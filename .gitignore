@@ -1,0 +1,119 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Environment variables and API keys
+.env
+config/.env
+*.env
+
+# Data files (sensitive)
+*.csv
+*.xlsx
+*.xls
+data/input/*
+data/output/*
+data/backup/*
+!data/input/.gitkeep
+!data/output/.gitkeep
+!data/backup/.gitkeep
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# IDE and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Development artifacts
+organize_for_github.py
+
+
+# Data files - prevent confidential data from being committed
+*.xlsx
+*.xls
+*.csv
+
+# Data directories
+data/input/
+data/output/
+data/backup/
+backup/
+
+# But allow example and template files
+!examples/*.csv
+!templates/*.csv
+!**/example*.csv
+!**/template*.csv
+!**/sample*.csv
+!test_data/test_*.csv
+
+# Logs with potentially sensitive data
+logs/*.log
+
+# Temporary files
+temp/
+tmp/
+*.tmp

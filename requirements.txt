@@ -1,0 +1,28 @@
+# Core data processing
+pandas>=1.5.0
+numpy>=1.21.0
+
+# AI and OpenAI integration
+openai>=1.0.0
+python-dotenv>=0.19.0
+
+# Data validation and utilities
+regex>=2022.0.0
+
+# Enhanced data processing (required for Excel support)
+openpyxl>=3.0.9  # For Excel file support
+xlrd>=2.0.1      # For older Excel files (.xls)
+chardet>=4.0.0   # For encoding detection
+
+# Additional utilities
+colorama>=0.4.4  # For colored terminal output
+tqdm>=4.64.0     # For progress bars
+python-dateutil>=2.8.2  # For date parsing
+
+# Optional: Enhanced Excel support
+xlsxwriter>=3.0.0  # For advanced Excel writing
+
+# Development and testing (optional)
+pytest>=7.0.0
+black>=22.0.0
+flake8>=5.0.0

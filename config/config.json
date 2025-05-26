@@ -1,0 +1,66 @@
+{
+  "lead_distribution": {},
+  "default_values": {
+    "patrimonio_financeiro": 1300000,
+    "tipo": "Pessoa Física",
+    "maisdeMilhao__c": 1
+  },
+  "output_encoding": "utf-8",
+  "backup_enabled": true,
+  "processing_options": {
+    "clean_phone_numbers": true,
+    "format_names": true,
+    "format_emails": true,
+    "auto_distribute_leads": true,
+    "remove_empty_rows": true
+  },
+  "file_formats": {
+    "raw_format": {
+      "separator": ";",
+      "columns": {
+        "Cliente": "Last Name",
+        "Telefone Adicional": "Telefone Adcional",
+        "Telefone": "Phone",
+        "E-mail": "Email",
+        "Volume Aproximado": "Patrimônio Financeiro",
+        "Descrição": "Description",
+        "Estado": "State/Province",
+        "Tipo": "Tipo",
+        "Alias": "OwnerId"
+      }
+    },
+    "standard_format": {
+      "separator": ",",
+      "columns": [
+        "Last Name",
+        "Telefone Adcional",
+        "Phone",
+        "Email",
+        "Description",
+        "Patrimônio Financeiro",
+        "Tipo",
+        "State/Province",
+        "OwnerId",
+        "maisdeMilhao__c"
+      ]
+    }
+  },
+  "validation_rules": {
+    "required_fields": ["Last Name", "Email"],
+    "phone_number_min_length": 8,
+    "email_validation": true
+  },
+  "ai_processing": {
+    "enabled": true,
+    "confidence_threshold": 80.0,
+    "use_ai_for_mapping": true,
+    "use_ai_for_validation": true,
+    "use_ai_for_data_conversion": true,
+    "fallback_to_rules": true,
+    "max_retries": 3,
+    "api_timeout": 30,
+    "model": "gpt-3.5-turbo",
+    "temperature": 0.1,
+    "max_tokens": 2000
+  }
+}

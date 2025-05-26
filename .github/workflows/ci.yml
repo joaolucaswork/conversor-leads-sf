@@ -1,0 +1,260 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.8, 3.9, '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 core/ tools/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 core/ tools/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+
+    - name: Format check with black
+      run: |
+        black --check core/ tools/ tests/
+
+    - name: Test with pytest (without AI)
+      env:
+        OPENAI_API_KEY: ""  # Test without AI to ensure fallback works
+      run: |
+        python -m pytest tests/ -v --tb=short
+
+    - name: Test quick start interface
+      env:
+        OPENAI_API_KEY: ""
+      run: |
+        python quick_start.py test
+
+  test-with-ai:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Test with AI integration
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python -m pytest tests/test_ai_integration.py -v
+      continue-on-error: true  # Don't fail if AI tests fail (API limits, etc.)
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run security scan with bandit
+      run: |
+        bandit -r core/ tools/ -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Check dependencies for vulnerabilities
+      run: |
+        safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  build-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install mkdocs mkdocs-material
+
+    - name: Validate documentation
+      run: |
+        # Check that all referenced files exist
+        python -c "
+        import os
+        import re
+        
+        # Check README links
+        with open('README.md', 'r') as f:
+            content = f.read()
+            
+        # Find all local file references
+        links = re.findall(r'\[.*?\]\(((?!http)[^)]+)\)', content)
+        
+        for link in links:
+            if not os.path.exists(link):
+                print(f'Broken link: {link}')
+                exit(1)
+        
+        print('All documentation links are valid')
+        "
+
+  performance:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install memory-profiler
+
+    - name: Create test data
+      run: |
+        python -c "
+        import pandas as pd
+        import os
+        
+        # Create large test dataset
+        data = {
+            'Lead': [f'Test User {i}' for i in range(1000)],
+            'Tel. Fixo': [f'(11)9{i:08d}' for i in range(1000)],
+            'E-mail': [f'user{i}@test.com' for i in range(1000)],
+            'Descrição': ['ModeradoRegular'] * 1000
+        }
+        
+        df = pd.DataFrame(data)
+        os.makedirs('data/input', exist_ok=True)
+        df.to_excel('data/input/performance_test.xlsx', index=False)
+        "
+
+    - name: Performance test
+      env:
+        OPENAI_API_KEY: ""  # Test without AI for consistent performance
+      run: |
+        python -c "
+        import time
+        import sys
+        sys.path.append('core')
+        from master_leads_processor_ai import AIEnhancedLeadsProcessor
+        
+        processor = AIEnhancedLeadsProcessor()
+        processor.config['ai_processing']['enabled'] = False
+        
+        start_time = time.time()
+        output_file = processor.process_file_ai('data/input/performance_test.xlsx')
+        end_time = time.time()
+        
+        processing_time = end_time - start_time
+        print(f'Processing time: {processing_time:.2f} seconds')
+        
+        # Fail if processing takes more than 30 seconds for 1000 records
+        if processing_time > 30:
+            print(f'Performance test failed: {processing_time:.2f}s > 30s')
+            exit(1)
+        else:
+            print('Performance test passed')
+        "
+
+  release:
+    needs: [test, security, build-docs, performance]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for changelog generation
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Generate release notes
+      run: |
+        # Extract version from CHANGELOG.md
+        VERSION=$(grep -m 1 "## \[" CHANGELOG.md | sed 's/## \[\(.*\)\].*/\1/')
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        
+        # Extract release notes for this version
+        sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | head -n -1 > release_notes.md
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: Release v${{ env.VERSION }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false

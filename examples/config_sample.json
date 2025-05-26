@@ -1,0 +1,20 @@
+{
+  "lead_distribution": {
+    "user1": 100,
+    "user2": 100,
+    "user3": 70,
+    "user4": 30
+  },
+  "default_values": {
+    "patrimonio_financeiro": 1500000,
+    "tipo": "Pessoa Física",
+    "state_province": "SP"
+  },
+  "ai_processing": {
+    "enabled": true,
+    "confidence_threshold": 80.0,
+    "use_ai_for_mapping": true,
+    "use_ai_for_validation": true,
+    "fallback_to_rules": true
+  }
+}
