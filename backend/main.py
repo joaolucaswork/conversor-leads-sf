@@ -386,7 +386,7 @@ async def refresh_oauth_token(refresh_token: str) -> Dict[str, Any]:
 async def get_salesforce_user_profile(access_token: str, instance_url: str) -> Dict[str, Any]:
     """Get Salesforce user profile information"""
     config = get_salesforce_oauth_config()
-    userinfo_url = f"{instance_url}{config['userinfo_url']}"
+    userinfo_url = f"{instance_url}/services/oauth2/userinfo"
 
     async with httpx.AsyncClient() as client:
         try:

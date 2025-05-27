@@ -113,11 +113,11 @@ def start_production_server():
         backend_dir = Path(__file__).parent
         os.chdir(backend_dir)
 
+        # Use single worker for Heroku (workers parameter causes issues)
         uvicorn.run(
             "main:app",
             host=host,
             port=port,
-            workers=workers,
             reload=False,
             log_level="info",
             access_log=True
@@ -125,6 +125,7 @@ def start_production_server():
 
     except ImportError as e:
         logger.error(f"Failed to import uvicorn: {e}")
+        logger.error("Make sure uvicorn is installed: pip install uvicorn[standard]")
         sys.exit(1)
     except Exception as e:
         logger.error(f"Failed to start server: {e}")
