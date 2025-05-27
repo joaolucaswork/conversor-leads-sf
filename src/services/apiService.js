@@ -31,7 +31,7 @@ const apiClient = axios.create({
   },
 });
 
-// Add a request interceptor to include the auth token
+// Add a request interceptor to include the auth token and admin token
 apiClient.interceptors.request.use(
   async (config) => {
     console.log(
@@ -58,10 +58,18 @@ apiClient.interceptors.request.use(
       console.log("🔑 Using demo token");
     }
 
+    // Add admin token if available (for admin endpoints)
+    const adminSession = localStorage.getItem("admin_session");
+    if (adminSession) {
+      config.headers["X-Admin-Token"] = adminSession;
+      console.log("🔐 Added admin token to request");
+    }
+
     // Log headers for debugging
     console.log("📋 Request headers:", {
       "Content-Type": config.headers["Content-Type"],
       Authorization: config.headers["Authorization"] ? "Bearer ***" : "None",
+      "X-Admin-Token": config.headers["X-Admin-Token"] ? "***" : "None",
       Accept: config.headers["Accept"],
     });
 
