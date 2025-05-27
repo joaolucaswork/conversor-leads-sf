@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, sta
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 import httpx
@@ -124,6 +125,12 @@ app.add_middleware(
     ],
     expose_headers=["*"],
 )
+
+# Mount static files for production (React build)
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    print(f"[INFO] Static files mounted from {static_dir}")
 
 # Security scheme
 security = HTTPBearer()
@@ -249,7 +256,7 @@ def get_salesforce_oauth_config():
     """Get hardcoded Salesforce OAuth configuration for Reino Capital."""
     # Reino Capital specific Salesforce instance
     reino_capital_domain = "https://reino-capital.my.salesforce.com"
-    
+
     return {
         "client_id": os.getenv("SALESFORCE_CLIENT_ID", "3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy"),
         "client_secret": os.getenv("SALESFORCE_CLIENT_SECRET", "4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E"),
@@ -755,8 +762,17 @@ async def salesforce_field_mapping(
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
-    return {"message": "Leads Processing API is running", "version": "1.0.0"}
+    """Serve React app or API health check"""
+    # Check if we have static files (production mode)
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        # Serve React app in production
+        return FileResponse(str(index_file))
+    else:
+        # API health check in development
+        return {"message": "Leads Processing API is running", "version": "1.0.0"}
 
 @app.options("/{path:path}")
 async def options_handler(path: str):
@@ -1119,14 +1135,18 @@ async def clear_ready_files(
         raise HTTPException(status_code=500, detail=f"Failed to clear ready files: {str(e)}")
 
 if __name__ == "__main__":
+    # Get port from environment variable (Heroku sets PORT)
+    port = int(os.environ.get("PORT", 8000))
+    host = "0.0.0.0"
+
     print("Starting Leads Processing API Server...")
-    print("Server will be available at: http://localhost:8000")
-    print("API documentation at: http://localhost:8000/docs")
+    print(f"Server will be available at: http://{host}:{port}")
+    print(f"API documentation at: http://{host}:{port}/docs")
 
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host=host,
+        port=port,
+        reload=False,  # Disable reload in production
         log_level="info"
     )

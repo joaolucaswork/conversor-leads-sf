@@ -1,0 +1,69 @@
+{
+  "name": "Leads Processing System",
+  "description": "AI-powered leads processing system with Salesforce integration",
+  "repository": "https://github.com/joaolucaswork/conversor-leads-sf",
+  "logo": "https://via.placeholder.com/128x128.png?text=LP",
+  "keywords": [
+    "leads",
+    "salesforce",
+    "ai",
+    "fastapi",
+    "react",
+    "data-processing"
+  ],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node.js environment",
+      "value": "production"
+    },
+    "PYTHON_ENV": {
+      "description": "Python environment",
+      "value": "production"
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for AI processing features",
+      "required": true
+    },
+    "SALESFORCE_CLIENT_ID": {
+      "description": "Salesforce Connected App Client ID",
+      "required": true
+    },
+    "SALESFORCE_CLIENT_SECRET": {
+      "description": "Salesforce Connected App Client Secret",
+      "required": true
+    },
+    "SALESFORCE_LOGIN_URL": {
+      "description": "Salesforce login URL",
+      "value": "https://reino-capital.my.salesforce.com",
+      "required": false
+    },
+    "WEB_CONCURRENCY": {
+      "description": "Number of web server workers",
+      "value": "1"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0",
+      "as": "DATABASE"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "echo 'Deployment completed successfully'"
+  }
+}

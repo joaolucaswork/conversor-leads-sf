@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Heroku post-compile hook
+# This script runs after the main buildpack compilation
+
+set -e
+
+echo "-----> Running post-compile hook"
+
+# Build the React frontend for production
+echo "-----> Building React frontend"
+npm run build
+
+# Create static file serving directory in backend
+echo "-----> Setting up static file serving"
+mkdir -p backend/static
+cp -r dist/* backend/static/
+
+# Set up directory structure
+echo "-----> Creating required directories"
+mkdir -p data/input data/output data/backup
+mkdir -p backend/logs backend/cache/ai_mappings
+
+# Set permissions
+echo "-----> Setting permissions"
+chmod -R 755 backend/
+chmod +x backend/start_production.py
+
+echo "-----> Post-compile hook completed"

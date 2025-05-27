@@ -2,12 +2,24 @@ import axios from "axios";
 import { useAuthStore } from "../store/authStore"; // Adjust path as needed
 
 // Define the base URL for the backend API.
-// This should ideally come from an environment variable.
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000") + "/api/v1"; // Replace with your actual backend URL
+// Automatically detects production vs development environment
+const getApiBaseUrl = () => {
+  // In production (Heroku), use relative URLs to the same domain
+  if (import.meta.env.PROD) {
+    return window.location.origin + "/api/v1";
+  }
+
+  // In development, use environment variable or localhost
+  return (
+    (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000") + "/api/v1"
+  );
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 console.log("🔗 API Base URL:", API_BASE_URL);
 console.log("🌍 Environment:", import.meta.env.MODE);
+console.log("🏭 Production:", import.meta.env.PROD);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
