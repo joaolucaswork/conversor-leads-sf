@@ -84,7 +84,11 @@ export async function generateBrowserOAuthUrl() {
     console.log("Browser OAuth: Starting URL generation...");
 
     const config = await getOAuthConfig();
-    const redirectUri = `${window.location.origin}/oauth/callback`;
+
+    // Use redirect URI from backend configuration (environment-aware)
+    const redirectUri =
+      config.redirect_uri || `${window.location.origin}/oauth/callback`;
+    console.log("Browser OAuth: Using redirect URI:", redirectUri);
 
     // Generate PKCE parameters
     const codeVerifier = generateCodeVerifier();
@@ -192,7 +196,14 @@ export async function exchangeCodeForToken(code) {
       throw new Error("Code verifier not found. Please try logging in again.");
     }
 
-    const redirectUri = `${window.location.origin}/oauth/callback`;
+    // Get redirect URI from backend configuration (environment-aware)
+    const config = await getOAuthConfig();
+    const redirectUri =
+      config.redirect_uri || `${window.location.origin}/oauth/callback`;
+    console.log(
+      "Browser OAuth: Using redirect URI for token exchange:",
+      redirectUri
+    );
 
     const apiBaseUrl = getApiBaseUrl();
     const tokenUrl = `${apiBaseUrl}/api/v1/oauth/token`;

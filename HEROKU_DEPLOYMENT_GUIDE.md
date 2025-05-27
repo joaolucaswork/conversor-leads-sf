@@ -44,7 +44,9 @@ heroku config:set PYTHON_ENV=production
 heroku config:set OPENAI_API_KEY=your_actual_openai_api_key_here
 heroku config:set SALESFORCE_CLIENT_ID=3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy
 heroku config:set SALESFORCE_CLIENT_SECRET=4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E
+heroku config:set SALESFORCE_REDIRECT_URI=https://your-app-name.herokuapp.com/oauth/callback
 heroku config:set SALESFORCE_LOGIN_URL=https://reino-capital.my.salesforce.com
+heroku config:set HEROKU_APP_NAME=your-app-name
 heroku config:set WEB_CONCURRENCY=1
 heroku config:set DEBUG=False
 
@@ -75,7 +77,26 @@ heroku ps
 heroku open
 ```
 
-## Step 6: Post-Deployment Verification
+## Step 6: Configure Salesforce Connected App
+
+**IMPORTANT**: Before testing OAuth, ensure your Salesforce Connected App is configured with the correct callback URLs:
+
+1. **Login to Salesforce**: Go to [reino-capital.my.salesforce.com](https://reino-capital.my.salesforce.com)
+2. **Navigate to Setup**: Click the gear icon → Setup
+3. **Find Connected Apps**: In Quick Find, search for "App Manager"
+4. **Edit the Connected App**: Find "Leads Processing App" and click "Edit"
+5. **Update Callback URLs**: In the "Callback URL" field, ensure both URLs are listed:
+
+   ```text
+   http://localhost:5173/oauth/callback
+   https://your-app-name.herokuapp.com/oauth/callback
+   ```
+
+6. **Save Changes**: Click "Save"
+
+**Note**: Replace `your-app-name` with your actual Heroku app name.
+
+## Step 7: Post-Deployment Verification
 
 1. **Check API Health**: Visit `https://your-app-name.herokuapp.com/api/v1/health`
 2. **Test Frontend**: Visit `https://your-app-name.herokuapp.com`

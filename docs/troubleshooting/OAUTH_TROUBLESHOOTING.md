@@ -64,7 +64,7 @@ Look for these log messages in the console:
 
 **Expected Success Flow:**
 
-```
+```text
 Generating OAuth URL with parameters:
 - redirect_uri: http://localhost:5173/oauth/callback
 - code_challenge length: 43
@@ -87,7 +87,7 @@ App.jsx: Authentication state changed: { isAuthenticated: true, isAuthLoading: f
 
 **Error Indicators:**
 
-```
+```text
 === TOKEN EXCHANGE ERROR DETAILS ===
 Error message: [specific error]
 Error status: 400
@@ -112,9 +112,18 @@ Response body: [Salesforce error details]
 
 **Solution:**
 
-- Check your Salesforce Connected App settings
-- Ensure the redirect URI matches exactly (case-sensitive, including trailing slashes)
-- Current configuration: `http://localhost:5173/oauth/callback`
+⚠️ **For comprehensive redirect URI troubleshooting, see**: [OAuth Redirect URI Troubleshooting Guide](./OAUTH_REDIRECT_URI_TROUBLESHOOTING.md)
+
+**Quick checks:**
+
+- Verify Salesforce Connected App callback URLs include both development and production URLs
+- Check environment variables are set correctly for your deployment environment
+- Ensure frontend and backend use the same redirect URI
+
+**Current expected configurations:**
+
+- Development: `http://localhost:5173/oauth/callback`
+- Production: `https://your-app-name.herokuapp.com/oauth/callback`
 
 ### 2. Invalid Authorization Code
 

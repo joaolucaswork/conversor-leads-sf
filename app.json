@@ -41,9 +41,17 @@
       "description": "Salesforce Connected App Client Secret",
       "required": true
     },
+    "SALESFORCE_REDIRECT_URI": {
+      "description": "Salesforce OAuth redirect URI (automatically set based on app name)",
+      "required": false
+    },
     "SALESFORCE_LOGIN_URL": {
       "description": "Salesforce login URL",
       "value": "https://reino-capital.my.salesforce.com",
+      "required": false
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Heroku app name for redirect URI generation",
       "required": false
     },
     "WEB_CONCURRENCY": {

@@ -70,7 +70,7 @@ if "!OPENAI_API_KEY!"=="" (
 
 REM Set environment variables
 echo [INFO] Setting up environment variables...
-heroku config:set NODE_ENV=production PYTHON_ENV=production OPENAI_API_KEY=!OPENAI_API_KEY! SALESFORCE_CLIENT_ID=3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy SALESFORCE_CLIENT_SECRET=4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E SALESFORCE_LOGIN_URL=https://reino-capital.my.salesforce.com WEB_CONCURRENCY=1 DEBUG=False --app !APP_NAME!
+heroku config:set NODE_ENV=production PYTHON_ENV=production OPENAI_API_KEY=!OPENAI_API_KEY! SALESFORCE_CLIENT_ID=3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy SALESFORCE_CLIENT_SECRET=4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E SALESFORCE_REDIRECT_URI=https://!APP_NAME!.herokuapp.com/oauth/callback SALESFORCE_LOGIN_URL=https://reino-capital.my.salesforce.com HEROKU_APP_NAME=!APP_NAME! WEB_CONCURRENCY=1 DEBUG=False --app !APP_NAME!
 echo [SUCCESS] Environment variables configured
 
 REM Add Heroku remote if it doesn't exist
@@ -92,7 +92,7 @@ timeout /t 10 /nobreak >nul
 heroku ps --app !APP_NAME! | findstr "up" >nul
 if not errorlevel 1 (
     echo [SUCCESS] App is running
-    
+
     REM Get app URL
     for /f "tokens=3" %%i in ('heroku info --app !APP_NAME! ^| findstr "Web URL"') do set APP_URL=%%i
     echo [SUCCESS] App is available at: !APP_URL!
