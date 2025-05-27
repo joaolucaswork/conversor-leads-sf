@@ -135,6 +135,24 @@ async def startup_event():
         print("[INFO] Continuing with in-memory storage fallback")
 
 # Configure CORS for frontend access
+def make_json_safe(obj):
+    """Convert pandas/numpy objects to JSON-safe Python objects"""
+    if pd.isna(obj):
+        return None
+    elif isinstance(obj, (pd.Timestamp, pd.Timedelta)):
+        return str(obj)
+    elif isinstance(obj, float):
+        if not pd.api.types.is_finite(obj):
+            return None
+        return obj
+    elif hasattr(obj, 'item'):  # numpy scalars
+        try:
+            return obj.item()
+        except (ValueError, OverflowError):
+            return None
+    else:
+        return obj
+
 def get_cors_origins():
     """Get CORS origins based on environment"""
     # Always include localhost for development
@@ -1486,11 +1504,41 @@ async def view_processed_file_data(
 
             print(f"[INFO] Pagination: total_records={total_records}, total_pages={total_pages}, start_idx={start_idx}, end_idx={end_idx}")
 
-            # Get paginated data
-            paginated_df = df.iloc[start_idx:end_idx]
+            # Clean data: Replace NaN, Infinity, and other non-JSON compliant values
+            df_cleaned = df.copy()
+
+            # Replace NaN values with None (which becomes null in JSON)
+            df_cleaned = df_cleaned.where(pd.notnull(df_cleaned), None)
+
+            # Replace infinity values with None
+            df_cleaned = df_cleaned.replace([float('inf'), float('-inf')], None)
+
+            # Convert any remaining problematic numeric values
+            for col in df_cleaned.columns:
+                if df_cleaned[col].dtype in ['float64', 'float32']:
+                    # Replace any remaining non-finite values
+                    df_cleaned[col] = df_cleaned[col].apply(
+                        lambda x: None if pd.isna(x) or not pd.api.types.is_finite(x) else x
+                    )
+
+            print(f"[INFO] Data cleaned: replaced NaN/Infinity values with None")
+
+            # Get paginated data from cleaned dataframe
+            paginated_df = df_cleaned.iloc[start_idx:end_idx]
 
             # Convert to records (list of dictionaries)
             records = paginated_df.to_dict('records')
+
+            # Additional safety check: ensure all values are JSON serializable
+            safe_records = []
+            for record in records:
+                safe_record = {}
+                for key, value in record.items():
+                    safe_record[key] = make_json_safe(value)
+                safe_records.append(safe_record)
+
+            records = safe_records
+            print(f"[INFO] Records processed and made JSON-safe: {len(records)} records")
 
             # Get column information
             columns = df.columns.tolist()
@@ -1518,6 +1566,26 @@ async def view_processed_file_data(
             }
 
             print(f"[INFO] Returning {len(records)} records for page {page}")
+
+            # Test JSON serialization before returning
+            try:
+                import json
+                json.dumps(response_data)
+                print("[INFO] Response data is JSON serializable")
+            except (ValueError, TypeError) as json_error:
+                print(f"[ERROR] Response data is not JSON serializable: {json_error}")
+                # Fallback: return minimal safe data
+                return {
+                    "success": False,
+                    "error": "Data contains values that cannot be serialized to JSON",
+                    "details": str(json_error),
+                    "file_info": {
+                        "processing_id": processing_id,
+                        "file_name": job["fileName"],
+                        "record_count": total_records
+                    }
+                }
+
             return response_data
 
         except Exception as e:
