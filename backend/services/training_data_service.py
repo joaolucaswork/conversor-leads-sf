@@ -235,9 +235,10 @@ class TrainingDataService:
         total_mappings = self.db.query(FieldMapping).count()
         total_corrections = self.db.query(UserCorrection).count()
 
-        # Get recent activity
+        # Get recent activity (last 7 days)
+        from sqlalchemy import text
         recent_jobs = self.db.query(ProcessingJob).filter(
-            ProcessingJob.created_at >= func.date_trunc('day', func.now()) - func.interval('7 days')
+            ProcessingJob.created_at >= text("NOW() - INTERVAL '7 days'")
         ).count()
 
         # Get accuracy metrics
