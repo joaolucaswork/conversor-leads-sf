@@ -189,9 +189,11 @@ DATABASE_URL=postgresql://postgres:password@localhost:5432/leads_processing
 # Add PostgreSQL add-on (already configured in app.json)
 heroku addons:create heroku-postgresql:mini --app your-app-name
 
-# Initialize fine-tuning database
-heroku run python backend/migrations/init_fine_tuning_db.py --init --app your-app-name
+# Database tables are automatically created during deployment
+# No manual initialization needed! 🎉
 ```
+
+> **📋 Note**: Database migrations now run automatically during Heroku deployment via release phase. See [Heroku Auto-Migration Guide](HEROKU_AUTO_MIGRATION_GUIDE.md) for details.
 
 **Test the Fine-Tuning System:**
 

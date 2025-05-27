@@ -1,1 +1,2 @@
+release: cd backend && python migrations/auto_migrate_simple.py
 web: cd backend && gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
