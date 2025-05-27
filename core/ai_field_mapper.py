@@ -53,7 +53,8 @@ class AIFieldMapper:
         """Initialize the AI field mapper."""
         self.logger = logging.getLogger(__name__)
         self.config = config or {}
-        self.ai_enabled = self.config.get('ai_processing', {}).get('enabled', False)
+        # Always enable AI initially since we have hardcoded API key
+        self.ai_enabled = True
         self.confidence_threshold = self.config.get('ai_processing', {}).get('confidence_threshold', 80.0)
 
         # Load environment variables
@@ -61,8 +62,11 @@ class AIFieldMapper:
 
         # Initialize OpenAI client
         self.openai_client = None
-        if OPENAI_AVAILABLE and self.ai_enabled:
+        if OPENAI_AVAILABLE:
             self._initialize_openai()
+        else:
+            self.logger.warning("OpenAI package not available, AI features disabled")
+            self.ai_enabled = False
 
         # Standard target fields for lead processing
         self.target_fields = [
@@ -94,7 +98,7 @@ class AIFieldMapper:
         """Initialize OpenAI client with hardcoded API key for Reino Capital."""
         # Hardcoded API key for production use at Reino Capital
         api_key = "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"
-        
+
         try:
             from openai import OpenAI
             self.openai_client = OpenAI(api_key=api_key)
