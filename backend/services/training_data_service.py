@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 
-from ..models.training_data import (
+from models.training_data import (
     ProcessingJob, FieldMapping, UserCorrection,
     FileUpload, TrainingDataset, ModelPerformance
 )
