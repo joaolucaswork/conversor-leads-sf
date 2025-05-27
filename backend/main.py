@@ -781,6 +781,63 @@ async def root():
         # API health check in development
         return {"message": "Leads Processing API is running", "version": "1.0.0"}
 
+@app.get("/oauth/callback")
+async def oauth_callback():
+    """Serve React app for OAuth callback handling"""
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        # Serve React app - React Router will handle the /oauth/callback route
+        return FileResponse(str(index_file))
+    else:
+        # Development fallback
+        return {"message": "OAuth callback - React app not found", "redirect": "/"}
+
+@app.get("/login")
+async def login_page():
+    """Serve React app for login page"""
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        return {"message": "Login page - React app not found", "redirect": "/"}
+
+@app.get("/settings")
+async def settings_page():
+    """Serve React app for settings page"""
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        return {"message": "Settings page - React app not found", "redirect": "/"}
+
+@app.get("/salesforce")
+async def salesforce_page():
+    """Serve React app for Salesforce page"""
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        return {"message": "Salesforce page - React app not found", "redirect": "/"}
+
+@app.get("/preview/{processing_id}")
+async def preview_page(processing_id: str):
+    """Serve React app for preview page"""
+    static_dir = Path(__file__).parent / "static"
+    index_file = static_dir / "index.html"
+
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    else:
+        return {"message": "Preview page - React app not found", "redirect": "/"}
+
 @app.options("/{path:path}")
 async def options_handler(path: str):
     """Handle CORS preflight requests"""
@@ -1150,6 +1207,11 @@ async def serve_static_files(file_path: str):
     # Skip API routes
     if file_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    # Skip routes that are already handled by specific endpoints
+    handled_routes = ["oauth/callback", "login", "settings", "salesforce", "preview"]
+    if any(file_path.startswith(route) for route in handled_routes):
+        raise HTTPException(status_code=404, detail="Route handled by specific endpoint")
 
     # Handle specific static file requests
     if file_path.endswith(('.js', '.css', '.svg', '.png', '.jpg', '.ico', '.json')):
