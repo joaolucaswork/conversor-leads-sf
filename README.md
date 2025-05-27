@@ -23,6 +23,7 @@ The system significantly reduces manual effort in preparing and uploading lead d
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **Framework**: React 18.0.0
 - **UI Library**: Material UI 5.0.0
 - **State Management**: Zustand 4.0.0
@@ -33,6 +34,7 @@ The system significantly reduces manual effort in preparing and uploading lead d
 - **Build Tool**: Vite 5.0.0
 
 ### Backend
+
 - **Language**: Python 3.9+
 - **Data Processing**: Pandas 1.5.0+, NumPy 1.21.0+
 - **AI Integration**: OpenAI API 1.0.0+
@@ -40,11 +42,13 @@ The system significantly reduces manual effort in preparing and uploading lead d
 - **Utilities**: Python-dotenv, colorama, tqdm, chardet, regex
 
 ### Desktop Application
+
 - **Framework**: Electron 28.0.0
 - **Packaging**: Electron Builder 24.0.0
 - **Storage**: Electron Store 8.0.0
 
 ### Development Tools
+
 - **Task Runner**: Concurrently 9.1.2
 - **Environment**: Cross-env 7.0.3
 - **Process Management**: Wait-on 8.0.3
@@ -136,12 +140,14 @@ cp .env.example config/.env
 2. Edit the environment files with your settings:
 
 **Frontend (.env.local)**:
+
 ```
 VITE_API_URL=http://localhost:8000
 VITE_DEFAULT_LANGUAGE=pt-BR
 ```
 
 **Backend (config/.env)**:
+
 ```
 OPENAI_API_KEY=your_openai_api_key_here
 DEBUG=False
@@ -156,6 +162,7 @@ DEBUG=False
    - Add required OAuth scopes: `api`, `refresh_token`, `offline_access`
 
 2. Configure Salesforce credentials in `config/.env`:
+
 ```
 SF_CLIENT_ID=your_connected_app_consumer_key
 SF_CLIENT_SECRET=your_connected_app_consumer_secret
@@ -174,8 +181,9 @@ npm run dev
 ```
 
 This will start:
-- Backend API server on http://localhost:8000
-- Frontend Vite server on http://localhost:5173
+
+- Backend API server on <http://localhost:8000>
+- Frontend Vite server on <http://localhost:5173>
 - Electron desktop application
 
 ### Browser Version
@@ -203,14 +211,120 @@ npm run electron:build
 
 ### Production Deployment
 
-Build for production:
+#### Web Application (Heroku)
+
+**Automated Deployment (Recommended):**
+
+The automated scripts handle all deployment steps including app creation, environment variables, and deployment:
 
 ```bash
-# Build frontend
-npm run build
+# Linux/Mac
+npm run deploy:heroku your-app-name
 
-# Package Electron app
+# Windows
+npm run deploy:heroku:windows your-app-name
+```
+
+**What the automated script does:**
+
+- Creates Heroku application
+- Adds required buildpacks (Node.js + Python)
+- Sets all environment variables automatically
+- Deploys the application
+- Opens the deployed app in browser
+
+**Requirements for automated deployment:**
+
+- Heroku CLI installed and logged in
+- OpenAI API key (you'll be prompted to enter it)
+- Git repository with all changes committed
+
+**Manual Deployment:**
+
+1. **Create Heroku Application:**
+
+```bash
+# Install Heroku CLI if not already installed
+# https://devcenter.heroku.com/articles/heroku-cli
+
+# Login to Heroku
+heroku login
+
+# Create new app
+heroku create your-app-name
+
+# Add buildpacks
+heroku buildpacks:add heroku/nodejs --app your-app-name
+heroku buildpacks:add heroku/python --app your-app-name
+```
+
+2. **Configure Environment Variables:**
+
+```bash
+# Required variables
+heroku config:set NODE_ENV=production --app your-app-name
+heroku config:set PYTHON_ENV=production --app your-app-name
+heroku config:set OPENAI_API_KEY=your_openai_api_key --app your-app-name
+
+# Salesforce OAuth configuration
+heroku config:set SALESFORCE_CLIENT_ID=3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy --app your-app-name
+heroku config:set SALESFORCE_CLIENT_SECRET=4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E --app your-app-name
+heroku config:set SALESFORCE_REDIRECT_URI=https://your-app-name.herokuapp.com/oauth/callback --app your-app-name
+heroku config:set SALESFORCE_LOGIN_URL=https://reino-capital.my.salesforce.com --app your-app-name
+heroku config:set HEROKU_APP_NAME=your-app-name --app your-app-name
+
+# Performance settings
+heroku config:set WEB_CONCURRENCY=1 --app your-app-name
+heroku config:set DEBUG=False --app your-app-name
+```
+
+3. **Configure Salesforce Connected App:**
+
+⚠️ **IMPORTANT**: Before deploying, configure your Salesforce Connected App with the correct callback URLs:
+
+- Login to [reino-capital.my.salesforce.com](https://reino-capital.my.salesforce.com)
+- Go to Setup → App Manager → Find "Leads Processing App" → Edit
+- In "Callback URL" field, add both URLs:
+
+  ```text
+  http://localhost:5173/oauth/callback
+  https://your-app-name.herokuapp.com/oauth/callback
+  ```
+
+- Save changes
+
+4. **Deploy Application:**
+
+```bash
+# Deploy to Heroku
+git push heroku main
+
+# Monitor deployment
+heroku logs --tail --app your-app-name
+
+# Open deployed application
+heroku open --app your-app-name
+```
+
+5. **Verify Deployment:**
+
+- Check API health: `https://your-app-name.herokuapp.com/api/v1/health`
+- Test OAuth login functionality
+- Upload a sample leads file
+
+#### Desktop Application (Electron)
+
+Build distributable desktop applications:
+
+```bash
+# Build frontend for Electron
+npm run build:electron
+
+# Package Electron app for current platform
 npm run electron:build
+
+# Build for all platforms (Windows, Mac, Linux)
+npm run electron:build:all
 ```
 
 The distributable files will be available in the `dist` directory.
@@ -261,15 +375,18 @@ The distributable files will be available in the `dist` directory.
 ### Environment Variables
 
 **Frontend Variables**:
+
 - `VITE_API_URL`: Backend API URL
 - `VITE_DEFAULT_LANGUAGE`: Default UI language
 
 **Backend Variables**:
+
 - `OPENAI_API_KEY`: OpenAI API key for AI features
 - `DEBUG`: Enable debug mode (True/False)
 - `LOG_LEVEL`: Logging level (INFO, DEBUG, ERROR)
 
 **Salesforce Variables**:
+
 - `SF_CLIENT_ID`: Salesforce Connected App Consumer Key
 - `SF_CLIENT_SECRET`: Salesforce Connected App Consumer Secret
 - `SF_LOGIN_URL`: Salesforce login URL (login.salesforce.com or test.salesforce.com)
@@ -312,7 +429,7 @@ The system uses a modular architecture with clear separation of concerns:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Key Components:
+### Key Components
 
 1. **Frontend (React/Vite)**: User interface for file upload, processing, and Salesforce integration
 2. **Backend (Python)**: API for file processing, AI integration, and data validation
@@ -345,9 +462,70 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
+## 🚨 Troubleshooting
+
+### Common Issues
+
+#### OAuth Authentication Problems
+
+If you encounter "redirect_uri_mismatch" errors during Salesforce login:
+
+1. **Check Salesforce Connected App configuration**
+2. **Verify environment variables are set correctly**
+3. **Ensure callback URLs match exactly**
+
+📖 **Detailed Guide**: [OAuth Redirect URI Troubleshooting](docs/troubleshooting/OAUTH_REDIRECT_URI_TROUBLESHOOTING.md)
+
+#### Deployment Issues
+
+For Heroku deployment problems:
+
+1. **Check buildpack order** (Node.js first, then Python)
+2. **Verify all environment variables are set**
+3. **Monitor deployment logs** with `heroku logs --tail`
+
+📖 **Detailed Guide**: [Heroku Deployment Guide](HEROKU_DEPLOYMENT_GUIDE.md)
+
+#### File Processing Errors
+
+For issues with file upload and processing:
+
+1. **Check file format** (Excel .xlsx/.xls or CSV)
+2. **Verify file size** (max 10MB recommended)
+3. **Check column headers** for proper mapping
+
+### Getting Help
+
+If you encounter issues not covered in the documentation:
+
+1. **Check the logs** in browser console or terminal
+2. **Review environment variables** configuration
+3. **Consult troubleshooting guides** in the `docs/troubleshooting/` directory
+4. **Create an issue** with detailed error information
+
 ## 🔗 Quick Links
+
+### Setup and Configuration
 
 - [Development Setup Guide](docs/setup/DEVELOPMENT_SETUP.md)
 - [Salesforce Integration Guide](docs/salesforce/SALESFORCE_FIELD_MAPPING_SOLUTION.md)
+- [Environment Configuration](docs/setup/ENVIRONMENT_SETUP.md)
+
+### Deployment Guides
+
+- [Heroku Deployment Guide](HEROKU_DEPLOYMENT_GUIDE.md)
+- [Electron Distribution Guide](ELECTRON_DISTRIBUTION_GUIDE.md)
+- [OAuth Redirect URI Fix Summary](OAUTH_REDIRECT_URI_FIX_SUMMARY.md)
+
+### Documentation
+
 - [AI Features Documentation](docs/README_AI.md)
-- [Troubleshooting Guide](docs/troubleshooting/SALESFORCE_FIXES_SUMMARY.md)
+- [API Documentation](docs/api/)
+- [Salesforce Field Mapping](docs/salesforce/SALESFORCE_FIELD_MAPPING_SOLUTION.md)
+
+### Troubleshooting
+
+- [OAuth Troubleshooting](docs/troubleshooting/OAUTH_TROUBLESHOOTING.md)
+- [OAuth Redirect URI Issues](docs/troubleshooting/OAUTH_REDIRECT_URI_TROUBLESHOOTING.md)
+- [Salesforce Integration Issues](docs/troubleshooting/SALESFORCE_FIXES_SUMMARY.md)
+- [General Troubleshooting](docs/troubleshooting/)

@@ -985,20 +985,52 @@ const getSalesforceObjectsInBrowser = async () => {
 
 const uploadToSalesforceInBrowser = async (options) => {
   try {
+    console.log(
+      "Browser Upload: Starting Salesforce upload with options:",
+      options
+    );
+
     // Get stored auth data
     const storedAuth = browserStorage.get("salesforceAuth");
 
     if (!storedAuth || !storedAuth.accessToken || !storedAuth.instanceUrl) {
+      console.error("Browser Upload: No Salesforce authentication found");
       return {
         success: false,
         error: "Not authenticated with Salesforce. Please log in first.",
       };
     }
 
-    // Use backend API for upload
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-    const response = await fetch(`${baseUrl}/api/v1/salesforce/upload`, {
+    console.log("Browser Upload: Authentication found, proceeding with upload");
+
+    // Use backend API for upload with production detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const baseUrl = getApiBaseUrl();
+    const uploadUrl = `${baseUrl}/api/v1/salesforce/upload`;
+
+    console.log("Browser Upload: Using backend URL:", baseUrl);
+    console.log("Browser Upload: Full upload URL:", uploadUrl);
+
+    const requestBody = {
+      processing_id: options.processingId,
+      salesforce_object: options.salesforceObject || "Lead",
+      access_token: storedAuth.accessToken,
+      instance_url: storedAuth.instanceUrl,
+      file_name: options.fileName,
+    };
+
+    console.log("Browser Upload: Request body:", {
+      ...requestBody,
+      access_token: "[REDACTED]", // Don't log the actual token
+    });
+
+    const response = await fetch(uploadUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1006,30 +1038,67 @@ const uploadToSalesforceInBrowser = async (options) => {
           localStorage.getItem("authToken") || "dummy-token"
         }`,
       },
-      body: JSON.stringify({
-        processing_id: options.processingId,
-        salesforce_object: options.salesforceObject || "Lead",
-        access_token: storedAuth.accessToken,
-        instance_url: storedAuth.instanceUrl,
-        file_name: options.fileName,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
+    console.log("Browser Upload: Response status:", response.status);
+    console.log(
+      "Browser Upload: Response headers:",
+      Object.fromEntries(response.headers.entries())
+    );
+
     if (!response.ok) {
-      const errorData = await response
-        .json()
-        .catch(() => ({ detail: "Unknown error" }));
-      throw new Error(errorData.detail || `HTTP ${response.status}`);
+      console.error(
+        "Browser Upload: Request failed with status:",
+        response.status
+      );
+
+      let errorData;
+      try {
+        errorData = await response.json();
+        console.error("Browser Upload: Error response data:", errorData);
+      } catch (parseError) {
+        console.error(
+          "Browser Upload: Could not parse error response as JSON:",
+          parseError
+        );
+        const errorText = await response.text().catch(() => "Unknown error");
+        console.error("Browser Upload: Error response text:", errorText);
+        errorData = { detail: errorText || `HTTP ${response.status}` };
+      }
+
+      throw new Error(
+        errorData.detail || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
     const result = await response.json();
-    console.log("Browser upload - Backend upload result:", result);
+    console.log("Browser Upload: Backend upload result:", result);
     return result;
   } catch (error) {
-    console.error("Browser upload error:", error);
+    console.error("Browser Upload: Upload failed with error:", error);
+
+    // Enhanced error reporting
+    if (
+      error.name === "TypeError" &&
+      error.message.includes("Failed to fetch")
+    ) {
+      console.error(
+        "Browser Upload: Network connection failed - backend may not be running"
+      );
+      return {
+        success: false,
+        error: `Connection failed: Backend server may not be running on ${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+        }. Please check if the backend is started.`,
+        errorType: "CONNECTION_REFUSED",
+      };
+    }
+
     return {
       success: false,
       error: `Upload failed: ${error.message}`,
+      errorType: error.name || "UNKNOWN_ERROR",
     };
   }
 };
@@ -1046,9 +1115,15 @@ const getSalesforceFieldMappingInBrowser = async (options) => {
       };
     }
 
-    // Use backend API for field mapping
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    // Use backend API for field mapping with production detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const baseUrl = getApiBaseUrl();
     const response = await fetch(`${baseUrl}/api/v1/salesforce/field-mapping`, {
       method: "POST",
       headers: {

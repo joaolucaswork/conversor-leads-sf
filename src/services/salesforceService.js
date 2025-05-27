@@ -42,9 +42,11 @@ export const uploadLeadsToSalesforce = async (
         filePath,
         salesforceObject,
         options,
+        environment: isElectron() ? "Electron" : "Browser",
       }
     );
 
+    // Use the environment-aware electronAPI which handles both Electron and browser modes
     const result = await electronAPI.uploadToSalesforce({
       filePath,
       salesforceObject,
