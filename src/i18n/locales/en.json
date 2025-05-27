@@ -41,6 +41,8 @@
     "noFilesToClear": "No files were found to clear.",
     "noProcessedFiles": "No processed files available.",
     "noProcessedFilesDescription": "Process some lead files first, then return here to upload them to Salesforce.",
+    "noReadyFiles": "No files ready for upload.",
+    "noReadyFilesDescription": "Process some lead files first, then return here to upload them to Salesforce.",
     "fileAutoAdded": "{{fileName}} has been processed and is now ready for upload",
     "autoRefreshing": "Auto-refreshing...",
     "filesReadyForUpload": "{{count}} file(s) ready for upload"
@@ -101,10 +103,10 @@
     },
     "developerMode": {
       "title": "Developer Mode",
-      "description": "When disabled, the interface will be simplified to show only essential features. AI processing continues to run in the background for optimal results, but advanced options and statistics are hidden.",
+      "description": "By default, the interface is simplified to show only essential features. AI processing always runs in the background for optimal results. Enable Developer Mode to access advanced options, statistics, and debugging features.",
       "tooltip": "Controls visibility of advanced features, AI options, and analytics",
       "enabled": "Developer Mode Enabled",
-      "disabled": "Simplified Interface",
+      "disabled": "Simplified Interface (Default)",
       "simplifiedInfo": "Simplified interface active. AI processing continues to work behind the scenes for best results, while advanced options, statistics, and cost tracking are hidden for a cleaner experience."
     }
   },

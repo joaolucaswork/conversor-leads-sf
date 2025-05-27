@@ -43,6 +43,7 @@ import { format } from 'date-fns';
 
 import { getProcessingHistory, clearProcessingHistory, clearReadyFiles } from '../services/apiService';
 import { useAuthStore } from '../store/authStore';
+import { useLanguageStore } from '../store/languageStore';
 import {
   uploadLeadsToSalesforce,
   getSalesforceObjects,
@@ -55,7 +56,13 @@ import StatusLegend from './StatusLegend';
 import DuplicateHandlingDialog from './DuplicateHandlingDialog';
 
 const UnifiedFilesHistorySection = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Language store to ensure re-render when language changes
+  const { currentLanguage } = useLanguageStore(state => ({
+    currentLanguage: state.currentLanguage,
+  }));
+
   const {
     isAuthenticated,
     accessToken,
@@ -734,7 +741,7 @@ const UnifiedFilesHistorySection = () => {
                       }
                     }}
                   >
-                    Enviar para o Sales
+                    {t('salesforce.upload', { defaultValue: 'Upload to Salesforce' })}
                   </Button>
                 </CardActions>
               </Card>

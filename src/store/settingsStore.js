@@ -20,10 +20,10 @@ const callElectronApi = async (apiFunction, ...args) => {
 export const useSettingsStore = create((set, get) => ({
   // State
   openAIApiKeyIsSet: true, // Always true since API key is hardcoded for Reino Capital
-  isLoadingApiKeyStatus: false, 
+  isLoadingApiKeyStatus: false,
   errorApiKeyStatus: null,
-  // Developer Mode state - enabled by default
-  developerMode: true,
+  // Developer Mode state - disabled by default for simplified interface
+  developerMode: false,
   isDeveloperModeLoading: true,
 
   // Actions
@@ -32,7 +32,7 @@ export const useSettingsStore = create((set, get) => ({
     set({
       openAIApiKeyIsSet: true,
       isLoadingApiKeyStatus: false,
-      errorApiKeyStatus: null
+      errorApiKeyStatus: null,
     });
     console.log("OpenAI API key is pre-configured for Reino Capital");
   },
@@ -54,12 +54,12 @@ export const useSettingsStore = create((set, get) => ({
         storedMode = stored ? JSON.parse(stored) : null;
       }
 
-      // Default to true if not set
-      const developerMode = storedMode !== null ? storedMode : true;
+      // Default to false if not set (simplified interface by default)
+      const developerMode = storedMode !== null ? storedMode : false;
       set({ developerMode, isDeveloperModeLoading: false });
     } catch (err) {
       console.error("Error loading developer mode:", err);
-      set({ developerMode: true, isDeveloperModeLoading: false }); // Default to enabled
+      set({ developerMode: false, isDeveloperModeLoading: false }); // Default to simplified interface
     }
   },
 

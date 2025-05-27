@@ -41,6 +41,8 @@
     "noFilesToClear": "Nenhum arquivo foi encontrado para limpar.",
     "noProcessedFiles": "Nenhum arquivo processado disponível.",
     "noProcessedFilesDescription": "Processe alguns arquivos de leads primeiro, depois retorne aqui para enviá-los ao Salesforce.",
+    "noReadyFiles": "Nenhum arquivo pronto para upload.",
+    "noReadyFilesDescription": "Processe alguns arquivos de leads primeiro, depois retorne aqui para enviá-los ao Salesforce.",
     "fileAutoAdded": "{{fileName}} foi processado e está pronto para upload",
     "autoRefreshing": "Atualizando automaticamente...",
     "filesReadyForUpload": "{{count}} arquivo(s) pronto(s) para upload"
@@ -101,10 +103,10 @@
     },
     "developerMode": {
       "title": "Modo Desenvolvedor",
-      "description": "Quando desabilitado, a interface será simplificada para mostrar apenas recursos essenciais. O processamento com IA continua funcionando em segundo plano para obter os melhores resultados, mas opções avançadas e estatísticas ficam ocultas.",
+      "description": "Por padrão, a interface é simplificada para mostrar apenas recursos essenciais. O processamento com IA sempre funciona em segundo plano para obter os melhores resultados. Ative o Modo Desenvolvedor para acessar opções avançadas, estatísticas e recursos de depuração.",
       "tooltip": "Controla a visibilidade de recursos avançados, opções de IA e análises",
       "enabled": "Modo Desenvolvedor Ativado",
-      "disabled": "Interface Simplificada",
+      "disabled": "Interface Simplificada (Padrão)",
       "simplifiedInfo": "Interface simplificada ativa. O processamento com IA continua funcionando nos bastidores para obter os melhores resultados, enquanto opções avançadas, estatísticas e rastreamento de custos ficam ocultos para uma experiência mais limpa."
     }
   },
