@@ -286,6 +286,15 @@ class UserCorrectionRequest(BaseModel):
     field_name: Optional[str] = None
     record_index: Optional[int] = None
 
+# Admin authentication models
+class AdminAuthRequest(BaseModel):
+    admin_token: str
+
+class AdminAuthResponse(BaseModel):
+    success: bool
+    session_token: Optional[str] = None
+    message: str
+
 class TrainingDataSummary(BaseModel):
     total_processing_jobs: int
     total_field_mappings: int
@@ -1332,6 +1341,82 @@ async def clear_ready_files(
     except Exception as e:
         print(f"[ERROR] Error clearing ready files: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear ready files: {str(e)}")
+
+# Admin Authentication API Endpoints
+
+@app.post("/api/v1/admin/authenticate")
+async def authenticate_admin(
+    request: AdminAuthRequest,
+    token: str = Depends(verify_token)
+):
+    """Authenticate admin user with token"""
+    try:
+        # Validate admin token
+        admin_token = os.getenv("ADMIN_ACCESS_TOKEN")
+        if not admin_token:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Admin authentication not configured"
+            )
+
+        if request.admin_token != admin_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin token"
+            )
+
+        # Generate session token (in production, use proper session management)
+        import secrets
+        session_token = secrets.token_urlsafe(32)
+
+        return AdminAuthResponse(
+            success=True,
+            session_token=session_token,
+            message="Admin authentication successful"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Admin authentication failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Admin authentication failed"
+        )
+
+@app.get("/api/v1/admin/verify")
+async def verify_admin_session(
+    request: Request,
+    token: str = Depends(verify_token)
+):
+    """Verify admin session"""
+    try:
+        # Check admin token in headers
+        admin_token = request.headers.get("X-Admin-Token")
+        if not admin_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admin token required"
+            )
+
+        # Validate admin token (in production, validate session properly)
+        expected_token = os.getenv("ADMIN_ACCESS_TOKEN")
+        if not expected_token or admin_token != expected_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin session"
+            )
+
+        return {"valid": True, "message": "Admin session verified"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Admin session verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Session verification failed"
+        )
 
 # Fine-tuning System API Endpoints
 
