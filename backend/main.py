@@ -1,0 +1,1128 @@
+#!/usr/bin/env python3
+"""
+FastAPI Backend Server for Leads Processing System
+Provides REST API endpoints for the React/Electron frontend
+"""
+
+import os
+import sys
+import uuid
+import json
+import asyncio
+import base64
+import hashlib
+import secrets
+import urllib.parse
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+import uvicorn
+import httpx
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Load from project root .env file
+    project_root = Path(__file__).parent.parent
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"[SUCCESS] Environment variables loaded from {env_path}")
+    else:
+        print(f"[WARNING] .env file not found at {env_path}")
+except ImportError:
+    print("[WARNING] python-dotenv not installed, loading environment variables manually")
+    # Fallback: manual .env loading
+    project_root = Path(__file__).parent.parent
+    env_path = project_root / ".env"
+    if env_path.exists():
+        print(f"[INFO] Loading environment variables manually from {env_path}")
+        with open(env_path, 'r') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    if '=' in line:
+                        key, value = line.strip().split('=', 1)
+                        # Remove quotes if present
+                        value = value.strip('"').strip("'")
+                        os.environ[key] = value
+        print("[SUCCESS] Environment variables loaded manually")
+    else:
+        print(f"[WARNING] .env file not found at {env_path}")
+
+# Add the core directory to Python path for imports (project_root already defined above)
+core_dir = project_root / "core"
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(core_dir))
+
+# Import our existing processing modules
+try:
+    # First try to import the AI field mapper to check if it's available
+    try:
+        from ai_field_mapper import AIFieldMapper
+        print("[SUCCESS] AI field mapper imported successfully")
+    except ImportError as ai_import_error:
+        print(f"[WARNING] Could not import ai_field_mapper: {ai_import_error}")
+        print("[INFO] AI features will be limited")
+
+    from core.master_leads_processor_ai import process_leads_with_ai
+    from core.master_leads_processor import process_leads_traditional
+    from tools.data_validator import validate_data
+    PROCESSING_MODULES_AVAILABLE = True
+    print("[SUCCESS] Processing modules imported successfully")
+except ImportError as e:
+    print(f"[WARNING] Could not import processing modules: {e}")
+    print("[INFO] Make sure you're running from the project root directory")
+    print("[INFO] Server will continue with limited functionality")
+    PROCESSING_MODULES_AVAILABLE = False
+
+    # Define fallback functions
+    def process_leads_with_ai(*args, **kwargs):
+        raise HTTPException(status_code=503, detail="AI processing module not available")
+
+    def process_leads_traditional(*args, **kwargs):
+        raise HTTPException(status_code=503, detail="Traditional processing module not available")
+
+    def validate_data(*args, **kwargs):
+        return {"valid": True, "message": "Validation module not available"}
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="Leads Processing API",
+    description="Backend API for AI-enhanced leads processing system",
+    version="1.0.0"
+)
+
+# Configure CORS for frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:3000"
+    ],  # Vite and React dev servers
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
+    ],
+    expose_headers=["*"],
+)
+
+# Security scheme
+security = HTTPBearer()
+
+# In-memory storage for demo (replace with database in production)
+processing_jobs: Dict[str, Dict[str, Any]] = {}
+processing_history: List[Dict[str, Any]] = []
+
+# Processing history starts empty - no sample data
+# Users will only see files they have actually processed
+
+# Data models
+class ProcessingStatus(BaseModel):
+    processingId: str
+    fileName: str
+    status: str
+    progress: int
+    currentStage: str
+    message: str
+    resultUrl: Optional[str] = None
+    previewUrl: Optional[str] = None
+    aiStats: Optional[Dict[str, Any]] = None
+    apiUsage: Optional[Dict[str, Any]] = None
+
+class HistoryItem(BaseModel):
+    processingId: str
+    fileName: str
+    uploadedAt: str
+    status: str
+    recordCount: Optional[int] = None
+    resultUrl: Optional[str] = None
+    outputPath: Optional[str] = None
+    completedAt: Optional[str] = None
+    processingMode: Optional[str] = None
+    validationIssues: Optional[List[str]] = None
+
+class PaginatedHistory(BaseModel):
+    history: List[HistoryItem]
+    pagination: Dict[str, Any]
+
+# OAuth models
+class OAuthTokenRequest(BaseModel):
+    code: str
+    code_verifier: str
+    redirect_uri: str
+
+class OAuthTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    instance_url: str
+    token_type: str = "Bearer"
+    expires_in: Optional[int] = None
+    scope: Optional[str] = None
+
+class OAuthRefreshRequest(BaseModel):
+    refresh_token: str
+
+class OAuthUserProfile(BaseModel):
+    user_id: str
+    organization_id: str
+    username: str
+    display_name: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    photos: Optional[Dict[str, str]] = None
+
+# Salesforce-specific models
+class SalesforceUploadRequest(BaseModel):
+    processing_id: str
+    salesforce_object: str = "Lead"
+    access_token: str
+    instance_url: str
+    file_name: Optional[str] = None
+
+class SalesforceValidationRequest(BaseModel):
+    access_token: str
+    instance_url: str
+
+class SalesforceObjectsRequest(BaseModel):
+    access_token: str
+    instance_url: str
+
+class SalesforceFieldMappingRequest(BaseModel):
+    access_token: str
+    instance_url: str
+    object_type: str = "Lead"
+
+# Authentication dependency (simplified for demo)
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Verify the authorization token.
+    For now, we'll accept any token that starts with 'Bearer'
+    In production, validate against Salesforce or your auth system
+    """
+    if not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No access token provided"
+        )
+    return credentials.credentials
+
+# Utility functions
+def generate_processing_id() -> str:
+    """Generate a unique processing ID"""
+    return str(uuid.uuid4())
+
+def get_file_path(filename: str, folder: str = "input") -> Path:
+    """Get the full path for a file in the data directory"""
+    data_dir = project_root / "data" / folder
+    data_dir.mkdir(parents=True, exist_ok=True)
+    return data_dir / filename
+
+def get_output_path(processing_id: str, original_filename: str) -> Path:
+    """Get the output path for processed files"""
+    output_dir = project_root / "data" / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base_name = Path(original_filename).stem
+    return output_dir / f"{base_name}_processed_{processing_id}.csv"
+
+# OAuth utility functions
+def get_salesforce_oauth_config():
+    """Get Salesforce OAuth configuration from environment variables"""
+    return {
+        "client_id": os.getenv("SALESFORCE_CLIENT_ID"),
+        "client_secret": os.getenv("SALESFORCE_CLIENT_SECRET"),
+        "login_url": os.getenv("SALESFORCE_LOGIN_URL", "https://login.salesforce.com"),
+        "token_url": f"{os.getenv('SALESFORCE_LOGIN_URL', 'https://login.salesforce.com')}/services/oauth2/token",
+        "userinfo_url": "/services/oauth2/userinfo"
+    }
+
+def generate_code_verifier() -> str:
+    """Generate a code verifier for PKCE"""
+    return base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8').rstrip('=')
+
+def generate_code_challenge(code_verifier: str) -> str:
+    """Generate a code challenge from code verifier for PKCE"""
+    digest = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    return base64.urlsafe_b64encode(digest).decode('utf-8').rstrip('=')
+
+async def exchange_oauth_code(code: str, code_verifier: str, redirect_uri: str) -> Dict[str, Any]:
+    """Exchange OAuth authorization code for access token"""
+    config = get_salesforce_oauth_config()
+
+    if not config["client_id"] or not config["client_secret"]:
+        raise HTTPException(
+            status_code=500,
+            detail="Salesforce OAuth configuration not found. Please check environment variables."
+        )
+
+    token_data = {
+        "grant_type": "authorization_code",
+        "client_id": config["client_id"],
+        "client_secret": config["client_secret"],
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "code_verifier": code_verifier
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                config["token_url"],
+                data=token_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"[ERROR] Salesforce token exchange failed: {error_detail}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"OAuth token exchange failed: {error_detail}"
+                )
+
+            token_response = response.json()
+            return {
+                "success": True,
+                "data": {
+                    "access_token": token_response["access_token"],
+                    "refresh_token": token_response.get("refresh_token"),
+                    "instance_url": token_response["instance_url"],
+                    "token_type": token_response.get("token_type", "Bearer"),
+                    "expires_in": token_response.get("expires_in"),
+                    "scope": token_response.get("scope")
+                }
+            }
+
+        except httpx.RequestError as e:
+            print(f"[ERROR] HTTP request failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to connect to Salesforce: {str(e)}"
+            )
+
+async def refresh_oauth_token(refresh_token: str) -> Dict[str, Any]:
+    """Refresh OAuth access token"""
+    config = get_salesforce_oauth_config()
+
+    if not config["client_id"] or not config["client_secret"]:
+        raise HTTPException(
+            status_code=500,
+            detail="Salesforce OAuth configuration not found"
+        )
+
+    token_data = {
+        "grant_type": "refresh_token",
+        "client_id": config["client_id"],
+        "client_secret": config["client_secret"],
+        "refresh_token": refresh_token
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                config["token_url"],
+                data=token_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"[ERROR] Salesforce token refresh failed: {error_detail}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"OAuth token refresh failed: {error_detail}"
+                )
+
+            token_response = response.json()
+            return {
+                "success": True,
+                "data": {
+                    "access_token": token_response["access_token"],
+                    "refresh_token": token_response.get("refresh_token"),
+                    "instance_url": token_response["instance_url"],
+                    "token_type": token_response.get("token_type", "Bearer"),
+                    "expires_in": token_response.get("expires_in"),
+                    "scope": token_response.get("scope")
+                }
+            }
+
+        except httpx.RequestError as e:
+            print(f"[ERROR] HTTP request failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to connect to Salesforce: {str(e)}"
+            )
+
+async def get_salesforce_user_profile(access_token: str, instance_url: str) -> Dict[str, Any]:
+    """Get Salesforce user profile information"""
+    config = get_salesforce_oauth_config()
+    userinfo_url = f"{instance_url}{config['userinfo_url']}"
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                userinfo_url,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+
+            if response.status_code != 200:
+                error_detail = response.text
+                print(f"[ERROR] Salesforce user profile fetch failed: {error_detail}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to fetch user profile: {error_detail}"
+                )
+
+            profile_data = response.json()
+            print(f"[DEBUG] Raw Salesforce userinfo response: {profile_data}")
+            print(f"[DEBUG] Available fields: {list(profile_data.keys())}")
+
+            # Enhanced name field mapping with multiple fallbacks
+            display_name = (
+                profile_data.get("display_name") or
+                profile_data.get("name") or
+                f"{profile_data.get('first_name', '')} {profile_data.get('last_name', '')}".strip() or
+                profile_data.get("username") or
+                profile_data.get("preferred_username") or
+                "Unknown User"
+            )
+
+            # Enhanced picture URL extraction
+            picture_url = None
+            if profile_data.get("photos"):
+                if isinstance(profile_data["photos"], dict):
+                    picture_url = profile_data["photos"].get("picture")
+                elif isinstance(profile_data["photos"], str):
+                    picture_url = profile_data["photos"]
+
+            # Map Salesforce userinfo response to expected format with comprehensive field mapping
+            mapped_data = {
+                "user_id": profile_data.get("user_id"),
+                "id": profile_data.get("user_id"),  # Alias for frontend compatibility
+                "organization_id": profile_data.get("organization_id"),
+                "username": profile_data.get("username"),
+                "preferred_username": profile_data.get("preferred_username"),
+                "display_name": display_name,
+                "name": display_name,  # Ensure name field is always populated
+                "email": profile_data.get("email"),
+                "first_name": profile_data.get("first_name"),
+                "last_name": profile_data.get("last_name"),
+                "photos": profile_data.get("photos"),
+                "picture": picture_url,
+                "profile": profile_data.get("profile"),
+                "zoneinfo": profile_data.get("zoneinfo"),
+                "locale": profile_data.get("locale")
+            }
+
+            print(f"[DEBUG] Mapped user profile data: {mapped_data}")
+            print(f"[DEBUG] Final display name: '{display_name}'")
+
+            return {
+                "success": True,
+                "data": mapped_data
+            }
+
+        except httpx.RequestError as e:
+            print(f"[ERROR] HTTP request failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to connect to Salesforce: {str(e)}"
+            )
+
+# Salesforce utility functions
+async def call_salesforce_integration(action: str, **kwargs) -> Dict[str, Any]:
+    """Call the Python Salesforce integration script"""
+    import subprocess
+    import json
+
+    try:
+        # Prepare the Python script call
+        script_path = project_root / "core" / "salesforce_integration.py"
+
+        # Build command arguments
+        args = ["python", str(script_path), "--action", action]
+
+        # Add specific arguments based on action
+        if action == "upload":
+            args.extend([
+                "--file-path", kwargs["file_path"],
+                "--object-type", kwargs.get("object_type", "Lead"),
+                "--access-token", kwargs["access_token"],
+                "--instance-url", kwargs["instance_url"]
+            ])
+        elif action in ["validate", "objects", "fields"]:
+            args.extend([
+                "--access-token", kwargs["access_token"],
+                "--instance-url", kwargs["instance_url"]
+            ])
+            if action == "fields":
+                args.extend(["--object-type", kwargs.get("object_type", "Lead")])
+
+        print(f"[INFO] Executing Salesforce integration: {' '.join(args[2:])}")  # Don't log sensitive tokens
+
+        # Execute the script
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minute timeout
+        )
+
+        if result.returncode != 0:
+            error_msg = f"Salesforce integration failed: {result.stderr}"
+            print(f"[ERROR] {error_msg}")
+            return {
+                "success": False,
+                "error": error_msg,
+                "errorType": "SCRIPT_ERROR"
+            }
+
+        # Parse JSON output
+        try:
+            output = json.loads(result.stdout)
+            print(f"[INFO] Salesforce integration completed successfully")
+            return output
+        except json.JSONDecodeError as e:
+            error_msg = f"Failed to parse Salesforce integration output: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            print(f"[DEBUG] Raw output: {result.stdout}")
+            return {
+                "success": False,
+                "error": error_msg,
+                "errorType": "PARSE_ERROR"
+            }
+
+    except subprocess.TimeoutExpired:
+        error_msg = "Salesforce integration timed out"
+        print(f"[ERROR] {error_msg}")
+        return {
+            "success": False,
+            "error": error_msg,
+            "errorType": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
+        error_msg = f"Unexpected error in Salesforce integration: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return {
+            "success": False,
+            "error": error_msg,
+            "errorType": "UNEXPECTED_ERROR"
+        }
+
+# API Endpoints
+
+# OAuth Endpoints
+@app.post("/api/v1/oauth/token")
+async def exchange_token(request: OAuthTokenRequest):
+    """Exchange OAuth authorization code for access token"""
+    start_time = time.time()
+    try:
+        print(f"[INFO] URGENT - Starting OAuth token exchange for code: {request.code[:10]}...")
+
+        result = await exchange_oauth_code(
+            request.code,
+            request.code_verifier,
+            request.redirect_uri
+        )
+
+        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        print(f"[INFO] OAuth token exchange completed in {processing_time:.2f}ms")
+
+        if result["success"]:
+            return OAuthTokenResponse(**result["data"])
+        else:
+            print(f"[ERROR] Token exchange failed after {processing_time:.2f}ms: {result}")
+            raise HTTPException(status_code=400, detail="Token exchange failed")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        processing_time = (time.time() - start_time) * 1000
+        print(f"[ERROR] Unexpected error in token exchange after {processing_time:.2f}ms: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/api/v1/oauth/refresh")
+async def refresh_token(request: OAuthRefreshRequest):
+    """Refresh OAuth access token"""
+    try:
+        result = await refresh_oauth_token(request.refresh_token)
+
+        if result["success"]:
+            return OAuthTokenResponse(**result["data"])
+        else:
+            raise HTTPException(status_code=400, detail="Token refresh failed")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in token refresh: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+class SalesforceUserProfileRequest(BaseModel):
+    access_token: str
+    instance_url: str
+
+@app.get("/api/v1/oauth/userinfo")
+async def get_user_info_get(
+    instance_url: str,
+    token: str = Depends(verify_token)
+):
+    """Get Salesforce user profile information (GET method for Electron)"""
+    try:
+        result = await get_salesforce_user_profile(token, instance_url)
+
+        if result["success"]:
+            return OAuthUserProfile(**result["data"])
+        else:
+            raise HTTPException(status_code=400, detail="Failed to fetch user profile")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in user profile fetch: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/api/v1/oauth/userinfo")
+async def get_user_info_post(
+    request: SalesforceUserProfileRequest,
+    token: str = Depends(verify_token)
+):
+    """Get Salesforce user profile information (POST method for browser)"""
+    try:
+        print(f"[INFO] Browser user profile request for instance: {request.instance_url}")
+
+        result = await get_salesforce_user_profile(request.access_token, request.instance_url)
+
+        if result["success"]:
+            return result["data"]  # Return raw data for browser compatibility
+        else:
+            raise HTTPException(status_code=400, detail="Failed to fetch user profile")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in user profile fetch: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/api/v1/oauth/config")
+async def get_oauth_config():
+    """Get OAuth configuration for frontend"""
+    config = get_salesforce_oauth_config()
+
+    # Only return public configuration (no secrets)
+    return {
+        "client_id": config["client_id"],
+        "login_url": config["login_url"],
+        "authorize_url": f"{config['login_url']}/services/oauth2/authorize",
+        "scope": "api id web refresh_token"
+    }
+
+# Salesforce API Endpoints
+@app.post("/api/v1/salesforce/upload")
+async def salesforce_upload(
+    request: SalesforceUploadRequest,
+    token: str = Depends(verify_token)
+):
+    """Upload processed file to Salesforce"""
+    try:
+        print(f"[INFO] Salesforce upload request for processing ID: {request.processing_id}")
+
+        # Get the processed file path
+        job = processing_jobs.get(request.processing_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Processing job not found")
+
+        if job["status"] != "completed":
+            raise HTTPException(status_code=400, detail="File processing not completed")
+
+        output_path = Path(job["outputPath"])
+        if not output_path.exists():
+            raise HTTPException(status_code=404, detail="Processed file not found")
+
+        # Call Salesforce integration
+        result = await call_salesforce_integration(
+            action="upload",
+            file_path=str(output_path),
+            object_type=request.salesforce_object,
+            access_token=request.access_token,
+            instance_url=request.instance_url
+        )
+
+        print(f"[INFO] Salesforce upload result: {result.get('success', False)}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in Salesforce upload: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/api/v1/salesforce/validate")
+async def salesforce_validate(
+    request: SalesforceValidationRequest,
+    token: str = Depends(verify_token)
+):
+    """Validate Salesforce connection"""
+    try:
+        print(f"[INFO] Salesforce validation request")
+
+        result = await call_salesforce_integration(
+            action="validate",
+            access_token=request.access_token,
+            instance_url=request.instance_url
+        )
+
+        print(f"[INFO] Salesforce validation result: {result.get('success', False)}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in Salesforce validation: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/api/v1/salesforce/objects")
+async def salesforce_objects(
+    request: SalesforceObjectsRequest,
+    token: str = Depends(verify_token)
+):
+    """Get Salesforce objects"""
+    try:
+        print(f"[INFO] Salesforce objects request")
+
+        result = await call_salesforce_integration(
+            action="objects",
+            access_token=request.access_token,
+            instance_url=request.instance_url
+        )
+
+        print(f"[INFO] Salesforce objects result: {result.get('success', False)}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in Salesforce objects: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.post("/api/v1/salesforce/field-mapping")
+async def salesforce_field_mapping(
+    request: SalesforceFieldMappingRequest,
+    token: str = Depends(verify_token)
+):
+    """Get Salesforce field mapping"""
+    try:
+        print(f"[INFO] Salesforce field mapping request for object: {request.object_type}")
+
+        result = await call_salesforce_integration(
+            action="fields",
+            object_type=request.object_type,
+            access_token=request.access_token,
+            instance_url=request.instance_url
+        )
+
+        print(f"[INFO] Salesforce field mapping result: {result.get('success', False)}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in Salesforce field mapping: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {"message": "Leads Processing API is running", "version": "1.0.0"}
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    """Handle CORS preflight requests"""
+    return {"message": "CORS preflight handled"}
+
+@app.get("/api/v1/health")
+async def health_check():
+    """Detailed health check"""
+    print("[INFO] Health check requested")
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0",
+        "processing_modules": PROCESSING_MODULES_AVAILABLE,
+        "cors_enabled": True
+    }
+
+@app.post("/api/v1/leads/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    useAiEnhancement: bool = Form(True),
+    aiModelPreference: Optional[str] = Form(None),
+    token: str = Depends(verify_token)
+):
+    """Upload and process a leads file"""
+
+    # Validate file type
+    if not file.filename.endswith(('.xlsx', '.xls', '.csv')):
+        raise HTTPException(
+            status_code=400,
+            detail="Only Excel (.xlsx, .xls) and CSV files are supported"
+        )
+
+    # Generate processing ID
+    processing_id = generate_processing_id()
+
+    # Save uploaded file
+    input_path = get_file_path(file.filename)
+    try:
+        with open(input_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save uploaded file: {str(e)}"
+        )
+
+    # Initialize processing job
+    job_data = {
+        "processingId": processing_id,
+        "fileName": file.filename,
+        "status": "queued",
+        "progress": 0,
+        "currentStage": "file_uploaded",
+        "message": "File uploaded successfully, processing queued",
+        "uploadedAt": datetime.now().isoformat(),
+        "useAiEnhancement": useAiEnhancement,
+        "aiModelPreference": aiModelPreference,
+        "inputPath": str(input_path),
+        "outputPath": str(get_output_path(processing_id, file.filename))
+    }
+
+    processing_jobs[processing_id] = job_data
+
+    # Start background processing
+    asyncio.create_task(process_file_background(processing_id))
+
+    return {
+        "processingId": processing_id,
+        "fileName": file.filename,
+        "message": "File uploaded successfully, processing started",
+        "statusUrl": f"/api/v1/leads/status/{processing_id}"
+    }
+
+async def process_file_background(processing_id: str):
+    """Background task to process the uploaded file"""
+    job = processing_jobs.get(processing_id)
+    if not job:
+        return
+
+    try:
+        # Update status to processing
+        job["status"] = "processing"
+        job["progress"] = 10
+        job["currentStage"] = "preprocessing"
+        job["message"] = "Starting file processing..."
+
+        input_path = job["inputPath"]
+        output_path = job["outputPath"]
+
+        # Check if processing modules are available
+        if not PROCESSING_MODULES_AVAILABLE:
+            job["status"] = "failed"
+            job["message"] = "Processing modules not available. Please check server configuration."
+            return
+
+        # Simulate preprocessing delay
+        await asyncio.sleep(0.5)
+
+        job["progress"] = 30
+        job["currentStage"] = "data_validation"
+        job["message"] = "Validating data format..."
+
+        # Simulate validation delay
+        await asyncio.sleep(0.5)
+
+        job["progress"] = 50
+        if job["useAiEnhancement"]:
+            job["currentStage"] = "ai_processing"
+            job["message"] = "Processing with AI enhancement..."
+        else:
+            job["currentStage"] = "traditional_processing"
+            job["message"] = "Processing with traditional rules..."
+
+        # Actual file processing
+        try:
+            # Use the appropriate processing function based on AI enhancement setting
+            if job["useAiEnhancement"]:
+                # Import the processor to get AI statistics
+                from core.master_leads_processor_ai import AIEnhancedLeadsProcessor
+                processor = AIEnhancedLeadsProcessor()
+                processed_file_path = processor.process_file_ai(input_path, output_path)
+
+                # Get AI statistics for real-time tracking
+                if hasattr(processor.ai_mapper, 'get_api_usage_stats'):
+                    job["aiStats"] = processor.ai_stats
+                    job["apiUsage"] = processor.ai_mapper.get_api_usage_stats()
+            else:
+                processed_file_path = process_leads_traditional(input_path, output_path)
+
+            # Count records in processed file
+            import pandas as pd
+            try:
+                df_result = pd.read_csv(processed_file_path)
+                record_count = len(df_result)
+                print(f"[INFO] Successfully counted {record_count} records in processed file")
+            except Exception as count_error:
+                print(f"[WARNING] Could not count records: {count_error}")
+                record_count = 0
+
+            job["progress"] = 100
+            job["status"] = "completed"
+            job["currentStage"] = "completed"
+            job["message"] = "Processing completed successfully"
+            job["resultUrl"] = f"/leads/download/{processing_id}"
+            job["recordCount"] = record_count
+
+            # Add to history
+            history_item = {
+                "processingId": processing_id,
+                "fileName": job["fileName"],
+                "uploadedAt": job["uploadedAt"],
+                "status": "completed",
+                "recordCount": job["recordCount"],
+                "resultUrl": job["resultUrl"],
+                "outputPath": job["outputPath"],
+                "completedAt": datetime.now().isoformat(),
+                "processingMode": "AI-Enhanced" if job["useAiEnhancement"] else "Traditional",
+                "validationIssues": []  # Add validation issues if any
+            }
+            processing_history.append(history_item)
+
+            print(f"[SUCCESS] File processing completed: {processed_file_path}")
+            print(f"[INFO] Processed {record_count} records")
+
+        except Exception as processing_error:
+            job["status"] = "failed"
+            job["message"] = f"Processing failed: {str(processing_error)}"
+            print(f"[ERROR] Processing failed: {processing_error}")
+
+    except Exception as e:
+        job["status"] = "failed"
+        job["message"] = f"Unexpected error: {str(e)}"
+        print(f"[ERROR] Unexpected error in background processing: {e}")
+
+@app.get("/api/v1/leads/status/{processing_id}")
+async def get_processing_status(
+    processing_id: str,
+    token: str = Depends(verify_token)
+):
+    """Get the status of a processing job"""
+    job = processing_jobs.get(processing_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Processing job not found")
+
+    return ProcessingStatus(
+        processingId=job["processingId"],
+        fileName=job["fileName"],
+        status=job["status"],
+        progress=job["progress"],
+        currentStage=job["currentStage"],
+        message=job["message"],
+        resultUrl=job.get("resultUrl"),
+        previewUrl=job.get("previewUrl"),
+        aiStats=job.get("aiStats"),
+        apiUsage=job.get("apiUsage")
+    )
+
+@app.get("/api/v1/leads/history")
+async def get_processing_history(
+    page: int = 1,
+    limit: int = 10,
+    token: str = Depends(verify_token)
+):
+    """Get paginated processing history"""
+    print(f"[INFO] Processing history request - Page: {page}, Limit: {limit}")
+    print(f"[INFO] Token received: {token[:20]}..." if token else "[INFO] No token")
+
+    try:
+        # Calculate pagination
+        total_items = len(processing_history)
+        total_pages = (total_items + limit - 1) // limit if total_items > 0 else 0
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+
+        # Get page items
+        page_items = processing_history[start_idx:end_idx]
+
+        print(f"[INFO] Returning {len(page_items)} items out of {total_items} total")
+
+        result = PaginatedHistory(
+            history=[HistoryItem(**item) for item in page_items],
+            pagination={
+                "page": page,
+                "limit": limit,
+                "totalItems": total_items,
+                "totalPages": total_pages
+            }
+        )
+
+        return result
+
+    except Exception as e:
+        print(f"[ERROR] Error in get_processing_history: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/api/v1/leads/download/{processing_id}")
+async def download_processed_file(
+    processing_id: str,
+    token: str = Depends(verify_token)
+):
+    """Download a processed file"""
+    job = processing_jobs.get(processing_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Processing job not found")
+
+    if job["status"] != "completed":
+        raise HTTPException(status_code=400, detail="File processing not completed")
+
+    output_path = Path(job["outputPath"])
+    if not output_path.exists():
+        raise HTTPException(status_code=404, detail="Processed file not found")
+
+    # Generate CSV filename regardless of original file extension
+    original_name = Path(job['fileName']).stem  # Get filename without extension
+    csv_filename = f"processed_{original_name}.csv"
+
+    return FileResponse(
+        path=output_path,
+        filename=csv_filename,
+        media_type="text/csv; charset=utf-8"
+    )
+
+@app.get("/api/v1/leads/history/{processing_id}/logs")
+async def get_job_logs(
+    processing_id: str,
+    token: str = Depends(verify_token)
+):
+    """Get processing logs for a specific job"""
+    job = processing_jobs.get(processing_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Processing job not found")
+
+    # Return mock logs for demo
+    logs = [
+        {
+            "timestamp": job["uploadedAt"],
+            "level": "INFO",
+            "stage": "upload",
+            "message": f"File {job['fileName']} uploaded successfully"
+        },
+        {
+            "timestamp": datetime.now().isoformat(),
+            "level": "INFO",
+            "stage": job["currentStage"],
+            "message": job["message"]
+        }
+    ]
+
+    return {"logs": logs}
+
+@app.delete("/api/v1/leads/history/clear")
+async def clear_processing_history(
+    token: str = Depends(verify_token)
+):
+    """Clear all processing history"""
+    global processing_history
+    try:
+        cleared_count = len(processing_history)
+        processing_history.clear()
+        print(f"[INFO] Cleared {cleared_count} history items")
+        return {
+            "success": True,
+            "message": f"Successfully cleared {cleared_count} history items",
+            "clearedCount": cleared_count
+        }
+    except Exception as e:
+        print(f"[ERROR] Error clearing history: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear history: {str(e)}")
+
+@app.delete("/api/v1/leads/files/clear")
+async def clear_ready_files(
+    token: str = Depends(verify_token)
+):
+    """Clear all ready files (completed processing jobs)"""
+    global processing_jobs, processing_history
+    try:
+        # Count completed jobs
+        completed_jobs = [job_id for job_id, job in processing_jobs.items() if job["status"] == "completed"]
+        cleared_count = len(completed_jobs)
+
+        # Remove completed jobs from processing_jobs
+        for job_id in completed_jobs:
+            # Optionally delete the actual files from disk
+            job = processing_jobs[job_id]
+            if "outputPath" in job:
+                output_path = Path(job["outputPath"])
+                if output_path.exists():
+                    try:
+                        output_path.unlink()
+                        print(f"[INFO] Deleted file: {output_path}")
+                    except Exception as file_error:
+                        print(f"[WARNING] Could not delete file {output_path}: {file_error}")
+
+            # Remove from processing_jobs
+            del processing_jobs[job_id]
+
+        # Also remove corresponding entries from processing_history
+        # This ensures the UI reflects the cleared state immediately
+        initial_history_count = len(processing_history)
+        processing_history = [
+            item for item in processing_history
+            if item["processingId"] not in completed_jobs
+        ]
+        history_removed_count = initial_history_count - len(processing_history)
+
+        print(f"[INFO] Cleared {cleared_count} ready files from processing_jobs")
+        print(f"[INFO] Removed {history_removed_count} corresponding entries from processing_history")
+
+        return {
+            "success": True,
+            "message": f"Successfully cleared {cleared_count} ready files",
+            "clearedCount": cleared_count,
+            "historyItemsRemoved": history_removed_count
+        }
+    except Exception as e:
+        print(f"[ERROR] Error clearing ready files: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear ready files: {str(e)}")
+
+if __name__ == "__main__":
+    print("Starting Leads Processing API Server...")
+    print("Server will be available at: http://localhost:8000")
+    print("API documentation at: http://localhost:8000/docs")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_level="info"
+    )

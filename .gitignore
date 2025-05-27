@@ -1,4 +1,148 @@
-# Python
+# ========================================
+# LEADS PROCESSING SYSTEM - SECURITY GITIGNORE
+# ========================================
+# This .gitignore is designed to prevent any confidential lead data,
+# API keys, credentials, or sensitive business information from being
+# committed to the repository.
+
+# ========================================
+# CRITICAL SECURITY - API KEYS & CREDENTIALS
+# ========================================
+# Environment files with API keys and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+config/.env
+config/.env.*
+backend/.env
+backend/.env.*
+
+# API key files and credential storage
+**/api_keys.json
+**/credentials.json
+**/secrets.json
+**/*secret*
+**/*credential*
+**/*password*
+**/oauth_tokens.json
+**/auth_tokens.json
+
+# Salesforce OAuth tokens and session data
+**/salesforce_tokens.json
+**/sf_session.json
+**/oauth_cache/
+**/token_cache/
+
+# OpenAI API configuration files
+**/openai_config.json
+**/ai_keys.json
+
+# ========================================
+# CONFIDENTIAL LEAD DATA - HIGHEST PRIORITY
+# ========================================
+# All Excel and CSV files (lead data)
+*.xlsx
+*.xls
+*.csv
+*.xlsm
+*.xlsb
+
+# Data directories with lead information
+data/
+data/input/
+data/output/
+data/backup/
+data/processed/
+data/raw/
+backup/
+input/
+output/
+processed/
+raw/
+
+# Processing results and summaries
+**/processed_*.csv
+**/processed_*.xlsx
+**/*_processed_*.csv
+**/*_processed_*.xlsx
+**/*_summary.json
+**/*_ai_summary.json
+**/*_results.json
+
+# Lead distribution and assignment files
+**/lead_assignments.csv
+**/lead_distribution.csv
+**/user_assignments.json
+
+# EXCEPTIONS: Allow sample and test files
+!examples/*.csv
+!examples/*.xlsx
+!templates/*.csv
+!templates/*.xlsx
+!**/example*.csv
+!**/example*.xlsx
+!**/template*.csv
+!**/template*.xlsx
+!**/sample*.csv
+!**/sample*.xlsx
+!test_data/test_*.csv
+!test_data/test_*.xlsx
+
+# ========================================
+# LOGS WITH SENSITIVE INFORMATION
+# ========================================
+# All log files (may contain lead data, API responses, errors with sensitive info)
+logs/
+backend/logs/
+*.log
+*.log.*
+**/*.log
+**/*.log.*
+
+# Processing logs with lead information
+**/leads_processing_*.log
+**/ai_leads_processing_*.log
+**/salesforce_integration.log
+**/processing_*.log
+
+# Debug and error logs
+**/debug.log
+**/error.log
+**/api_errors.log
+**/oauth_debug.log
+
+# ========================================
+# CACHE AND TEMPORARY FILES
+# ========================================
+# AI processing cache (may contain lead mappings)
+cache/
+backend/cache/
+**/ai_mappings/
+**/ai_cache/
+**/mapping_cache/
+
+# Temporary processing files
+temp/
+tmp/
+**/temp/
+**/tmp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+
+# File processing temporary files
+**/processing_temp/
+**/upload_temp/
+**/conversion_temp/
+
+# ========================================
+# PYTHON ENVIRONMENT & DEPENDENCIES
+# ========================================
+# Python cache and compiled files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -27,93 +171,211 @@ env/
 ENV/
 .venv/
 .env/
+virtualenv/
 
-# Environment variables and API keys
-.env
-config/.env
-*.env
+# ========================================
+# NODE.JS & FRONTEND
+# ========================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
 
-# Data files (sensitive)
-*.csv
-*.xlsx
-*.xls
-data/input/*
-data/output/*
-data/backup/*
-!data/input/.gitkeep
-!data/output/.gitkeep
-!data/backup/.gitkeep
+# Build outputs
+dist/
+dist-renderer/
+build/
+.next/
+out/
 
-# Logs
-logs/
-*.log
-*.log.*
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Temporary files
-temp/
-tmp/
-*.tmp
-*.bak
-*.swp
-*.swo
-
-# IDE and editors
+# ========================================
+# DEVELOPMENT TOOLS & IDE
+# ========================================
+# IDE and editor files
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 .spyderproject
 .spyproject
+*.code-workspace
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ========================================
+# TESTING & COVERAGE
+# ========================================
+# Test results and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.nyc_output
+coverage/
+*.cover
+.hypothesis/
 
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pytest
-.pytest_cache/
-.coverage
-htmlcov/
-
+# ========================================
+# LINTING & TYPE CHECKING
+# ========================================
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
 
-# Development artifacts
+# ESLint
+.eslintcache
+
+# ========================================
+# OPERATING SYSTEM FILES
+# ========================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ========================================
+# ELECTRON & DESKTOP APP
+# ========================================
+# Electron build outputs
+dist-electron/
+release/
+app/dist/
+app/build/
+
+# Electron store and user data
+**/electron-store/
+**/user-data/
+**/app-data/
+
+# ========================================
+# SECURITY AUDIT & CLEANUP
+# ========================================
+# Security audit results
+**/security_audit_*.json
+**/security_report_*.txt
+**/cleanup_report_*.txt
+
+# Files marked for cleanup
+**/to_delete.txt
+**/sensitive_files.txt
+
+# ========================================
+# DEVELOPMENT ARTIFACTS
+# ========================================
+# Development scripts that might contain sensitive paths
 organize_for_github.py
+cleanup_sensitive_data.py
+**/dev_setup_*.py
 
+# Debug and test files
+debug*.html
+test-oauth*.js
+test-api*.js
+**/debug_*.html
+**/test_*.html
 
-# Data files - prevent confidential data from being committed
-*.xlsx
-*.xls
-*.csv
+# ========================================
+# DOCUMENTATION WITH SENSITIVE INFO
+# ========================================
+# Documentation that might contain real credentials or user info
+**/PRIVATE_*.md
+**/INTERNAL_*.md
+**/CONFIDENTIAL_*.md
 
-# Data directories
-data/input/
-data/output/
-data/backup/
-backup/
+# Setup guides with real credentials
+**/REAL_SETUP.md
+**/PRODUCTION_SETUP.md
 
-# But allow example and template files
-!examples/*.csv
-!templates/*.csv
-!**/example*.csv
-!**/template*.csv
-!**/sample*.csv
-!test_data/test_*.csv
+# ========================================
+# BACKUP AND ARCHIVE FILES
+# ========================================
+# Compressed archives that might contain sensitive data
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
 
-# Logs with potentially sensitive data
-logs/*.log
+# Database backups
+*.sql
+*.db
+*.sqlite
+*.sqlite3
 
-# Temporary files
-temp/
-tmp/
-*.tmp
+# ========================================
+# CUSTOM PROJECT EXCLUSIONS
+# ========================================
+# Project-specific files that should never be committed
+final_verification_result.csv
+**/real_leads_*.csv
+**/production_*.csv
+**/client_*.csv
+**/customer_*.csv
+
+# Configuration files with real user data
+config/config.json
+!config/config_sample.json
+!config/config_template.json
+
+# ========================================
+# KEEP FILES (EXCEPTIONS)
+# ========================================
+# Ensure these directories exist but are empty
+!data/.gitkeep
+!data/input/.gitkeep
+!data/output/.gitkeep
+!data/backup/.gitkeep
+!logs/.gitkeep
+!temp/.gitkeep
+!cache/.gitkeep

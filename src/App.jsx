@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter, BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ptBR, enUS } from '@mui/material/locale';
 import CssBaseline from '@mui/material/CssBaseline';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -14,49 +13,79 @@ import Alert from '@mui/material/Alert'; // For Snackbar content
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
+// Import i18n configuration
+import './i18n/config';
+import { useTranslation } from 'react-i18next';
+
 // Page Imports
 import LoginPage from './pages/LoginPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import { useAuthStore } from './store/authStore';
+import UserProfileHeader from './components/UserProfileHeader';
+import NavigationDropdown from './components/NavigationDropdown';
+import SalesforceStatusBar from './components/SalesforceStatusBar';
+import { useAuthStore, setupOAuthListeners } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore'; // Import the new settings store
+import { useLanguageStore } from './store/languageStore'; // Import the language store
+import { isElectron, isBrowser, logEnvironmentInfo } from './utils/environment';
 
 // Page Imports
 import HomePage from './pages/HomePage';
 import MappingPreviewPage from './pages/MappingPreviewPage';
-import ProcessingHistoryPage from './pages/ProcessingHistoryPage'; // Import the new History page
+
+import SettingsPage from './pages/SettingsPage'; // Import the real SettingsPage component
+import SalesforcePage from './pages/SalesforcePage'; // Import the Salesforce integration page
+
 // ... other page imports remain the same
 
-// Placeholder Pages (can be moved to their own files in src/pages)
-// const HomePage definition is in src/pages/HomePage.jsx
-const SettingsPage = () => <h2>Settings Page (Public)</h2>; // Example: public page
-const SalesforcePage = () => <h2>Salesforce Integration Page (Protected)</h2>;
 
-
-// Basic theme, can be expanded
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+// Create theme with locale support
+const createAppTheme = (language) => {
+  const locale = language === 'pt' ? ptBR : enUS;
+  return createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  }, locale);
+};
 
 function App() {
+  // Translation hook
+  const { t } = useTranslation();
+
+  // Navigation dropdown will handle its own state internally
+
   // Auth store
-  const { isAuthenticated, isLoading: isAuthLoading, error: authError, initializeAuth, logout } = useAuthStore(state => ({
+  const { isAuthenticated, isLoading: isAuthLoading, error: authError, initializeAuth } = useAuthStore(state => ({
     isAuthenticated: state.isAuthenticated,
     isLoading: state.isLoading,
     error: state.error,
     initializeAuth: state.initializeAuth,
-    logout: state.logout,
   }));
 
+  // Choose router based on environment
+  // Electron uses HashRouter for file:// protocol compatibility
+  // Browser uses BrowserRouter for proper OAuth callback handling
+  const Router = isElectron() ? HashRouter : BrowserRouter;
+
+  // Debug authentication state changes
+  useEffect(() => {
+    console.log("App.jsx: Authentication state changed:", {
+      isAuthenticated,
+      isAuthLoading,
+      hasError: !!authError
+    });
+  }, [isAuthenticated, isAuthLoading, authError]);
+
   // Settings store
-  const { 
-    openAIApiKeyIsSet, 
-    isLoadingApiKeyStatus, 
+  const {
+    openAIApiKeyIsSet,
+    isLoadingApiKeyStatus,
     checkOpenAIApiKeyPresence,
     showApiKeyMissingPrompt,
     closeApiKeyMissingPrompt,
-    openApiKeyMissingPrompt
+    openApiKeyMissingPrompt,
+    loadDeveloperMode
   } = useSettingsStore(state => ({
     openAIApiKeyIsSet: state.openAIApiKeyIsSet,
     isLoadingApiKeyStatus: state.isLoadingApiKeyStatus,
@@ -64,15 +93,42 @@ function App() {
     showApiKeyMissingPrompt: state.showApiKeyMissingPrompt,
     closeApiKeyMissingPrompt: state.closeApiKeyMissingPrompt,
     openApiKeyMissingPrompt: state.openApiKeyMissingPrompt,
+    loadDeveloperMode: state.loadDeveloperMode,
   }));
 
+  // Language store
+  const { currentLanguage, initializeLanguage } = useLanguageStore(state => ({
+    currentLanguage: state.currentLanguage,
+    initializeLanguage: state.initializeLanguage,
+  }));
+
+  // Create theme based on current language
+  const theme = createAppTheme(currentLanguage);
+
   useEffect(() => {
+    // Log environment information for debugging
+    logEnvironmentInfo();
+
+    // Initialize language first
+    console.log('App.jsx: Initializing language...');
+    initializeLanguage();
+
     // Initialize authentication state and API key presence when the app loads
     console.log('App.jsx: Initializing auth store...');
     initializeAuth();
+
+    // Load developer mode setting
+    console.log('App.jsx: Loading developer mode setting...');
+    loadDeveloperMode();
+
+    // Check API key in all environments, but handle browser mode gracefully
     console.log('App.jsx: Checking for OpenAI API Key presence...');
     checkOpenAIApiKeyPresence();
-  }, [initializeAuth, checkOpenAIApiKeyPresence]);
+
+    // Ensure OAuth listeners are set up (retry in case electronAPI wasn't available during module load)
+    console.log('App.jsx: Setting up OAuth listeners...');
+    setupOAuthListeners();
+  }, [initializeAuth, checkOpenAIApiKeyPresence, initializeLanguage, loadDeveloperMode]);
 
   // Setup global listeners for OAuth events from main process
   // This is an alternative to putting them in the store, or can complement it.
@@ -92,58 +148,68 @@ function App() {
 
   if (isAuthLoading || isLoadingApiKeyStatus) { // Show loading if either auth or settings are loading
     return (
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
           <CircularProgress />
-          <Typography sx={{ ml: 2 }}>Initializing Application...</Typography>
+          <Typography sx={{ ml: 2 }}>{t('app.loading')}</Typography>
         </Box>
       </ThemeProvider>
     );
   }
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <AppBar position="static">
-          <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Electron Salesforce App
-            </Typography>
-            {isAuthenticated ? (
-              <>
-                <Button color="inherit" component={Link} to="/">Home</Button>
-                <Button color="inherit" component={Link} to="/salesforce">Salesforce</Button>
-                <Button color="inherit" component={Link} to="/history">History</Button> 
-                <Button color="inherit" component={Link} to="/settings">Settings</Button>
-                <Button color="inherit" onClick={logout}>Logout</Button>
-              </>
-            ) : (
-              <>
-                <Button color="inherit" component={Link} to="/login">Login</Button>
-                {/* Show settings link even if not logged in, as some settings might be general */}
-                <Button color="inherit" component={Link} to="/settings">Settings</Button> 
-              </>
-            )}
-          </Toolbar>
-        </AppBar>
-        <Container sx={{ mt: 4 }}>
-          {authError && <Alert severity="error" sx={{ mb: 2 }}>Auth Error: {typeof authError === 'object' ? JSON.stringify(authError) : authError}</Alert>}
-          {/* Add settingsError display if needed */}
-          <Routes>
+        <Box sx={{ display: 'flex' }}>
+          {/* Main Content Area */}
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
+            }}
+          >
+            {/* Top header area with same background as main app */}
+            <Box
+              sx={{
+                backgroundColor: 'background.default', // Use the same background as the main app
+                width: '100%',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '64px', // Maintain some height for the hamburger menu and profile
+                px: 2,
+              }}
+            >
+              {/* Navigation Dropdown */}
+              <NavigationDropdown isAuthenticated={isAuthenticated} />
+
+              {/* Spacer to push UserProfileHeader to the right */}
+              <Box sx={{ flexGrow: 1 }} />
+
+              {/* Only show UserProfileHeader when authenticated */}
+              {isAuthenticated && <UserProfileHeader />}
+            </Box>
+
+            {/* Main Content Container */}
+            <Container sx={{ mt: 1, flexGrow: 1, pb: 8 }}>
+              {authError && <Alert severity="error" sx={{ mb: 2 }}>Auth Error: {typeof authError === 'object' ? JSON.stringify(authError) : authError}</Alert>}
+              {/* Add settingsError display if needed */}
+              <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
             <Route path="/settings" element={<SettingsPage />} /> {/* SettingsPage is now public */}
             <Route path="/preview/:processingId" element={
               <ProtectedRoute>
                 <MappingPreviewPage />
               </ProtectedRoute>
             } />
-            <Route path="/history" element={
-              <ProtectedRoute>
-                <ProcessingHistoryPage />
-              </ProtectedRoute>
-            } />
+
+
             <Route
               path="/"
               element={
@@ -160,9 +226,12 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Add other routes here */}
-          </Routes>
-        </Container>
+                {/* Add other routes here */}
+              </Routes>
+            </Container>
+          </Box>
+        </Box>
+
         <Snackbar
           open={showApiKeyMissingPrompt}
           autoHideDuration={null} // Persistent until closed by user or key is set
@@ -174,13 +243,13 @@ function App() {
           }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert 
-            severity="warning" 
+          <Alert
+            severity="warning"
             sx={{ width: '100%' }}
             action={
               <>
                 <Button color="inherit" size="small" component={Link} to="/settings" onClick={closeApiKeyMissingPrompt}>
-                  Go to Settings
+                  {t('alerts.goToSettings')}
                 </Button>
                 <IconButton
                   size="small"
@@ -193,9 +262,12 @@ function App() {
               </>
             }
           >
-            OpenAI API Key is not set. Please configure it in Settings to enable AI features.
+            {t('alerts.apiKeyMissing')}
           </Alert>
         </Snackbar>
+
+        {/* Global Salesforce Status Bar */}
+        <SalesforceStatusBar />
       </Router>
     </ThemeProvider>
   );

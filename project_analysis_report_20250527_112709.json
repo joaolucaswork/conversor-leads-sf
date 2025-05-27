@@ -1,0 +1,3014 @@
+{
+  "analysis_metadata": {
+    "generated_at": "2025-05-27T11:27:09.968377",
+    "analyzer_version": "1.0.0",
+    "project_root": ".",
+    "analysis_scope": "comprehensive"
+  },
+  "current_structure": {
+    "project_info": {
+      "name": "",
+      "root_path": ".",
+      "analysis_date": "2025-05-27T11:27:09.184496",
+      "total_files": 420,
+      "total_directories": 49,
+      "project_size_mb": 3.12,
+      "project_type": [
+        "electron",
+        "react",
+        "python",
+        "fastapi",
+        "salesforce",
+        "ai_ml"
+      ]
+    },
+    "directory_tree": {
+      "type": "directory",
+      "children": {
+        ".env.example": {
+          "type": "file",
+          "size": 324,
+          "extension": ".example",
+          "category": "other"
+        },
+        ".gitignore": {
+          "type": "file",
+          "size": 7223,
+          "extension": "",
+          "category": "other"
+        },
+        "app": {
+          "type": "directory",
+          "children": {
+            "assets": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            },
+            "main.js": {
+              "type": "file",
+              "size": 56767,
+              "extension": ".js",
+              "category": "source_code"
+            },
+            "preload.js": {
+              "type": "file",
+              "size": 3390,
+              "extension": ".js",
+              "category": "source_code"
+            }
+          },
+          "file_count": 2,
+          "dir_count": 1
+        },
+        "backend": {
+          "type": "directory",
+          "children": {
+            "cache": {
+              "type": "directory",
+              "children": {
+                "ai_mappings": {
+                  "type": "directory",
+                  "truncated": true
+                }
+              },
+              "file_count": 0,
+              "dir_count": 1
+            },
+            "data": {
+              "type": "directory",
+              "children": {
+                "backup": {
+                  "type": "directory",
+                  "truncated": true
+                }
+              },
+              "file_count": 0,
+              "dir_count": 1
+            },
+            "logs": {
+              "type": "directory",
+              "children": {
+                "ai_leads_processing_20250527_003213.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_004056.log": {
+                  "type": "file",
+                  "size": 23502,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_004213.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_011455.log": {
+                  "type": "file",
+                  "size": 9361,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_011602.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_012002.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_012905.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_013719.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_014359.log": {
+                  "type": "file",
+                  "size": 10694,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_015101.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_015819.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_021956.log": {
+                  "type": "file",
+                  "size": 10670,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_022431.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_022701.log": {
+                  "type": "file",
+                  "size": 10670,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_023157.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_023345.log": {
+                  "type": "file",
+                  "size": 10670,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_024034.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_025515.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_030412.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_032514.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_032610.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_033117.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_033708.log": {
+                  "type": "file",
+                  "size": 5335,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_034135.log": {
+                  "type": "file",
+                  "size": 10767,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_034249.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_034746.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_052951.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_073158.log": {
+                  "type": "file",
+                  "size": 5348,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_073519.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_073853.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_073959.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_074822.log": {
+                  "type": "file",
+                  "size": 10941,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_075644.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_080016.log": {
+                  "type": "file",
+                  "size": 21344,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_080417.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_080710.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081003.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081249.log": {
+                  "type": "file",
+                  "size": 42688,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081322.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081356.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081658.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081738.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081818.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_081951.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_082145.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_082547.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_082640.log": {
+                  "type": "file",
+                  "size": 12824,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_083820.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_091245.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_092057.log": {
+                  "type": "file",
+                  "size": 6568,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "ai_leads_processing_20250527_102633.log": {
+                  "type": "file",
+                  "size": 5336,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "leads_processing_20250527_002927.log": {
+                  "type": "file",
+                  "size": 1504,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "leads_processing_20250527_003045.log": {
+                  "type": "file",
+                  "size": 15207,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "leads_processing_20250527_003046.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "leads_processing_20250527_003531.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                },
+                "leads_processing_20250527_003821.log": {
+                  "type": "file",
+                  "size": 0,
+                  "extension": ".log",
+                  "category": "logs"
+                }
+              },
+              "file_count": 56,
+              "dir_count": 0
+            },
+            "main.py": {
+              "type": "file",
+              "size": 40563,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "README.md": {
+              "type": "file",
+              "size": 2369,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "requirements.txt": {
+              "type": "file",
+              "size": 240,
+              "extension": ".txt",
+              "category": "documentation"
+            },
+            "salesforce_integration.log": {
+              "type": "file",
+              "size": 18648,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "start_dev_server.py": {
+              "type": "file",
+              "size": 3949,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "start_server.py": {
+              "type": "file",
+              "size": 4477,
+              "extension": ".py",
+              "category": "source_code"
+            }
+          },
+          "file_count": 6,
+          "dir_count": 3
+        },
+        "cache": {
+          "type": "directory",
+          "children": {
+            "ai_mappings": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            }
+          },
+          "file_count": 0,
+          "dir_count": 1
+        },
+        "config": {
+          "type": "directory",
+          "children": {
+            "config.json": {
+              "type": "file",
+              "size": 1850,
+              "extension": ".json",
+              "category": "configuration"
+            },
+            "config_ai_sample.json": {
+              "type": "file",
+              "size": 812,
+              "extension": ".json",
+              "category": "configuration"
+            },
+            "config_sample.json": {
+              "type": "file",
+              "size": 420,
+              "extension": ".json",
+              "category": "configuration"
+            },
+            "examples": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            },
+            "instrucoes.txt": {
+              "type": "file",
+              "size": 110,
+              "extension": ".txt",
+              "category": "documentation"
+            },
+            "salesforce_field_mapping.json": {
+              "type": "file",
+              "size": 3308,
+              "extension": ".json",
+              "category": "configuration"
+            }
+          },
+          "file_count": 5,
+          "dir_count": 1
+        },
+        "core": {
+          "type": "directory",
+          "children": {
+            "__init__.py": {
+              "type": "file",
+              "size": 0,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "ai_field_mapper.py": {
+              "type": "file",
+              "size": 27492,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "duplicate_handler.py": {
+              "type": "file",
+              "size": 11291,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "master_leads_processor.py": {
+              "type": "file",
+              "size": 20087,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "master_leads_processor_ai.py": {
+              "type": "file",
+              "size": 40892,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "salesforce_field_mapper.py": {
+              "type": "file",
+              "size": 9247,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "salesforce_integration.py": {
+              "type": "file",
+              "size": 55261,
+              "extension": ".py",
+              "category": "source_code"
+            }
+          },
+          "file_count": 7,
+          "dir_count": 0
+        },
+        "data": {
+          "type": "directory",
+          "children": {
+            "backup": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            },
+            "input": {
+              "type": "directory",
+              "children": {
+                "final_test_leads.csv": {
+                  "type": "file",
+                  "size": 428,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste.xlsx": {
+                  "type": "file",
+                  "size": 13188,
+                  "extension": ".xlsx",
+                  "category": "data"
+                },
+                "test_encoding.csv": {
+                  "type": "file",
+                  "size": 193,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_leads.csv": {
+                  "type": "file",
+                  "size": 153,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_raw_leads.csv": {
+                  "type": "file",
+                  "size": 273,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_real_leads.csv": {
+                  "type": "file",
+                  "size": 342,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_standard_leads.csv": {
+                  "type": "file",
+                  "size": 211,
+                  "extension": ".csv",
+                  "category": "data"
+                }
+              },
+              "file_count": 7,
+              "dir_count": 0
+            },
+            "output": {
+              "type": "directory",
+              "children": {
+                "final_test_leads_processed_43e25aba-6999-48d3-bba7-741bcd2c7d96.csv": {
+                  "type": "file",
+                  "size": 645,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "final_test_leads_processed_43e25aba-6999-48d3-bba7-741bcd2c7d96_summary.json": {
+                  "type": "file",
+                  "size": 709,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_01e99a14-f9ba-4194-9d10-28c873b2e386_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_01fece1c-bf8a-4b7a-8133-b72b43aeec73.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_01fece1c-bf8a-4b7a-8133-b72b43aeec73_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_07de84ac-9126-401e-91c0-0539c9577fd0.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_07de84ac-9126-401e-91c0-0539c9577fd0_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_0a725de0-bd62-4c81-90e4-0dd628c50191.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_0a725de0-bd62-4c81-90e4-0dd628c50191_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_11bfc525-dc08-458d-9736-6102e3b0c8b4_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_15f4b10e-09ef-46a4-b6a7-3057499c6399.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_15f4b10e-09ef-46a4-b6a7-3057499c6399_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_170ff0b5-7f0c-49f2-bc2c-dbb3d80e35cd_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_1c57ca1a-32f8-4555-b46a-96ff758beea1_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_211e423a-c75d-4495-b563-efda0839d897.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_211e423a-c75d-4495-b563-efda0839d897_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_23051011-66f3-4a54-8bd7-732f7e5f9ebc.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_23051011-66f3-4a54-8bd7-732f7e5f9ebc_ai_summary.json": {
+                  "type": "file",
+                  "size": 4764,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_29c2bea2-9588-4d83-b89c-19bc4c0510f7.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_29c2bea2-9588-4d83-b89c-19bc4c0510f7_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_36bfe77e-9610-496b-8042-6565e287d0f3_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_370d1e8d-8b22-4350-9ca0-52b24b4210c3.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_370d1e8d-8b22-4350-9ca0-52b24b4210c3_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_38232da1-46d5-4374-a2aa-abd8fa8f254d_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_3ffc7eba-2463-4ee9-b2fa-6bb071573a5b.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_3ffc7eba-2463-4ee9-b2fa-6bb071573a5b_ai_summary.json": {
+                  "type": "file",
+                  "size": 4764,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_46cfa732-9a37-4a6b-9655-e81aa5b1f486.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_46cfa732-9a37-4a6b-9655-e81aa5b1f486_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_4728980b-3e74-4fe0-bf5a-296b4205e9b8.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_4728980b-3e74-4fe0-bf5a-296b4205e9b8_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_4bf4597f-b3bd-4171-8912-bd613b26363e_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_599c54a0-4d9f-45a6-9c26-13dcf7f9cac3.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_599c54a0-4d9f-45a6-9c26-13dcf7f9cac3_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_5b55ab15-2704-4079-9682-90a5d85d5239_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_5d44b6b6-da4e-4a14-8f60-8794ec37af89_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_5f9daf65-65ce-4b65-aeb0-ceccc0df7d12.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_5f9daf65-65ce-4b65-aeb0-ceccc0df7d12_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_61785899-bd24-4d17-a4c2-65681ba4e5b7.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_61785899-bd24-4d17-a4c2-65681ba4e5b7_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_6e4c8689-eb11-40dc-aeec-2025473a0b7c_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_71a45d80-3b22-47c7-9851-31fa689a3ba5.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_71a45d80-3b22-47c7-9851-31fa689a3ba5_ai_summary.json": {
+                  "type": "file",
+                  "size": 4764,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_733ca2a3-8adb-43c8-ba80-2c860e85c915_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_74a1d662-a9f0-4130-a473-937f158c16fe.csv": {
+                  "type": "file",
+                  "size": 108,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_77b93f9e-45fe-459a-8de6-5d1055273665_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_78415ab6-1dfb-4e0d-ac6b-3842efaba469.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_78415ab6-1dfb-4e0d-ac6b-3842efaba469_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_81ecd43a-a5a3-4e02-a547-d40941b67466.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_81ecd43a-a5a3-4e02-a547-d40941b67466_ai_summary.json": {
+                  "type": "file",
+                  "size": 5594,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_88dd6680-219e-491a-bd36-9a689b67eeb2_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_8b9a65fa-5c8c-4fd4-a796-9b2aa8bd812c.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_8b9a65fa-5c8c-4fd4-a796-9b2aa8bd812c_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_8cd00e9d-a864-4a69-83cd-8b31f93f87ae_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_8fce4ab7-13f1-4a49-8d1b-4cf712105e6a_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_903b3b42-44d5-4562-b7f5-78395eac7d6b_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_923ca08f-f771-4bba-b1fd-bb6dcb31ab30.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_923ca08f-f771-4bba-b1fd-bb6dcb31ab30_ai_summary.json": {
+                  "type": "file",
+                  "size": 5548,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_932e98a2-4ff8-416b-9d2d-ea7bc67d4062_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_95f4a49e-a195-4dad-8f91-9b604674004b.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_95f4a49e-a195-4dad-8f91-9b604674004b_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_9a586b1c-806e-4717-afa2-11b04c707691.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_9a586b1c-806e-4717-afa2-11b04c707691_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_9b62235d-dcef-439e-b54e-eddff42350b1_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_ae451520-b6b9-43cc-9cea-bf277d70188e_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_ae53e971-833c-4725-8c1d-56abeb8e1ac1.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_ae53e971-833c-4725-8c1d-56abeb8e1ac1_ai_summary.json": {
+                  "type": "file",
+                  "size": 4761,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_afb4b93c-1f7f-47df-b0f1-75636cd64fab.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_afb4b93c-1f7f-47df-b0f1-75636cd64fab_ai_summary.json": {
+                  "type": "file",
+                  "size": 5299,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_b2f0c810-9756-485c-be03-16279b69ab75.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_b2f0c810-9756-485c-be03-16279b69ab75_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_b8565cf6-fda3-4aea-a324-8b5808bef9f2.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_b8565cf6-fda3-4aea-a324-8b5808bef9f2_ai_summary.json": {
+                  "type": "file",
+                  "size": 4769,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_be548b5b-591c-47cd-b201-c7dd2b4eba81.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_be548b5b-591c-47cd-b201-c7dd2b4eba81_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_cec10536-3766-4f22-9505-8f5bd23e2383.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_cec10536-3766-4f22-9505-8f5bd23e2383_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_d9def51e-9239-41ce-a539-1484e8579653.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_d9def51e-9239-41ce-a539-1484e8579653_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_e3df3f22-a66f-4f53-85d9-e4f425b75cfe.csv": {
+                  "type": "file",
+                  "size": 242,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_e3df3f22-a66f-4f53-85d9-e4f425b75cfe_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_ea68d747-78ab-4298-b2d2-bbca41bd3d05.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_ea68d747-78ab-4298-b2d2-bbca41bd3d05_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_eb85f8b7-658a-455e-9139-ac3a14753338.csv": {
+                  "type": "file",
+                  "size": 108,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_ee015258-f9ab-4fea-a4fa-48e8a3591736.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_ee015258-f9ab-4fea-a4fa-48e8a3591736_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "lead-planilha-teste_processed_f97104a8-064b-436e-a65c-f43e48ab2112.csv": {
+                  "type": "file",
+                  "size": 241,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "lead-planilha-teste_processed_f97104a8-064b-436e-a65c-f43e48ab2112_ai_summary.json": {
+                  "type": "file",
+                  "size": 4762,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_161258_ai_summary.json": {
+                  "type": "file",
+                  "size": 4262,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_162010_ai_summary.json": {
+                  "type": "file",
+                  "size": 4228,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_162033_ai_summary.json": {
+                  "type": "file",
+                  "size": 4228,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_162417_ai_summary.json": {
+                  "type": "file",
+                  "size": 4103,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_162747_ai_summary.json": {
+                  "type": "file",
+                  "size": 4003,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_163006_ai_summary.json": {
+                  "type": "file",
+                  "size": 4003,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_163037_ai_summary.json": {
+                  "type": "file",
+                  "size": 4003,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "leads_vinteseismaio_ai_processed_20250526_163723_ai_summary.json": {
+                  "type": "file",
+                  "size": 4003,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "test_encoding_processed_881a8224-8f75-454d-930f-9a7ee92c51d5.csv": {
+                  "type": "file",
+                  "size": 344,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_encoding_processed_881a8224-8f75-454d-930f-9a7ee92c51d5_summary.json": {
+                  "type": "file",
+                  "size": 700,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "test_leads_processed_ac9cfb9d-256c-4eff-baf2-e1281575642e.csv": {
+                  "type": "file",
+                  "size": 108,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_raw_leads_processed_ba9e9e54-e6f5-4083-a0de-a7fa325cb023.csv": {
+                  "type": "file",
+                  "size": 457,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_raw_leads_processed_ba9e9e54-e6f5-4083-a0de-a7fa325cb023_summary.json": {
+                  "type": "file",
+                  "size": 703,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "test_real_leads_processed_8d5c6044-4c5e-43a7-b923-259cf7224ddd.csv": {
+                  "type": "file",
+                  "size": 559,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_real_leads_processed_8d5c6044-4c5e-43a7-b923-259cf7224ddd_summary.json": {
+                  "type": "file",
+                  "size": 706,
+                  "extension": ".json",
+                  "category": "configuration"
+                },
+                "test_standard_leads_processed_f66b782b-d288-4332-9cac-2625e8f58d8e.csv": {
+                  "type": "file",
+                  "size": 233,
+                  "extension": ".csv",
+                  "category": "data"
+                },
+                "test_standard_leads_processed_f66b782b-d288-4332-9cac-2625e8f58d8e_summary.json": {
+                  "type": "file",
+                  "size": 601,
+                  "extension": ".json",
+                  "category": "configuration"
+                }
+              },
+              "file_count": 104,
+              "dir_count": 0
+            },
+            "test_leads_with_nans.csv": {
+              "type": "file",
+              "size": 258,
+              "extension": ".csv",
+              "category": "data"
+            }
+          },
+          "file_count": 1,
+          "dir_count": 3
+        },
+        "debug-oauth-browser.html": {
+          "type": "file",
+          "size": 15797,
+          "extension": ".html",
+          "category": "source_code"
+        },
+        "docs": {
+          "type": "directory",
+          "children": {
+            "AI_OPTIMIZATION_GUIDE.md": {
+              "type": "file",
+              "size": 7233,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "api": {
+              "type": "directory",
+              "children": {
+                "API_CONTRACTS.md": {
+                  "type": "file",
+                  "size": 18018,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "INSTRUCOES_RAPIDAS.md": {
+                  "type": "file",
+                  "size": 2400,
+                  "extension": ".md",
+                  "category": "documentation"
+                }
+              },
+              "file_count": 2,
+              "dir_count": 0
+            },
+            "CHANGELOG.md": {
+              "type": "file",
+              "size": 5965,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "CONTRIBUTING.md": {
+              "type": "file",
+              "size": 10121,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "DESCRIPTION_FORMATTING_FEATURE.md": {
+              "type": "file",
+              "size": 6532,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "ENHANCED_DUPLICATE_DETECTION.md": {
+              "type": "file",
+              "size": 7843,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "FIELD_MAPPING_QUICK_REFERENCE.md": {
+              "type": "file",
+              "size": 4528,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "LICENSE": {
+              "type": "file",
+              "size": 1105,
+              "extension": "",
+              "category": "other"
+            },
+            "README.md": {
+              "type": "file",
+              "size": 8638,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "README_AI.md": {
+              "type": "file",
+              "size": 8711,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "salesforce": {
+              "type": "directory",
+              "children": {
+                "SALESFORCE_FIELD_MAPPING_SOLUTION.md": {
+                  "type": "file",
+                  "size": 6970,
+                  "extension": ".md",
+                  "category": "documentation"
+                }
+              },
+              "file_count": 1,
+              "dir_count": 0
+            },
+            "SECURITY_GUIDE.md": {
+              "type": "file",
+              "size": 5682,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "SEMICOLON_FORMATTING_UPDATE.md": {
+              "type": "file",
+              "size": 7407,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "setup": {
+              "type": "directory",
+              "children": {
+                "DEVELOPMENT_SETUP.md": {
+                  "type": "file",
+                  "size": 4871,
+                  "extension": ".md",
+                  "category": "documentation"
+                }
+              },
+              "file_count": 1,
+              "dir_count": 0
+            },
+            "TECHNICAL.md": {
+              "type": "file",
+              "size": 12661,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "troubleshooting": {
+              "type": "directory",
+              "children": {
+                "ATRIBUIR_MAPPING_FIX.md": {
+                  "type": "file",
+                  "size": 6571,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "BROWSER_INITIALIZATION_FIX.md": {
+                  "type": "file",
+                  "size": 5021,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "CORS_FIX_IMPLEMENTATION.md": {
+                  "type": "file",
+                  "size": 8803,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "CORS_FIX_SUMMARY.md": {
+                  "type": "file",
+                  "size": 4903,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "DUPLICATE_HANDLING_DEBUG_GUIDE.md": {
+                  "type": "file",
+                  "size": 5096,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "DUPLICATE_HANDLING_FIX.md": {
+                  "type": "file",
+                  "size": 4108,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "DUPLICATE_HANDLING_IMPLEMENTATION.md": {
+                  "type": "file",
+                  "size": 10351,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "FIELD_SELECTION_FIX.md": {
+                  "type": "file",
+                  "size": 6129,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "MAPPING_FIXES_SUMMARY.md": {
+                  "type": "file",
+                  "size": 5599,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "OAUTH_BROWSER_FIX.md": {
+                  "type": "file",
+                  "size": 6330,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "OAUTH_EXPIRED_CODE_FIX.md": {
+                  "type": "file",
+                  "size": 5447,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "OAUTH_TROUBLESHOOTING.md": {
+                  "type": "file",
+                  "size": 6487,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "PANDAS_SERIES_FIX.md": {
+                  "type": "file",
+                  "size": 5483,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "SALESFORCE_FIXES_SUMMARY.md": {
+                  "type": "file",
+                  "size": 4855,
+                  "extension": ".md",
+                  "category": "documentation"
+                },
+                "SALESFORCE_UPLOAD_FIXES.md": {
+                  "type": "file",
+                  "size": 6657,
+                  "extension": ".md",
+                  "category": "documentation"
+                }
+              },
+              "file_count": 15,
+              "dir_count": 0
+            },
+            "USAGE_GUIDE.md": {
+              "type": "file",
+              "size": 6416,
+              "extension": ".md",
+              "category": "documentation"
+            }
+          },
+          "file_count": 13,
+          "dir_count": 4
+        },
+        "electron-builder.yml": {
+          "type": "file",
+          "size": 392,
+          "extension": ".yml",
+          "category": "configuration"
+        },
+        "examples": {
+          "type": "directory",
+          "children": {},
+          "file_count": 0,
+          "dir_count": 0
+        },
+        "final_verification_result.csv": {
+          "type": "file",
+          "size": 645,
+          "extension": ".csv",
+          "category": "data"
+        },
+        "index.html": {
+          "type": "file",
+          "size": 1576,
+          "extension": ".html",
+          "category": "source_code"
+        },
+        "logs": {
+          "type": "directory",
+          "children": {
+            "ai_leads_processing_20250527_030038.log": {
+              "type": "file",
+              "size": 0,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "ai_leads_processing_20250527_030318.log": {
+              "type": "file",
+              "size": 0,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "project_analysis_20250527_112540.log": {
+              "type": "file",
+              "size": 827,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "project_analysis_20250527_112543.log": {
+              "type": "file",
+              "size": 0,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "project_analysis_20250527_112709.log": {
+              "type": "file",
+              "size": 174,
+              "extension": ".log",
+              "category": "logs"
+            },
+            "salesforce_integration.log": {
+              "type": "file",
+              "size": 101575,
+              "extension": ".log",
+              "category": "logs"
+            }
+          },
+          "file_count": 6,
+          "dir_count": 0
+        },
+        "organizar_projeto.py": {
+          "type": "file",
+          "size": 20033,
+          "extension": ".py",
+          "category": "source_code"
+        },
+        "package-lock.json": {
+          "type": "file",
+          "size": 249572,
+          "extension": ".json",
+          "category": "configuration"
+        },
+        "package.json": {
+          "type": "file",
+          "size": 1942,
+          "extension": ".json",
+          "category": "configuration"
+        },
+        "project_analysis_report_20250527_112542.json": {
+          "type": "file",
+          "size": 106191,
+          "extension": ".json",
+          "category": "configuration"
+        },
+        "public": {
+          "type": "directory",
+          "children": {},
+          "file_count": 0,
+          "dir_count": 0
+        },
+        "quick_start.py": {
+          "type": "file",
+          "size": 1707,
+          "extension": ".py",
+          "category": "source_code"
+        },
+        "relatorio_organizacao.html": {
+          "type": "file",
+          "size": 16097,
+          "extension": ".html",
+          "category": "source_code"
+        },
+        "requirements.txt": {
+          "type": "file",
+          "size": 669,
+          "extension": ".txt",
+          "category": "documentation"
+        },
+        "scripts": {
+          "type": "directory",
+          "children": {
+            "automation": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            },
+            "start-dev.js": {
+              "type": "file",
+              "size": 5335,
+              "extension": ".js",
+              "category": "source_code"
+            },
+            "utils": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            }
+          },
+          "file_count": 1,
+          "dir_count": 2
+        },
+        "simple-test.html": {
+          "type": "file",
+          "size": 10141,
+          "extension": ".html",
+          "category": "source_code"
+        },
+        "src": {
+          "type": "directory",
+          "children": {
+            "App.jsx": {
+              "type": "file",
+              "size": 10330,
+              "extension": ".jsx",
+              "category": "source_code"
+            },
+            "components": {
+              "type": "directory",
+              "children": {
+                "AISettingsForm.jsx": {
+                  "type": "file",
+                  "size": 11400,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "AIStatsDisplay.jsx": {
+                  "type": "file",
+                  "size": 10095,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "CostTrackingDashboard.jsx": {
+                  "type": "file",
+                  "size": 11887,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "DeveloperModeToggle.jsx": {
+                  "type": "file",
+                  "size": 3994,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "DuplicateHandlingDialog.jsx": {
+                  "type": "file",
+                  "size": 20437,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "FieldMappingDisplay.jsx": {
+                  "type": "file",
+                  "size": 6367,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "FileUpload.jsx": {
+                  "type": "file",
+                  "size": 11369,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "HamburgerIcon.jsx": {
+                  "type": "file",
+                  "size": 658,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "icone.svg": {
+                  "type": "file",
+                  "size": 2573,
+                  "extension": ".svg",
+                  "category": "media"
+                },
+                "LanguageSelector.jsx": {
+                  "type": "file",
+                  "size": 3820,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "LeadDistributionSettingsForm.jsx": {
+                  "type": "file",
+                  "size": 10570,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "LogViewerModal.jsx": {
+                  "type": "file",
+                  "size": 3814,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "LottieFileIcon.jsx": {
+                  "type": "file",
+                  "size": 5665,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "NavigationDropdown.jsx": {
+                  "type": "file",
+                  "size": 5143,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "OpenAIApiKeyForm.jsx": {
+                  "type": "file",
+                  "size": 9923,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProcessingHistorySection.jsx": {
+                  "type": "file",
+                  "size": 10875,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProcessingIndicators.jsx": {
+                  "type": "file",
+                  "size": 8628,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProcessingStatus.jsx": {
+                  "type": "file",
+                  "size": 11491,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProcessingSummary.jsx": {
+                  "type": "file",
+                  "size": 12811,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProtectedRoute.jsx": {
+                  "type": "file",
+                  "size": 1212,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "SalesforceStatusBar.jsx": {
+                  "type": "file",
+                  "size": 10513,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "SidebarNavigation.jsx": {
+                  "type": "file",
+                  "size": 5426,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "UnifiedFilesHistorySection.jsx": {
+                  "type": "file",
+                  "size": 22355,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "UserProfile.jsx": {
+                  "type": "file",
+                  "size": 6379,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "UserProfileHeader.jsx": {
+                  "type": "file",
+                  "size": 4679,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 25,
+              "dir_count": 0
+            },
+            "hooks": {
+              "type": "directory",
+              "children": {
+                "useProcessingEvents.js": {
+                  "type": "file",
+                  "size": 3803,
+                  "extension": ".js",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 1,
+              "dir_count": 0
+            },
+            "i18n": {
+              "type": "directory",
+              "children": {
+                "config.js": {
+                  "type": "file",
+                  "size": 1546,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "locales": {
+                  "type": "directory",
+                  "truncated": true
+                }
+              },
+              "file_count": 1,
+              "dir_count": 1
+            },
+            "index.jsx": {
+              "type": "file",
+              "size": 416,
+              "extension": ".jsx",
+              "category": "source_code"
+            },
+            "pages": {
+              "type": "directory",
+              "children": {
+                "HomePage.jsx": {
+                  "type": "file",
+                  "size": 7599,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "LoginPage.jsx": {
+                  "type": "file",
+                  "size": 6404,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "MappingPreviewPage.jsx": {
+                  "type": "file",
+                  "size": 5587,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "OAuthCallbackPage.jsx": {
+                  "type": "file",
+                  "size": 8548,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "ProcessingHistoryPage.jsx": {
+                  "type": "file",
+                  "size": 10179,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "SalesforcePage.jsx": {
+                  "type": "file",
+                  "size": 32495,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                },
+                "SettingsPage.jsx": {
+                  "type": "file",
+                  "size": 2745,
+                  "extension": ".jsx",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 7,
+              "dir_count": 0
+            },
+            "services": {
+              "type": "directory",
+              "children": {
+                "apiService.js": {
+                  "type": "file",
+                  "size": 17216,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "salesforceAuth.js": {
+                  "type": "file",
+                  "size": 7404,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "salesforceService.js": {
+                  "type": "file",
+                  "size": 15299,
+                  "extension": ".js",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 3,
+              "dir_count": 0
+            },
+            "store": {
+              "type": "directory",
+              "children": {
+                "authStore.js": {
+                  "type": "file",
+                  "size": 31549,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "languageStore.js": {
+                  "type": "file",
+                  "size": 3392,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "settingsStore.js": {
+                  "type": "file",
+                  "size": 4232,
+                  "extension": ".js",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 3,
+              "dir_count": 0
+            },
+            "styles": {
+              "type": "directory",
+              "children": {
+                "aura-new.json": {
+                  "type": "file",
+                  "size": 53093,
+                  "extension": ".json",
+                  "category": "configuration"
+                }
+              },
+              "file_count": 1,
+              "dir_count": 0
+            },
+            "utils": {
+              "type": "directory",
+              "children": {
+                "browserOAuth.js": {
+                  "type": "file",
+                  "size": 10120,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "environment.js": {
+                  "type": "file",
+                  "size": 32331,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "iconTest.js": {
+                  "type": "file",
+                  "size": 1623,
+                  "extension": ".js",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 3,
+              "dir_count": 0
+            }
+          },
+          "file_count": 2,
+          "dir_count": 8
+        },
+        "start_backend.bat": {
+          "type": "file",
+          "size": 117,
+          "extension": ".bat",
+          "category": "other"
+        },
+        "start_dev.bat": {
+          "type": "file",
+          "size": 445,
+          "extension": ".bat",
+          "category": "other"
+        },
+        "start_dev.sh": {
+          "type": "file",
+          "size": 472,
+          "extension": ".sh",
+          "category": "other"
+        },
+        "temp": {
+          "type": "directory",
+          "children": {
+            "__init__.cpython-313.pyc": {
+              "type": "file",
+              "size": 172,
+              "extension": ".pyc",
+              "category": "other"
+            },
+            "data_validator.cpython-313.pyc": {
+              "type": "file",
+              "size": 21801,
+              "extension": ".pyc",
+              "category": "other"
+            },
+            "sample_processed_leads.csv": {
+              "type": "file",
+              "size": 381,
+              "extension": ".csv",
+              "category": "data"
+            }
+          },
+          "file_count": 3,
+          "dir_count": 0
+        },
+        "test_data": {
+          "type": "directory",
+          "children": {},
+          "file_count": 0,
+          "dir_count": 0
+        },
+        "tests": {
+          "type": "directory",
+          "children": {
+            "__init__.py": {
+              "type": "file",
+              "size": 0,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "debug": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            },
+            "debug_auth.html": {
+              "type": "file",
+              "size": 9063,
+              "extension": ".html",
+              "category": "source_code"
+            },
+            "debug_env.html": {
+              "type": "file",
+              "size": 5883,
+              "extension": ".html",
+              "category": "source_code"
+            },
+            "debug_init.html": {
+              "type": "file",
+              "size": 8994,
+              "extension": ".html",
+              "category": "source_code"
+            },
+            "examine_excel.py": {
+              "type": "file",
+              "size": 1883,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "integration": {
+              "type": "directory",
+              "children": {
+                "test-oauth-config.js": {
+                  "type": "file",
+                  "size": 6074,
+                  "extension": ".js",
+                  "category": "source_code"
+                },
+                "test-oauth-direct.js": {
+                  "type": "file",
+                  "size": 7012,
+                  "extension": ".js",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 2,
+              "dir_count": 0
+            },
+            "test_ai_integration.py": {
+              "type": "file",
+              "size": 8898,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_api.py": {
+              "type": "file",
+              "size": 1616,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_api_connection.js": {
+              "type": "file",
+              "size": 1369,
+              "extension": ".js",
+              "category": "source_code"
+            },
+            "test_api_cors.html": {
+              "type": "file",
+              "size": 9073,
+              "extension": ".html",
+              "category": "source_code"
+            },
+            "test_atribuir_mapping_fix.py": {
+              "type": "file",
+              "size": 11089,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_complete_mapping_fix.py": {
+              "type": "file",
+              "size": 8435,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_description_formatting.py": {
+              "type": "file",
+              "size": 10493,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_description_mapping.py": {
+              "type": "file",
+              "size": 3672,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_download_fix.py": {
+              "type": "file",
+              "size": 6211,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_excel_support.py": {
+              "type": "file",
+              "size": 3363,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_fix.py": {
+              "type": "file",
+              "size": 7230,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_mixed_format.csv": {
+              "type": "file",
+              "size": 296,
+              "extension": ".csv",
+              "category": "data"
+            },
+            "test_name_mapping_fix.py": {
+              "type": "file",
+              "size": 6747,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_openai_connection.py": {
+              "type": "file",
+              "size": 3039,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_patrimonio_field_mapping.py": {
+              "type": "file",
+              "size": 8396,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_raw_format.csv": {
+              "type": "file",
+              "size": 284,
+              "extension": ".csv",
+              "category": "data"
+            },
+            "test_salesforce_field_mapping.py": {
+              "type": "file",
+              "size": 7227,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_semicolon_description_formatting.py": {
+              "type": "file",
+              "size": 13723,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "ui": {
+              "type": "directory",
+              "children": {
+                "test-oauth.html": {
+                  "type": "file",
+                  "size": 6050,
+                  "extension": ".html",
+                  "category": "source_code"
+                }
+              },
+              "file_count": 1,
+              "dir_count": 0
+            },
+            "unit": {
+              "type": "directory",
+              "children": {},
+              "file_count": 0,
+              "dir_count": 0
+            }
+          },
+          "file_count": 23,
+          "dir_count": 4
+        },
+        "tools": {
+          "type": "directory",
+          "children": {
+            "__init__.py": {
+              "type": "file",
+              "size": 0,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "ai_cost_optimizer.py": {
+              "type": "file",
+              "size": 12274,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "batch_processor.py": {
+              "type": "file",
+              "size": 6326,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "data_validator.py": {
+              "type": "file",
+              "size": 17901,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "demo_project_analyzer.py": {
+              "type": "file",
+              "size": 7050,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "install_excel_support.py": {
+              "type": "file",
+              "size": 2487,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "organize_complete_workspace.py": {
+              "type": "file",
+              "size": 13426,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "organize_workspace.py": {
+              "type": "file",
+              "size": 5168,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "project_structure_analyzer.py": {
+              "type": "file",
+              "size": 63915,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "README_PROJECT_ANALYZER.md": {
+              "type": "file",
+              "size": 7677,
+              "extension": ".md",
+              "category": "documentation"
+            },
+            "secure_data_cleanup.py": {
+              "type": "file",
+              "size": 14134,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "security_audit_cleanup.py": {
+              "type": "file",
+              "size": 15888,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "setup_ai_system.py": {
+              "type": "file",
+              "size": 7652,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_ai_optimization.py": {
+              "type": "file",
+              "size": 9861,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_duplicate_handling.py": {
+              "type": "file",
+              "size": 11550,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_enhanced_duplicate_detection.py": {
+              "type": "file",
+              "size": 9003,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "test_salesforce_fixes.py": {
+              "type": "file",
+              "size": 6732,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "validate_field_mapping.py": {
+              "type": "file",
+              "size": 7237,
+              "extension": ".py",
+              "category": "source_code"
+            },
+            "validate_upload_fixes.py": {
+              "type": "file",
+              "size": 9378,
+              "extension": ".py",
+              "category": "source_code"
+            }
+          },
+          "file_count": 19,
+          "dir_count": 0
+        },
+        "verify-oauth-fix.js": {
+          "type": "file",
+          "size": 3717,
+          "extension": ".js",
+          "category": "source_code"
+        },
+        "vite.config.js": {
+          "type": "file",
+          "size": 390,
+          "extension": ".js",
+          "category": "source_code"
+        }
+      },
+      "file_count": 19,
+      "dir_count": 16
+    },
+    "file_distribution": {
+      "by_category": {
+        "other": 27,
+        "source_code": 107,
+        "configuration": 76,
+        "data": 108,
+        "documentation": 38,
+        "logs": 63,
+        "media": 1
+      },
+      "by_directory": {
+        ".": 21,
+        ".github\\ISSUE_TEMPLATE": 2,
+        ".github\\workflows": 1,
+        "app": 2,
+        "app\\assets": 1,
+        "backend": 6,
+        "backend\\cache\\ai_mappings": 2,
+        "backend\\data\\backup": 56,
+        "backend\\logs": 56,
+        "config": 6,
+        "core": 7,
+        "data": 1,
+        "data\\backup": 1,
+        "data\\input": 8,
+        "data\\output": 105,
+        "docs": 13,
+        "docs\\api": 2,
+        "docs\\salesforce": 1,
+        "docs\\setup": 1,
+        "docs\\troubleshooting": 15,
+        "examples": 1,
+        "logs": 7,
+        "public": 1,
+        "scripts": 1,
+        "src": 2,
+        "src\\components": 26,
+        "src\\hooks": 2,
+        "src\\i18n": 1,
+        "src\\i18n\\locales": 2,
+        "src\\pages": 8,
+        "src\\services": 4,
+        "src\\store": 4,
+        "src\\styles": 2,
+        "src\\utils": 3,
+        "temp": 4,
+        "tests": 23,
+        "tests\\integration": 2,
+        "tests\\ui": 1,
+        "tools": 19
+      },
+      "by_extension": {
+        "": 17,
+        ".example": 1,
+        ".local": 1,
+        ".html": 9,
+        ".yml": 2,
+        ".csv": 56,
+        ".py": 46,
+        ".json": 74,
+        ".txt": 3,
+        ".bat": 2,
+        ".sh": 1,
+        ".js": 19,
+        ".md": 35,
+        ".log": 63,
+        ".pkl": 2,
+        ".xlsx": 52,
+        ".sample": 1,
+        ".jsx": 33,
+        ".svg": 1,
+        ".pyc": 2
+      },
+      "large_files": [],
+      "empty_directories": [
+        "cache\\ai_mappings",
+        "config\\examples",
+        "scripts\\automation",
+        "scripts\\utils",
+        "tests\\debug",
+        "tests\\unit",
+        "test_data"
+      ]
+    },
+    "technology_stack": {
+      "frontend": [
+        "react",
+        "vite",
+        "mui",
+        "axios",
+        "i18next",
+        "zustand",
+        "lottie"
+      ],
+      "backend": [
+        "pandas"
+      ],
+      "desktop": [
+        "electron",
+        "electron-store"
+      ],
+      "ai_ml": [
+        "openai"
+      ],
+      "databases": [],
+      "build_tools": [
+        "vite",
+        "concurrently",
+        "cross-env"
+      ],
+      "testing": [],
+      "deployment": []
+    },
+    "dependency_analysis": {
+      "frontend_deps": {
+        "@emotion/react": "^11.0.0",
+        "@emotion/styled": "^11.0.0",
+        "@lottiefiles/dotlottie-react": "^0.13.5",
+        "@mui/icons-material": "^5.0.0",
+        "@mui/material": "^5.0.0",
+        "axios": "^1.0.0",
+        "crypto-js": "^4.2.0",
+        "date-fns": "^4.1.0",
+        "electron-store": "^8.0.0",
+        "i18next": "^25.2.1",
+        "i18next-browser-languagedetector": "^8.1.0",
+        "lottie-react": "^2.4.1",
+        "react": "^18.0.0",
+        "react-dom": "^18.0.0",
+        "react-dropzone": "^14.3.8",
+        "react-i18next": "^15.5.2",
+        "react-router-dom": "^6.0.0",
+        "simple-oauth2": "^5.0.0",
+        "zustand": "^4.0.0"
+      },
+      "backend_deps": {
+        "pandas>=1.5.0": "latest",
+        "numpy>=1.21.0": "latest",
+        "openai>=1.0.0": "latest",
+        "python-dotenv>=0.19.0": "latest",
+        "regex>=2022.0.0": "latest",
+        "openpyxl>=3.0.9  # For Excel file support": "latest",
+        "xlrd>=2.0.1      # For older Excel files (.xls)": "latest",
+        "chardet>=4.0.0   # For encoding detection": "latest",
+        "colorama>=0.4.4  # For colored terminal output": "latest",
+        "tqdm>=4.64.0     # For progress bars": "latest",
+        "python-dateutil>=2.8.2  # For date parsing": "latest",
+        "xlsxwriter>=3.0.0  # For advanced Excel writing": "latest",
+        "pytest>=7.0.0": "latest",
+        "black>=22.0.0": "latest",
+        "flake8>=5.0.0": "latest"
+      },
+      "dev_dependencies": {
+        "@vitejs/plugin-react": "^4.0.0",
+        "concurrently": "^9.1.2",
+        "cross-env": "^7.0.3",
+        "dotenv": "^16.0.0",
+        "electron": "^28.0.0",
+        "electron-builder": "^24.0.0",
+        "vite": "^5.0.0",
+        "wait-on": "^8.0.3"
+      },
+      "dependency_issues": []
+    },
+    "naming_conventions": {
+      "file_naming": {
+        "lowercase": 36,
+        "kebab_case": 11,
+        "snake_case": 326,
+        "camelCase": 47
+      },
+      "directory_naming": {
+        "lowercase": 45,
+        "snake_case": 4
+      },
+      "inconsistencies": [],
+      "recommendations": []
+    },
+    "organization_patterns": {
+      "structure_type": "mixed",
+      "separation_of_concerns": {
+        "frontend_backend": true,
+        "components_pages": true,
+        "configuration": true,
+        "documentation": true,
+        "testing": true,
+        "utilities": true
+      },
+      "modularity_score": 100.0,
+      "patterns_identified": [
+        "frontend_backend_separation",
+        "component_based_architecture",
+        "configuration_separation",
+        "documentation_organization",
+        "testing_organization",
+        "utilities_organization"
+      ]
+    },
+    "issues_identified": [
+      {
+        "type": "scattered_config",
+        "severity": "low",
+        "description": "Multiple configuration files in root directory (4 files)",
+        "affected_paths": [
+          "electron-builder.yml",
+          "package-lock.json",
+          "package.json",
+          "project_analysis_report_20250527_112542.json"
+        ],
+        "recommendation": "Consider consolidating configuration files in a config/ directory"
+      },
+      {
+        "type": "mixed_file_types",
+        "severity": "low",
+        "description": "Directories with mixed file types detected (5 directories)",
+        "affected_paths": [
+          ".",
+          "backend",
+          "config",
+          "data\\output",
+          "src\\components"
+        ],
+        "recommendation": "Consider organizing files by type or purpose"
+      },
+      {
+        "type": "large_directories",
+        "severity": "medium",
+        "description": "Large directories detected (6 directories)",
+        "affected_paths": [
+          ".",
+          "backend\\data\\backup",
+          "backend\\logs",
+          "data\\output",
+          "src\\components"
+        ],
+        "recommendation": "Consider breaking down large directories into subdirectories"
+      }
+    ]
+  },
+  "improvement_proposals": {
+    "recommended_structure": {
+      "type": "electron_react_python",
+      "description": "Optimized structure for Electron desktop app with React frontend and Python backend",
+      "structure": {
+        "app/": "Electron main process files",
+        "src/": "React frontend source code",
+        "src/components/": "Reusable React components",
+        "src/pages/": "Page-level React components",
+        "src/hooks/": "Custom React hooks",
+        "src/services/": "API and service layer",
+        "src/store/": "State management (Zustand stores)",
+        "src/utils/": "Frontend utility functions",
+        "src/styles/": "Styling and theme files",
+        "src/i18n/": "Internationalization files",
+        "backend/": "Python FastAPI backend",
+        "backend/core/": "Core business logic",
+        "backend/api/": "API route handlers",
+        "backend/models/": "Data models and schemas",
+        "backend/services/": "Business service layer",
+        "backend/utils/": "Backend utility functions",
+        "core/": "Shared Python processing logic",
+        "tools/": "Development and utility scripts",
+        "config/": "Configuration files",
+        "docs/": "Documentation",
+        "tests/": "Test files",
+        "tests/unit/": "Unit tests",
+        "tests/integration/": "Integration tests",
+        "tests/e2e/": "End-to-end tests",
+        "scripts/": "Build and deployment scripts",
+        "public/": "Static assets for frontend",
+        "data/": "Data files (with .gitkeep only)",
+        "logs/": "Log files (with .gitkeep only)",
+        "temp/": "Temporary files (with .gitkeep only)"
+      },
+      "benefits": [
+        "Clear separation of frontend, backend, and desktop concerns",
+        "Scalable component organization",
+        "Proper separation of business logic and API layers",
+        "Organized testing structure",
+        "Clear data flow and state management"
+      ]
+    },
+    "file_relocations": [
+      {
+        "current_path": "organizar_projeto.py",
+        "proposed_path": "tools/organizar_projeto.py",
+        "reason": "Python scripts should be organized in tools/ directory",
+        "priority": "medium"
+      },
+      {
+        "current_path": "simple-test.html",
+        "proposed_path": "tests/debug/simple-test.html",
+        "reason": "Test and debug files should be in tests/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\atomically\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\boolean\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\call-bind-apply-helpers\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\crc-32\\types\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\define-data-property\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\dunder-proto\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\es-define-property\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\es-errors\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\es-object-atoms\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\es-set-tostringtag\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\get-proto\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\gopd\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\has-symbols\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\has-tostringtag\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\hasown\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\i18next-browser-languagedetector\\tsconfig.nonEsModuleInterop.json",
+        "proposed_path": "config/tsconfig.nonEsModuleInterop.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\math-intrinsics\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\react-dropzone\\typings\\tests\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\read-config-file\\node_modules\\dotenv\\types\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\tsconfig.json",
+        "proposed_path": "config/tsconfig.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.base.json",
+        "proposed_path": "config/tsconfig.base.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.cjs.json",
+        "proposed_path": "config/tsconfig.cjs.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.cjs.spec.json",
+        "proposed_path": "config/tsconfig.cjs.spec.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.esm.json",
+        "proposed_path": "config/tsconfig.esm.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.esm5.json",
+        "proposed_path": "config/tsconfig.esm5.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.esm5.rollup.json",
+        "proposed_path": "config/tsconfig.esm5.rollup.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.types.json",
+        "proposed_path": "config/tsconfig.types.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\rxjs\\src\\tsconfig.types.spec.json",
+        "proposed_path": "config/tsconfig.types.spec.json",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      },
+      {
+        "current_path": "node_modules\\tmp-promise\\.circleci\\config.yml",
+        "proposed_path": "config/config.yml",
+        "reason": "Configuration files should be centralized in config/ directory",
+        "priority": "low"
+      }
+    ],
+    "directory_consolidations": [
+      {
+        "type": "testing_consolidation",
+        "directories": [
+          "tests",
+          "test_data"
+        ],
+        "proposed_location": "testing/",
+        "reason": "Multiple testing directories could be consolidated",
+        "priority": "medium"
+      },
+      {
+        "type": "utilities_consolidation",
+        "directories": [
+          "scripts\\utils",
+          "src\\utils"
+        ],
+        "proposed_location": "utilities/",
+        "reason": "Multiple utilities directories could be consolidated",
+        "priority": "medium"
+      }
+    ],
+    "naming_improvements": [
+      {
+        "type": "file_naming_consistency",
+        "issue": "Multiple naming conventions detected",
+        "current_patterns": {
+          "lowercase": 36,
+          "kebab_case": 11,
+          "snake_case": 326,
+          "camelCase": 47
+        },
+        "recommendation": "Standardize on snake_case for Python files, camelCase for React components",
+        "priority": "low"
+      }
+    ],
+    "new_directories": [
+      {
+        "path": "backend/models",
+        "description": "Data models and schemas",
+        "reason": "Standard directory for project type",
+        "priority": "medium"
+      },
+      {
+        "path": "backend/services",
+        "description": "Business service layer",
+        "reason": "Standard directory for project type",
+        "priority": "medium"
+      }
+    ],
+    "cleanup_suggestions": [
+      {
+        "type": "remove_empty_directories",
+        "directories": [
+          "cache\\ai_mappings",
+          "config\\examples",
+          "scripts\\automation",
+          "scripts\\utils",
+          "tests\\debug",
+          "tests\\unit",
+          "test_data"
+        ],
+        "reason": "Empty directories add no value and clutter the structure",
+        "priority": "low"
+      }
+    ],
+    "migration_plan": {
+      "phases": [
+        {
+          "phase": 1,
+          "name": "Preparation",
+          "description": "Create backup and prepare for reorganization",
+          "steps": [
+            "Create full project backup",
+            "Commit all current changes to version control",
+            "Create new directory structure",
+            "Update .gitignore if necessary"
+          ],
+          "estimated_time": "15 minutes"
+        },
+        {
+          "phase": 2,
+          "name": "Directory Creation",
+          "description": "Create new directories according to recommended structure",
+          "steps": [
+            "Create missing standard directories",
+            "Set up proper directory hierarchy",
+            "Add .gitkeep files to empty directories"
+          ],
+          "estimated_time": "10 minutes"
+        },
+        {
+          "phase": 3,
+          "name": "File Relocation",
+          "description": "Move files to their new locations",
+          "steps": [
+            "Move configuration files to config/",
+            "Relocate utility scripts to tools/",
+            "Organize test files in tests/",
+            "Update import statements and references"
+          ],
+          "estimated_time": "30 minutes"
+        },
+        {
+          "phase": 4,
+          "name": "Cleanup",
+          "description": "Clean up old structure and validate changes",
+          "steps": [
+            "Remove empty directories",
+            "Update documentation",
+            "Test application functionality",
+            "Update build scripts and paths"
+          ],
+          "estimated_time": "20 minutes"
+        }
+      ],
+      "total_estimated_time": "75 minutes",
+      "prerequisites": [
+        "Version control system (Git) available",
+        "No uncommitted changes",
+        "Backup storage available",
+        "Development environment ready for testing"
+      ],
+      "risks": [
+        "Import path changes may break functionality",
+        "Build scripts may need updates",
+        "IDE configurations may need adjustment"
+      ]
+    }
+  },
+  "summary": {
+    "project_overview": {
+      "name": "",
+      "type": "electron, react, python, fastapi, salesforce, ai_ml",
+      "size_mb": 3.12,
+      "total_files": 420,
+      "total_directories": 49
+    },
+    "organization_score": {
+      "modularity": 100.0,
+      "issues_count": 3,
+      "overall_rating": "Good"
+    },
+    "key_findings": [
+      "Multi-tier architecture detected: react, vite, mui, axios, i18next, zustand, lottie frontend with pandas backend",
+      "Well-organized project structure with good separation of concerns",
+      "Primary file type: data (108 files)"
+    ],
+    "priority_actions": [
+      {
+        "action": "Resolve large_directories",
+        "description": "Large directories detected (6 directories)",
+        "priority": "medium",
+        "estimated_effort": "low"
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "category": "Documentation",
+      "title": "Create Project Documentation",
+      "description": "Add comprehensive README and documentation structure",
+      "benefits": [
+        "Better project understanding",
+        "Easier collaboration",
+        "Professional presentation"
+      ],
+      "effort": "medium"
+    }
+  ]
+}

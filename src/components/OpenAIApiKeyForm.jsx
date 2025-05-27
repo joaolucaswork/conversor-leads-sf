@@ -16,10 +16,15 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeySet, setIsKeySet] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState('');
 
   const checkForKeyPresence = async () => {
     try {
-      const storedKey = await window.electronAPI.getStoreValue('openai_api_key');
+      // Use the dedicated OpenAI API key function if available, fallback to general store
+      const storedKey = window.electronAPI.getOpenAIApiKey
+        ? await window.electronAPI.getOpenAIApiKey()
+        : await window.electronAPI.getStoreValue('openai_api_key');
       setIsKeySet(!!storedKey);
     } catch (err) {
       console.error('Error checking for OpenAI API key presence:', err);
@@ -62,7 +67,18 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
     setSuccess('');
     setIsLoading(true);
     try {
-      await window.electronAPI.setStoreValue('openai_api_key', apiKey.trim());
+      // Check if we're in browser mode
+      if (!window.electronAPI || (!window.electronAPI.setOpenAIApiKey && !window.electronAPI.setStoreValue)) {
+        throw new Error('API key storage is not available in browser mode. Please use the Electron desktop application.');
+      }
+
+      // Use the dedicated OpenAI API key function if available, fallback to general store
+      if (window.electronAPI.setOpenAIApiKey) {
+        await window.electronAPI.setOpenAIApiKey(apiKey.trim());
+      } else {
+        await window.electronAPI.setStoreValue('openai_api_key', apiKey.trim());
+      }
+
       setSuccess('OpenAI API Key saved successfully!');
       setApiKey(''); // Clear the input field
       setFieldError(''); // Clear field error on successful save
@@ -72,7 +88,7 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
       }
     } catch (err) {
       console.error('Error saving OpenAI API key:', err);
-      setGeneralError('Failed to save API Key. Check console for details.');
+      setGeneralError(err.message || 'Failed to save API Key. Check console for details.');
     } finally {
       setIsLoading(false);
     }
@@ -82,9 +98,15 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
     setGeneralError('');
     setFieldError('');
     setSuccess('');
+    setTestResult('');
     setIsLoading(true);
     try {
-      await window.electronAPI.setStoreValue('openai_api_key', null); // Or deleteStoreValue if implemented
+      // Use the dedicated OpenAI API key function if available, fallback to general store
+      if (window.electronAPI.setOpenAIApiKey) {
+        await window.electronAPI.setOpenAIApiKey(null);
+      } else {
+        await window.electronAPI.setStoreValue('openai_api_key', null);
+      }
       setSuccess('OpenAI API Key cleared successfully!');
       setIsKeySet(false);
       setApiKey('');
@@ -93,6 +115,64 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
       setGeneralError('Failed to clear API Key. Check console for details.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTestApiKey = async () => {
+    setIsTesting(true);
+    setTestResult('');
+    setGeneralError('');
+
+    try {
+      // Check if we're in browser mode
+      if (!window.electronAPI || !window.electronAPI.executePythonScript) {
+        throw new Error('API key testing is not available in browser mode. Please use the Electron desktop application.');
+      }
+
+      // Execute a simple Python script to test the OpenAI API key
+      const result = await window.electronAPI.executePythonScript(
+        'tests/test_openai_connection.py',
+        [],
+        {}
+      );
+
+      if (result.success) {
+        if (result.stdout.includes('[SUCCESS] OpenAI API connection successful')) {
+          setTestResult('✅ OpenAI API Key is working correctly!');
+        } else if (result.stdout.includes('[WARNING] OpenAI API key not found')) {
+          setTestResult('⚠️ No API key found. Please save your API key first.');
+        } else if (result.stdout.includes('[ERROR] OpenAI package not installed')) {
+          setTestResult('❌ OpenAI package not installed. Please run: pip install openai');
+        } else if (result.stdout.includes('[ERROR] OpenAI API authentication failed')) {
+          setTestResult('❌ API key is invalid. Please check your OpenAI API key.');
+        } else if (result.stdout.includes('[WARNING] OpenAI API rate limit exceeded')) {
+          setTestResult('⚠️ API key is valid but rate limited. Try again later.');
+        } else {
+          setTestResult('⚠️ API key test completed but with unexpected results. Check console for details.');
+          console.log('Test output:', result.stdout);
+          console.log('Test stderr:', result.stderr);
+        }
+      } else {
+        // Handle failed test cases
+        if (result.stdout && result.stdout.includes('❌')) {
+          // Extract the error message from stdout
+          const lines = result.stdout.split('\n');
+          const errorLine = lines.find(line => line.includes('❌'));
+          setTestResult(errorLine || '❌ API key test failed');
+        } else if (result.error && result.error.includes('Python script not found')) {
+          setTestResult('❌ Test script not found. Please ensure the application is properly installed.');
+        } else if (result.error && result.error.includes('Python interpreter not found')) {
+          setTestResult('❌ Python not found. Please install Python and ensure it\'s in your PATH.');
+        } else {
+          setTestResult('❌ API key test failed. Check console for details.');
+          console.log('Test failed:', result);
+        }
+      }
+    } catch (err) {
+      console.error('Error testing OpenAI API key:', err);
+      setGeneralError(err.message || 'Failed to test API Key. Check console for details.');
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -131,25 +211,43 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
         autoComplete="off"
         disabled={isLoading}
       />
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1, flexWrap: 'wrap' }}>
         {isKeySet && (
-          <Button 
-            onClick={handleClearKey} 
-            disabled={isLoading} 
-            color="warning"
-            sx={{ mr: 1 }}
-          >
-            Clear Stored Key
-          </Button>
+          <>
+            <Button
+              onClick={handleClearKey}
+              disabled={isLoading}
+              color="warning"
+            >
+              Clear Stored Key
+            </Button>
+            <Button
+              onClick={handleTestApiKey}
+              disabled={isTesting || isLoading}
+              color="info"
+              variant="outlined"
+            >
+              {isTesting ? 'Testing...' : 'Test Key'}
+            </Button>
+          </>
         )}
-        <Button 
-          onClick={handleSaveKey} 
-          variant="contained" 
+        <Button
+          onClick={handleSaveKey}
+          variant="contained"
           disabled={isLoading || !!fieldError || !apiKey.trim()} // Disable if field error or empty
         >
           {isLoading ? 'Saving...' : 'Save API Key'}
         </Button>
       </Box>
+
+      {/* Test Result Display */}
+      {testResult && (
+        <Box sx={{ mt: 2 }}>
+          <Alert severity={testResult.includes('✅') ? 'success' : 'warning'}>
+            {testResult}
+          </Alert>
+        </Box>
+      )}
     </Box>
   );
 };

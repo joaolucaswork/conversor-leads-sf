@@ -5,22 +5,13 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore(state => ({
+  const { isAuthenticated, isLoading } = useAuthStore(state => ({
     isAuthenticated: state.isAuthenticated,
     isLoading: state.isLoading,
-    initializeAuth: state.initializeAuth,
   }));
   const location = useLocation();
 
-  useEffect(() => {
-    // Call initializeAuth only if it hasn't been called or if loading state is true by default
-    // This ensures that on first load of any protected route, auth state is checked.
-    // The authStore itself should prevent multiple initializations if not needed.
-    if (isLoading) { // Assuming isLoading is true before initializeAuth completes
-        console.log('ProtectedRoute: Initializing auth state...');
-        initializeAuth();
-    }
-  }, [initializeAuth, isLoading]);
+  // Remove the duplicate initialization call - App.jsx already handles this
 
   if (isLoading) {
     // Show a loading spinner while checking auth status

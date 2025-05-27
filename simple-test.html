@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple OAuth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; background: #0176d3; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #014486; }
+        .output { background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #0176d3; }
+        .error { border-left-color: #d73527; color: #d73527; }
+        .success { border-left-color: #04844b; color: #04844b; }
+        .warning { border-left-color: #ffb75d; color: #b7750a; }
+        h1 { color: #0176d3; }
+        h2 { color: #333; margin-top: 30px; }
+        .status { font-weight: bold; font-size: 18px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Salesforce OAuth Integration Test</h1>
+        
+        <div class="status" id="status">🔄 Initializing tests...</div>
+        
+        <h2>Quick Tests</h2>
+        <button onclick="testBasicAPI()">Test Basic API</button>
+        <button onclick="testAuthURL()">Test Auth URL</button>
+        <button onclick="startOAuthFlow()">🚀 Start OAuth Flow</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const icons = { info: '🔄', success: '✅', error: '❌', warning: '⚠️' };
+            status.innerHTML = `${icons[type]} ${message}`;
+            status.className = `status ${type}`;
+        }
+
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `output ${type}`;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            results.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            testResults = [];
+        }
+
+        async function testBasicAPI() {
+            addResult('🔍 Testing basic Electron API availability...');
+            
+            if (typeof window.electronAPI === 'undefined') {
+                addResult('❌ window.electronAPI is not available - preload script may not be working', 'error');
+                updateStatus('API not available', 'error');
+                return false;
+            }
+            
+            addResult('✅ window.electronAPI is available', 'success');
+            
+            const methods = Object.keys(window.electronAPI);
+            addResult(`📋 Available methods: ${methods.join(', ')}`);
+            
+            // Test store functions
+            try {
+                await window.electronAPI.setStoreValue('test-timestamp', Date.now());
+                const value = await window.electronAPI.getStoreValue('test-timestamp');
+                addResult(`✅ Store functions working - test value: ${value}`, 'success');
+            } catch (error) {
+                addResult(`❌ Store functions failed: ${error.message}`, 'error');
+                return false;
+            }
+            
+            updateStatus('Basic API tests passed', 'success');
+            return true;
+        }
+
+        async function testAuthURL() {
+            addResult('🔗 Testing Salesforce Auth URL generation...');
+            
+            if (!window.electronAPI || !window.electronAPI.getSalesforceAuthUrl) {
+                addResult('❌ getSalesforceAuthUrl method not available', 'error');
+                return false;
+            }
+            
+            try {
+                const authUrl = await window.electronAPI.getSalesforceAuthUrl();
+                
+                if (!authUrl) {
+                    addResult('❌ Auth URL is null or empty', 'error');
+                    return false;
+                }
+                
+                addResult('✅ Auth URL generated successfully', 'success');
+                addResult(`🔗 URL: ${authUrl.substring(0, 100)}...`);
+                
+                // Check PKCE parameters
+                const url = new URL(authUrl);
+                const codeChallenge = url.searchParams.get('code_challenge');
+                const challengeMethod = url.searchParams.get('code_challenge_method');
+                
+                if (codeChallenge) {
+                    addResult('✅ PKCE code_challenge parameter found', 'success');
+                } else {
+                    addResult('❌ PKCE code_challenge parameter missing', 'error');
+                    return false;
+                }
+                
+                if (challengeMethod === 'S256') {
+                    addResult('✅ PKCE method S256 confirmed', 'success');
+                } else {
+                    addResult(`❌ PKCE method incorrect: ${challengeMethod}`, 'error');
+                    return false;
+                }
+                
+                // Check redirect URI
+                const redirectUri = url.searchParams.get('redirect_uri');
+                if (redirectUri && redirectUri.includes('localhost:5173')) {
+                    addResult('✅ Redirect URI uses correct port (5173)', 'success');
+                } else {
+                    addResult(`❌ Redirect URI incorrect: ${redirectUri}`, 'error');
+                    return false;
+                }
+                
+                updateStatus('Auth URL tests passed - PKCE working!', 'success');
+                return true;
+                
+            } catch (error) {
+                addResult(`❌ Auth URL generation failed: ${error.message}`, 'error');
+                updateStatus('Auth URL test failed', 'error');
+                return false;
+            }
+        }
+
+        async function startOAuthFlow() {
+            addResult('🚀 Starting complete OAuth flow...');
+            
+            // First ensure basic tests pass
+            const basicOk = await testBasicAPI();
+            if (!basicOk) {
+                addResult('❌ Basic API tests failed, cannot proceed with OAuth', 'error');
+                return;
+            }
+            
+            const authUrlOk = await testAuthURL();
+            if (!authUrlOk) {
+                addResult('❌ Auth URL tests failed, cannot proceed with OAuth', 'error');
+                return;
+            }
+            
+            try {
+                const authUrl = await window.electronAPI.getSalesforceAuthUrl();
+                addResult('🌐 Opening Salesforce authentication window...', 'warning');
+                addResult('👆 Please complete the login in the popup window', 'warning');
+                
+                // Open the auth window
+                window.electronAPI.sendSalesforceOpenAuthWindow(authUrl);
+                
+                updateStatus('OAuth flow started - check popup window', 'warning');
+                
+            } catch (error) {
+                addResult(`❌ Failed to start OAuth flow: ${error.message}`, 'error');
+                updateStatus('OAuth flow failed', 'error');
+            }
+        }
+
+        // Setup OAuth event listeners
+        function setupOAuthListeners() {
+            if (window.electronAPI && window.electronAPI.onSalesforceOAuthCallback) {
+                window.electronAPI.onSalesforceOAuthCallback(async (code) => {
+                    addResult(`🎉 OAuth callback received! Code: ${code.substring(0, 20)}...`, 'success');
+                    
+                    try {
+                        addResult('🔄 Exchanging code for access token...', 'warning');
+                        const result = await window.electronAPI.salesforceExchangeCode(code);
+                        
+                        if (result && result.success) {
+                            addResult('✅ Token exchange successful!', 'success');
+                            addResult(`🏢 Instance URL: ${result.data.instanceUrl}`, 'success');
+                            addResult('🎊 OAuth flow completed successfully!', 'success');
+                            updateStatus('OAuth authentication successful!', 'success');
+                        } else {
+                            addResult(`❌ Token exchange failed: ${result?.error || 'Unknown error'}`, 'error');
+                            updateStatus('Token exchange failed', 'error');
+                        }
+                    } catch (error) {
+                        addResult(`❌ Error during token exchange: ${error.message}`, 'error');
+                        updateStatus('Token exchange error', 'error');
+                    }
+                });
+                
+                window.electronAPI.onSalesforceOAuthError((errorDetails) => {
+                    addResult(`❌ OAuth error: ${errorDetails.error_description || errorDetails.error}`, 'error');
+                    updateStatus('OAuth authentication failed', 'error');
+                });
+                
+                addResult('✅ OAuth event listeners setup successfully', 'success');
+            } else {
+                addResult('❌ OAuth event listeners could not be setup', 'error');
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            updateStatus('Initializing OAuth test interface...', 'info');
+            
+            setTimeout(() => {
+                setupOAuthListeners();
+                addResult('🏁 OAuth test interface ready!', 'success');
+                addResult('👆 Click "Test Basic API" to start testing', 'info');
+                updateStatus('Ready for testing', 'success');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

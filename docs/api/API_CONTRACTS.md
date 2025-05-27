@@ -4,9 +4,10 @@ This document outlines the proposed API contracts for communication between the 
 
 ## General Considerations
 
-*   **Base URL:** All endpoints are prefixed with `/api/v1`.
-*   **Authentication:** All endpoints are expected to be protected and require an `Authorization: Bearer <token>` header. The nature of the `<token>` (e.g., forwarded Salesforce access token, dedicated backend API key) will be defined by the backend's security architecture.
-*   **Error Responses:** All error responses (4xx, 5xx) should follow a consistent JSON structure:
+* **Base URL:** All endpoints are prefixed with `/api/v1`.
+* **Authentication:** All endpoints are expected to be protected and require an `Authorization: Bearer <token>` header. The nature of the `<token>` (e.g., forwarded Salesforce access token, dedicated backend API key) will be defined by the backend's security architecture.
+* **Error Responses:** All error responses (4xx, 5xx) should follow a consistent JSON structure:
+
     ```json
     {
       "error": {
@@ -16,23 +17,25 @@ This document outlines the proposed API contracts for communication between the 
       }
     }
     ```
-*   **Content Type:** Unless otherwise specified (e.g., file uploads/downloads), requests and responses should use `application/json`.
+
+* **Content Type:** Unless otherwise specified (e.g., file uploads/downloads), requests and responses should use `application/json`.
 
 ## API Endpoints
 
 ### 1. File Upload
 
-*   **Endpoint:** `/leads/upload`
-*   **Method:** `POST`
-*   **Description:** Uploads an Excel or CSV file containing lead data for processing.
-*   **Request:**
-    *   `Content-Type: multipart/form-data`
-    *   Body:
-        *   `file`: The lead data file (e.g., `leads.xlsx`, `contacts.csv`).
-        *   `useAiEnhancement` (optional boolean, defaults to true): Specifies if AI processing should be used.
-        *   `aiModelPreference` (optional string, e.g., "gpt-4", "gpt-3.5-turbo"): User's preferred AI model if applicable.
-*   **Response (Success - 202 Accepted):**
+* **Endpoint:** `/leads/upload`
+* **Method:** `POST`
+* **Description:** Uploads an Excel or CSV file containing lead data for processing.
+* **Request:**
+  * `Content-Type: multipart/form-data`
+  * Body:
+    * `file`: The lead data file (e.g., `leads.xlsx`, `contacts.csv`).
+    * `useAiEnhancement` (optional boolean, defaults to true): Specifies if AI processing should be used.
+    * `aiModelPreference` (optional string, e.g., "gpt-4", "gpt-3.5-turbo"): User's preferred AI model if applicable.
+* **Response (Success - 202 Accepted):**
     Indicates the file has been received and processing has been queued.
+
     ```json
     {
       "processingId": "unique_processing_job_id_string_generated_by_backend",
@@ -42,20 +45,22 @@ This document outlines the proposed API contracts for communication between the 
       "previewUrl": "/api/v1/leads/preview/unique_processing_job_id_string_generated_by_backend" // URL to check for initial mapping preview
     }
     ```
-*   **Response (Error):**
-    *   `400 Bad Request`: Missing file, invalid parameters.
-    *   `413 Payload Too Large`: File exceeds size limits.
-    *   `415 Unsupported Media Type`: File is not a supported type (Excel/CSV).
-    *   `500 Internal Server Error`: Backend error during initial acceptance.
+
+* **Response (Error):**
+  * `400 Bad Request`: Missing file, invalid parameters.
+  * `413 Payload Too Large`: File exceeds size limits.
+  * `415 Unsupported Media Type`: File is not a supported type (Excel/CSV).
+  * `500 Internal Server Error`: Backend error during initial acceptance.
 
 ### 2. Processing Status
 
-*   **Endpoint:** `/leads/status/{processingId}`
-*   **Method:** `GET`
-*   **Description:** Fetches the real-time status, progress, and current stage of a specific lead processing job.
-*   **Request Parameters:**
-    *   `processingId` (in path): The unique ID of the processing job.
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/leads/status/{processingId}`
+* **Method:** `GET`
+* **Description:** Fetches the real-time status, progress, and current stage of a specific lead processing job.
+* **Request Parameters:**
+  * `processingId` (in path): The unique ID of the processing job.
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "processingId": "unique_processing_job_id_string",
@@ -69,22 +74,24 @@ This document outlines the proposed API contracts for communication between the 
         "totalRows": 2000,
         "warnings": 5 // Number of non-critical issues found so far
       },
-      "resultUrl": "/api/v1/leads/results/unique_processing_job_id_string", // Available when status is "completed" or "partial_success"
+      "resultUrl": "/leads/download/unique_processing_job_id_string", // Available when status is "completed" or "partial_success"
       "previewUrl": "/api/v1/leads/preview/unique_processing_job_id_string" // Still available if review is pending or for completed jobs
     }
     ```
-*   **Response (Error):**
-    *   `404 Not Found`: `processingId` does not exist.
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `404 Not Found`: `processingId` does not exist.
+  * `500 Internal Server Error`.
 
 ### 3. AI Field Mapping Visualization / Data Preview
 
-*   **Endpoint:** `/leads/preview/{processingId}`
-*   **Method:** `GET`
-*   **Description:** Retrieves AI-suggested field mappings, confidence scores, and a preview of the transformed data. This is typically available after an initial processing stage and before final confirmation (if user review is enabled).
-*   **Request Parameters:**
-    *   `processingId` (in path): The unique ID of the processing job.
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/leads/preview/{processingId}`
+* **Method:** `GET`
+* **Description:** Retrieves AI-suggested field mappings, confidence scores, and a preview of the transformed data. This is typically available after an initial processing stage and before final confirmation (if user review is enabled).
+* **Request Parameters:**
+  * `processingId` (in path): The unique ID of the processing job.
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "processingId": "unique_processing_job_id_string",
@@ -110,18 +117,20 @@ This document outlines the proposed API contracts for communication between the 
       "availableSalesforceFields": ["Lead.FirstName", "Lead.LastName", "Lead.Email", "Lead.Company", "Lead.Phone", "Lead.Description", "Account.Name", "Lead.CustomNotes__c", "..."] // List of target SF fields
     }
     ```
-*   **Response (Error):**
-    *   `404 Not Found`: `processingId` does not exist or preview is not yet available.
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `404 Not Found`: `processingId` does not exist or preview is not yet available.
+  * `500 Internal Server Error`.
 
 ### 4. Confirm Processing / Update Mappings
 
-*   **Endpoint:** `/leads/process/{processingId}/confirm`
-*   **Method:** `POST`
-*   **Description:** Allows the user to confirm or update the AI-suggested field mappings and then proceed with the full data processing.
-*   **Request Parameters:**
-    *   `processingId` (in path): The unique ID of the processing job.
-*   **Request Body:**
+* **Endpoint:** `/leads/process/{processingId}/confirm`
+* **Method:** `POST`
+* **Description:** Allows the user to confirm or update the AI-suggested field mappings and then proceed with the full data processing.
+* **Request Parameters:**
+  * `processingId` (in path): The unique ID of the processing job.
+* **Request Body:**
+
     ```json
     {
       "confirmedMappings": [ // Send only fields that are being confirmed or overridden by the user
@@ -132,7 +141,9 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Success - 200 OK):**
+
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "processingId": "unique_processing_job_id_string",
@@ -140,42 +151,45 @@ This document outlines the proposed API contracts for communication between the 
       "statusUrl": "/api/v1/leads/status/unique_processing_job_id_string"
     }
     ```
-*   **Response (Error):**
-    *   `400 Bad Request`: Invalid mapping data provided.
-    *   `404 Not Found`: `processingId` does not exist.
-    *   `409 Conflict`: Processing job is not in a state that allows confirmation (e.g., already completed or failed).
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `400 Bad Request`: Invalid mapping data provided.
+  * `404 Not Found`: `processingId` does not exist.
+  * `409 Conflict`: Processing job is not in a state that allows confirmation (e.g., already completed or failed).
+  * `500 Internal Server Error`.
 
 ### 5. Download Processed File
 
-*   **Endpoint:** `/leads/results/{processingId}/download`
-*   **Method:** `GET`
-*   **Description:** Downloads the processed lead file, typically a CSV ready for Salesforce import.
-*   **Request Parameters:**
-    *   `processingId` (in path): The unique ID of the processing job.
-*   **Response (Success - 200 OK):**
-    *   `Content-Type`: `text/csv` (or `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` if Excel output is supported)
-    *   `Content-Disposition`: `attachment; filename="salesforce_ready_leads_processingId.csv"`
-    *   Body: The raw file content.
-*   **Response (Error):**
-    *   `404 Not Found`: `processingId` does not exist or results are not available.
-    *   `410 Gone`: Results may have expired based on retention policy.
-    *   `500 Internal Server Error`.
+* **Endpoint:** `/leads/download/{processingId}`
+* **Method:** `GET`
+* **Description:** Downloads the processed lead file, typically a CSV ready for Salesforce import.
+* **Request Parameters:**
+  * `processingId` (in path): The unique ID of the processing job.
+* **Response (Success - 200 OK):**
+  * `Content-Type`: `text/csv` (or `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` if Excel output is supported)
+  * `Content-Disposition`: `attachment; filename="processed_filename.csv"`
+  * Body: The raw file content.
+* **Response (Error):**
+  * `404 Not Found`: `processingId` does not exist or results are not available.
+  * `400 Bad Request`: File processing not completed.
+  * `404 Not Found`: Processed file not found on disk.
+  * `500 Internal Server Error`.
 
 ### 6. Processing History
 
-*   **Endpoint:** `/leads/history`
-*   **Method:** `GET`
-*   **Description:** Fetches a paginated list of past lead processing jobs for the authenticated user.
-*   **Request Query Parameters:**
-    *   `page` (optional, integer, default: 1): For pagination.
-    *   `limit` (optional, integer, default: 10): Number of items per page.
-    *   `sortBy` (optional, string, default: `uploadedAt`): Field to sort by (e.g., `uploadedAt`, `fileName`, `status`).
-    *   `sortOrder` (optional, string, default: `desc`): `asc` or `desc`.
-    *   `statusFilter` (optional, string): Filter by status (e.g., "completed", "failed").
-    *   `dateFrom` (optional, string, ISO 8601 format): Filter jobs uploaded from this date.
-    *   `dateTo` (optional, string, ISO 8601 format): Filter jobs uploaded up to this date.
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/leads/history`
+* **Method:** `GET`
+* **Description:** Fetches a paginated list of past lead processing jobs for the authenticated user.
+* **Request Query Parameters:**
+  * `page` (optional, integer, default: 1): For pagination.
+  * `limit` (optional, integer, default: 10): Number of items per page.
+  * `sortBy` (optional, string, default: `uploadedAt`): Field to sort by (e.g., `uploadedAt`, `fileName`, `status`).
+  * `sortOrder` (optional, string, default: `desc`): `asc` or `desc`.
+  * `statusFilter` (optional, string): Filter by status (e.g., "completed", "failed").
+  * `dateFrom` (optional, string, ISO 8601 format): Filter jobs uploaded from this date.
+  * `dateTo` (optional, string, ISO 8601 format): Filter jobs uploaded up to this date.
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "pagination": {
@@ -193,7 +207,7 @@ This document outlines the proposed API contracts for communication between the 
           "recordCount": 1500, // Total records in the input file
           "processedCount": 1498, // Records successfully processed
           "errorCount": 2, // Records that had errors
-          "resultUrl": "/api/v1/leads/results/job_id_1/download", // If applicable
+          "resultUrl": "/leads/download/job_id_1", // If applicable
           "previewUrl": "/api/v1/leads/preview/job_id_1",
           "logsUrl": "/api/v1/leads/history/job_id_1/logs"
         }
@@ -201,18 +215,20 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Error):**
-    *   `400 Bad Request`: Invalid query parameters.
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `400 Bad Request`: Invalid query parameters.
+  * `500 Internal Server Error`.
 
 ### 7. Processing Log Details
 
-*   **Endpoint:** `/leads/history/{processingId}/logs`
-*   **Method:** `GET`
-*   **Description:** Fetches detailed processing logs for a specific historical job.
-*   **Request Parameters:**
-    *   `processingId` (in path): The unique ID of the processing job.
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/leads/history/{processingId}/logs`
+* **Method:** `GET`
+* **Description:** Fetches detailed processing logs for a specific historical job.
+* **Request Parameters:**
+  * `processingId` (in path): The unique ID of the processing job.
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "processingId": "job_id_1",
@@ -226,16 +242,18 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Error):**
-    *   `404 Not Found`: `processingId` does not exist.
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `404 Not Found`: `processingId` does not exist.
+  * `500 Internal Server Error`.
 
 ### 8. Configuration Management - Get AI Settings
 
-*   **Endpoint:** `/config/ai`
-*   **Method:** `GET`
-*   **Description:** Retrieves the current AI processing settings relevant to the user or system defaults.
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/config/ai`
+* **Method:** `GET`
+* **Description:** Retrieves the current AI processing settings relevant to the user or system defaults.
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "aiEnabled": true,
@@ -249,15 +267,17 @@ This document outlines the proposed API contracts for communication between the 
       "aiProvider": "openai" // Could be "azure_openai", "local_model" in future
     }
     ```
-*   **Response (Error):**
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `500 Internal Server Error`.
 
 ### 9. Configuration Management - Update AI Settings
 
-*   **Endpoint:** `/config/ai`
-*   **Method:** `PUT`
-*   **Description:** Updates AI processing settings. The backend should validate these settings.
-*   **Request Body:**
+* **Endpoint:** `/config/ai`
+* **Method:** `PUT`
+* **Description:** Updates AI processing settings. The backend should validate these settings.
+* **Request Body:**
+
     ```json
     {
       "aiEnabled": true,
@@ -270,8 +290,10 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Success - 200 OK):**
+
+* **Response (Success - 200 OK):**
     The updated AI settings object (same structure as GET `/config/ai`).
+
     ```json
     {
       "aiEnabled": true,
@@ -286,16 +308,18 @@ This document outlines the proposed API contracts for communication between the 
       "aiProvider": "openai"
     }
     ```
-*   **Response (Error):**
-    *   `400 Bad Request`: Invalid settings values.
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `400 Bad Request`: Invalid settings values.
+  * `500 Internal Server Error`.
 
 ### 10. Configuration Management - Get Lead Distribution Settings
 
-*   **Endpoint:** `/config/lead-distribution`
-*   **Method:** `GET`
-*   **Description:** Retrieves current lead distribution settings (e.g., rules for assigning leads to Salesforce users/queues).
-*   **Response (Success - 200 OK):**
+* **Endpoint:** `/config/lead-distribution`
+* **Method:** `GET`
+* **Description:** Retrieves current lead distribution settings (e.g., rules for assigning leads to Salesforce users/queues).
+* **Response (Success - 200 OK):**
+
     ```json
     {
       "distributionEnabled": true,
@@ -313,15 +337,17 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Error):**
-    *   `500 Internal Server Error`.
+
+* **Response (Error):**
+  * `500 Internal Server Error`.
 
 ### 11. Configuration Management - Update Lead Distribution Settings
 
-*   **Endpoint:** `/config/lead-distribution`
-*   **Method:** `PUT`
-*   **Description:** Updates lead distribution settings.
-*   **Request Body:** JSON body similar to the GET response structure for `/config/lead-distribution`.
+* **Endpoint:** `/config/lead-distribution`
+* **Method:** `PUT`
+* **Description:** Updates lead distribution settings.
+* **Request Body:** JSON body similar to the GET response structure for `/config/lead-distribution`.
+
     ```json
     {
       "distributionEnabled": true,
@@ -332,10 +358,11 @@ This document outlines the proposed API contracts for communication between the 
       ]
     }
     ```
-*   **Response (Success - 200 OK):** The updated lead distribution settings object.
-*   **Response (Error):**
-    *   `400 Bad Request`: Invalid settings values.
-    *   `500 Internal Server Error`.
+
+* **Response (Success - 200 OK):** The updated lead distribution settings object.
+* **Response (Error):**
+  * `400 Bad Request`: Invalid settings values.
+  * `500 Internal Server Error`.
 
 ---
 

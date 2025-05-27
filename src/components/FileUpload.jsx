@@ -1,16 +1,30 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+import Divider from '@mui/material/Divider';
+import LottieFileIcon from './LottieFileIcon';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import GavelIcon from '@mui/icons-material/Gavel';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import InfoIcon from '@mui/icons-material/Info';
 import { styled } from '@mui/material/styles';
+import { useSettingsStore } from '../store/settingsStore';
 
-const StyledDropzonePaper = styled(Paper)(({ theme, isDragActive, hasError }) => ({
+const StyledDropzonePaper = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'isDragActive' && prop !== 'hasError',
+})(({ theme, isDragActive, hasError }) => ({
   padding: theme.spacing(3),
   textAlign: 'center',
   border: `2px dashed ${hasError ? theme.palette.error.main : (isDragActive ? theme.palette.primary.main : theme.palette.divider)}`,
@@ -32,8 +46,15 @@ const acceptedFileTypes = {
 const maxFileSize = 10 * 1024 * 1024; // 10MB
 
 const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, uploadSuccessMessage }) => {
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileError, setFileError] = useState('');
+  const [useAiEnhancement, setUseAiEnhancement] = useState(true);
+
+  // Get developer mode state
+  const { developerMode } = useSettingsStore(state => ({
+    developerMode: state.developerMode,
+  }));
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     setFileError('');
@@ -71,7 +92,10 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
 
   const handleUpload = () => {
     if (selectedFile) {
-      onFileUpload(selectedFile);
+      // In simplified mode (developer mode disabled), always use AI processing for best quality
+      // but hide the complexity from the user. In developer mode, respect user's choice.
+      const finalUseAi = developerMode ? useAiEnhancement : true;
+      onFileUpload(selectedFile, { useAiEnhancement: finalUseAi });
     } else {
       setFileError('Please select a file to upload.');
     }
@@ -87,14 +111,18 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
     <Box sx={{ width: '100%' }}>
       <StyledDropzonePaper {...getRootProps()} isDragActive={isDragActive} hasError={!!fileError}>
         <input {...getInputProps()} />
-        <InsertDriveFileIcon sx={{ fontSize: 48, mb: 2, color: 'text.secondary' }} />
+        <LottieFileIcon
+          size={72}
+          isDragActive={isDragActive}
+          sx={{ mb: 2 }}
+        />
         {isDragActive ? (
-          <Typography>Drop the file here ...</Typography>
+          <Typography>{t('fileUpload.dropHere')}</Typography>
         ) : (
-          <Typography>Drag & drop a file here, or click the button below</Typography>
+          <Typography>{t('fileUpload.dragDrop')}</Typography>
         )}
         <Button variant="outlined" onClick={open} sx={{ mt: 2 }}>
-          Select File
+          {t('fileUpload.selectFile')}
         </Button>
       </StyledDropzonePaper>
 
@@ -106,17 +134,124 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
 
       {selectedFile && !uploadSuccessMessage && (
         <Paper elevation={1} sx={{ p: 2, mt: 2 }}>
-          <Typography variant="subtitle1">Selected File:</Typography>
-          <Typography variant="body2">Name: {selectedFile.name}</Typography>
-          <Typography variant="body2">Size: {(selectedFile.size / 1024).toFixed(2)} KB</Typography>
-          <Typography variant="body2">Type: {selectedFile.type || 'N/A'}</Typography>
+          <Typography variant="subtitle1">{t('fileUpload.selectedFile')}</Typography>
+          <Typography variant="body2">{t('fileUpload.fileName')} {selectedFile.name}</Typography>
+          <Typography variant="body2">{t('fileUpload.fileSize')} {(selectedFile.size / 1024).toFixed(2)} KB</Typography>
+          <Typography variant="body2">{t('fileUpload.fileType')} {selectedFile.type || 'N/A'}</Typography>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* AI Enhancement Options - Only show in developer mode */}
+          {developerMode && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                <PsychologyIcon sx={{ mr: 1, fontSize: 20 }} />
+                Processing Options
+              </Typography>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useAiEnhancement}
+                    onChange={(e) => setUseAiEnhancement(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2">
+                      AI-Enhanced Processing
+                    </Typography>
+                    <Tooltip title="Uses OpenAI GPT for intelligent field mapping and data validation. More accurate but uses API credits.">
+                      <InfoIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                    </Tooltip>
+                  </Box>
+                }
+              />
+
+              {/* Processing Mode Indicators */}
+              <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {useAiEnhancement ? (
+                  <>
+                    <Chip
+                      icon={<PsychologyIcon />}
+                      label={t('fileUpload.aiEnhanced')}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                    />
+                    <Chip
+                      icon={<AttachMoneyIcon />}
+                      label={t('fileUpload.costEstimate')}
+                      color="warning"
+                      size="small"
+                      variant="outlined"
+                    />
+                  </>
+                ) : (
+                  <Chip
+                    icon={<GavelIcon />}
+                    label={t('fileUpload.ruleBased')}
+                    color="success"
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
+
+              {/* Processing Benefits */}
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {useAiEnhancement ? (
+                    "✓ 90-95% mapping accuracy • ✓ Intelligent validation • ✓ Multi-language support"
+                  ) : (
+                    "✓ Fast processing • ✓ No API costs • ✓ Good for standard formats"
+                  )}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* Simplified processing info when developer mode is disabled */}
+          {!developerMode && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
+                <PsychologyIcon sx={{ mr: 1, fontSize: 20 }} />
+                {t('fileUpload.processingMode')}
+              </Typography>
+              <Chip
+                icon={<PsychologyIcon />}
+                label={t('fileUpload.standardProcessing')}
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                ✓ {t('fileUpload.intelligentMapping')} • ✓ {t('fileUpload.highAccuracy')} • ✓ {t('fileUpload.optimizedResults')}
+              </Typography>
+            </Box>
+          )}
+
           {!isUploading && (
             <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-              <Button variant="contained" color="primary" onClick={handleUpload} disabled={isUploading}>
-                Upload File
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUpload}
+                disabled={isUploading}
+                startIcon={
+                  developerMode
+                    ? (useAiEnhancement ? <PsychologyIcon /> : <GavelIcon />)
+                    : <PsychologyIcon />
+                }
+              >
+                {developerMode
+                  ? (useAiEnhancement ? t('fileUpload.processWithAI') : t('fileUpload.processRuleBased'))
+                  : t('fileUpload.processLeads')
+                }
               </Button>
               <Button variant="outlined" color="secondary" onClick={handleRemoveFile} disabled={isUploading}>
-                Remove
+                {t('fileUpload.remove')}
               </Button>
             </Box>
           )}
@@ -125,21 +260,21 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
 
       {isUploading && (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="body2">Uploading: {uploadProgress.toFixed(2)}%</Typography>
+          <Typography variant="body2">{t('fileUpload.uploadProgress', { progress: uploadProgress.toFixed(2) })}</Typography>
           <LinearProgress variant="determinate" value={uploadProgress} />
         </Box>
       )}
 
       {uploadError && (
          <Alert severity="error" icon={<ErrorIcon />} sx={{ mt: 2 }}>
-          Upload Failed: {uploadError}
+          {t('fileUpload.uploadError', { error: uploadError })}
         </Alert>
       )}
 
       {uploadSuccessMessage && (
         <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
           {uploadSuccessMessage}
-          <Button onClick={handleRemoveFile} size="small" sx={{ ml: 2 }}>Upload Another File</Button>
+          <Button onClick={handleRemoveFile} size="small" sx={{ ml: 2 }}>{t('fileUpload.uploadAnother', { defaultValue: 'Upload Another File' })}</Button>
         </Alert>
       )}
     </Box>

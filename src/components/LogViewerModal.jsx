@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   Typography, Box, CircularProgress, Alert, Paper,
@@ -22,17 +23,19 @@ const getLogLevelColor = (level) => {
   }
 };
 
-const LogViewerModal = ({ isOpen, onClose, logs, isLoading, error, processingId }) => {
+const LogViewerModal = ({ open, onClose, logs, isLoading, error, processingId }) => {
+  const { t } = useTranslation();
+
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="lg" fullWidth scroll="paper">
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth scroll="paper">
       <DialogTitle>
-        Processing Logs for Job ID: {processingId || 'N/A'}
+        {t('history.logsTitle', { defaultValue: 'Processing Logs for Job ID: {{processingId}}', processingId: processingId || 'N/A' })}
       </DialogTitle>
       <DialogContent dividers>
         {isLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100px' }}>
             <CircularProgress />
-            <Typography sx={{ ml: 2 }}>Loading logs...</Typography>
+            <Typography sx={{ ml: 2 }}>{t('history.loadingLogs', { defaultValue: 'Loading logs...' })}</Typography>
           </Box>
         )}
         {error && (
@@ -42,7 +45,7 @@ const LogViewerModal = ({ isOpen, onClose, logs, isLoading, error, processingId 
         )}
         {!isLoading && !error && (!logs || logs.length === 0) && (
           <Typography sx={{ textAlign: 'center', fontStyle: 'italic', mt: 2 }}>
-            No logs available for this processing job.
+            {t('history.noLogs', { defaultValue: 'No logs available for this processing job.' })}
           </Typography>
         )}
         {!isLoading && !error && logs && logs.length > 0 && (
@@ -51,9 +54,9 @@ const LogViewerModal = ({ isOpen, onClose, logs, isLoading, error, processingId 
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '200px', fontWeight: 'bold' }}>Timestamp</TableCell>
-                    <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>Level</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Message</TableCell>
+                    <TableCell sx={{ width: '200px', fontWeight: 'bold' }}>{t('history.timestamp', { defaultValue: 'Timestamp' })}</TableCell>
+                    <TableCell sx={{ width: '100px', fontWeight: 'bold' }}>{t('history.level', { defaultValue: 'Level' })}</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>{t('history.message', { defaultValue: 'Message' })}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -79,7 +82,7 @@ const LogViewerModal = ({ isOpen, onClose, logs, isLoading, error, processingId 
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose}>{t('common.close')}</Button>
       </DialogActions>
     </Dialog>
   );

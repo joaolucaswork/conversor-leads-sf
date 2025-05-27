@@ -14,6 +14,9 @@ import os
 import json
 import logging
 import re
+import hashlib
+import pickle
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -68,6 +71,25 @@ class AIFieldMapper:
             'State/Province', 'OwnerId', 'maisdeMilhao__c'
         ]
 
+        # Initialize caching system
+        self.cache_dir = Path("cache/ai_mappings")
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.mapping_cache = {}
+        self.validation_cache = {}
+        self._load_cache()
+
+        # Initialize API usage tracking
+        self.api_usage_stats = {
+            'total_calls': 0,
+            'mapping_calls': 0,
+            'validation_calls': 0,
+            'total_tokens_used': 0,
+            'estimated_cost': 0.0,
+            'cache_hits': 0,
+            'cache_misses': 0,
+            'ai_skipped': 0
+        }
+
     def _initialize_openai(self):
         """Initialize OpenAI client with API key from environment."""
         api_key = os.getenv('OPENAI_API_KEY')
@@ -77,16 +99,94 @@ class AIFieldMapper:
             return
 
         try:
-            openai.api_key = api_key
-            self.openai_client = openai
+            from openai import OpenAI
+            self.openai_client = OpenAI(api_key=api_key)
             self.logger.info("OpenAI client initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to initialize OpenAI client: {e}")
             self.ai_enabled = False
 
+    def _load_cache(self):
+        """Load cached mappings and validations from disk."""
+        try:
+            mapping_cache_file = self.cache_dir / "mapping_cache.pkl"
+            validation_cache_file = self.cache_dir / "validation_cache.pkl"
+
+            if mapping_cache_file.exists():
+                with open(mapping_cache_file, 'rb') as f:
+                    self.mapping_cache = pickle.load(f)
+                self.logger.info(f"Loaded {len(self.mapping_cache)} cached mappings")
+
+            if validation_cache_file.exists():
+                with open(validation_cache_file, 'rb') as f:
+                    self.validation_cache = pickle.load(f)
+                self.logger.info(f"Loaded {len(self.validation_cache)} cached validations")
+        except Exception as e:
+            self.logger.warning(f"Failed to load cache: {e}")
+            self.mapping_cache = {}
+            self.validation_cache = {}
+
+    def _save_cache(self):
+        """Save cached mappings and validations to disk."""
+        try:
+            mapping_cache_file = self.cache_dir / "mapping_cache.pkl"
+            validation_cache_file = self.cache_dir / "validation_cache.pkl"
+
+            with open(mapping_cache_file, 'wb') as f:
+                pickle.dump(self.mapping_cache, f)
+
+            with open(validation_cache_file, 'wb') as f:
+                pickle.dump(self.validation_cache, f)
+
+            self.logger.debug("Cache saved successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to save cache: {e}")
+
+    def _get_cache_key(self, data: Any) -> str:
+        """Generate a cache key for the given data."""
+        return hashlib.md5(str(data).encode()).hexdigest()
+
+    def _should_use_ai(self, column_names: List[str]) -> bool:
+        """Determine if AI processing is needed based on rule-based confidence."""
+        if not self.ai_enabled or not self.openai_client:
+            return False
+
+        # Check if rule-based mapping can handle most columns with high confidence
+        rule_based_mappings = self._rule_based_mapping(column_names)
+        high_confidence_count = sum(1 for m in rule_based_mappings if m.confidence >= 85.0)
+
+        # Use AI only if less than 80% of columns can be mapped with high confidence
+        confidence_ratio = high_confidence_count / len(column_names) if column_names else 0
+        return confidence_ratio < 0.8
+
+    def _track_api_usage(self, response, call_type: str):
+        """Track API usage statistics and estimated costs."""
+        if hasattr(response, 'usage'):
+            tokens_used = response.usage.total_tokens
+            self.api_usage_stats['total_tokens_used'] += tokens_used
+
+            # Estimate cost (GPT-3.5-turbo pricing: ~$0.002 per 1K tokens)
+            cost_per_token = 0.000002  # $0.002 / 1000 tokens
+            self.api_usage_stats['estimated_cost'] += tokens_used * cost_per_token
+
+        self.api_usage_stats['total_calls'] += 1
+        self.api_usage_stats[f'{call_type}_calls'] += 1
+
+        self.logger.debug(f"API usage - {call_type}: {self.api_usage_stats[f'{call_type}_calls']} calls, "
+                         f"Total tokens: {self.api_usage_stats['total_tokens_used']}, "
+                         f"Estimated cost: ${self.api_usage_stats['estimated_cost']:.4f}")
+
+    def get_api_usage_stats(self) -> Dict[str, Any]:
+        """Get comprehensive API usage statistics."""
+        return {
+            **self.api_usage_stats,
+            'cache_hit_ratio': self.api_usage_stats['cache_hits'] / max(1, self.api_usage_stats['cache_hits'] + self.api_usage_stats['cache_misses']),
+            'ai_skip_ratio': self.api_usage_stats['ai_skipped'] / max(1, self.api_usage_stats['total_calls'] + self.api_usage_stats['ai_skipped'])
+        }
+
     def analyze_columns(self, column_names: List[str], sample_data: Dict[str, List[str]] = None) -> List[FieldMapping]:
         """
-        Analyze column names and suggest mappings to target fields.
+        Analyze column names and suggest mappings to target fields with caching and smart AI usage.
 
         Args:
             column_names: List of source column names
@@ -95,15 +195,34 @@ class AIFieldMapper:
         Returns:
             List of FieldMapping objects with confidence scores
         """
-        if not self.ai_enabled or not self.openai_client:
-            self.logger.info("AI processing disabled, using rule-based mapping")
-            return self._rule_based_mapping(column_names)
+        # Generate cache key for this mapping request
+        cache_key = self._get_cache_key((column_names, list(sample_data.keys()) if sample_data else None))
 
-        try:
-            return self._ai_powered_mapping(column_names, sample_data)
-        except Exception as e:
-            self.logger.error(f"AI mapping failed, falling back to rule-based: {e}")
-            return self._rule_based_mapping(column_names)
+        # Check cache first
+        if cache_key in self.mapping_cache:
+            self.logger.info("Using cached mapping result")
+            self.api_usage_stats['cache_hits'] += 1
+            return self.mapping_cache[cache_key]
+
+        self.api_usage_stats['cache_misses'] += 1
+
+        # Determine if AI is needed
+        if not self._should_use_ai(column_names):
+            self.logger.info("Rule-based mapping sufficient, skipping AI")
+            self.api_usage_stats['ai_skipped'] += 1
+            mappings = self._rule_based_mapping(column_names)
+        else:
+            try:
+                mappings = self._ai_powered_mapping(column_names, sample_data)
+            except Exception as e:
+                self.logger.error(f"AI mapping failed, falling back to rule-based: {e}")
+                mappings = self._rule_based_mapping(column_names)
+
+        # Cache the result
+        self.mapping_cache[cache_key] = mappings
+        self._save_cache()
+
+        return mappings
 
     def _ai_powered_mapping(self, column_names: List[str], sample_data: Dict[str, List[str]] = None) -> List[FieldMapping]:
         """Use AI to analyze and map column names."""
@@ -113,15 +232,19 @@ class AIFieldMapper:
         prompt = self._create_mapping_prompt(column_names, sample_data)
 
         try:
-            response = self.openai_client.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+            response = self.openai_client.chat.completions.create(
+                model=self.config.get('ai_processing', {}).get('model', 'gpt-3.5-turbo'),
                 messages=[
-                    {"role": "system", "content": "You are an expert data analyst specializing in lead data processing and field mapping."},
+                    {"role": "system", "content": "Expert data analyst. Map columns to targets."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                max_tokens=2000
+                max_tokens=min(500, len(column_names) * 50),  # Dynamic token limit
+                stop=["}\n\n", "```"]  # Stop sequences to prevent over-generation
             )
+
+            # Track API usage
+            self._track_api_usage(response, 'mapping')
 
             # Parse the AI response
             ai_response = response.choices[0].message.content
@@ -132,56 +255,21 @@ class AIFieldMapper:
             raise
 
     def _create_mapping_prompt(self, column_names: List[str], sample_data: Dict[str, List[str]] = None) -> str:
-        """Create a detailed prompt for AI field mapping."""
-        prompt = f"""
-Analyze the following column names from a lead/customer data file and map them to the standard target fields.
-
-SOURCE COLUMNS:
-{json.dumps(column_names, indent=2)}
-
-TARGET FIELDS (map to these):
-{json.dumps(self.target_fields, indent=2)}
-
-"""
-
+        """Create an optimized, concise prompt for AI field mapping."""
+        # Build sample data string efficiently
+        sample_str = ""
         if sample_data:
-            prompt += "\nSAMPLE DATA:\n"
-            for col, samples in sample_data.items():
-                if samples:
-                    prompt += f"{col}: {samples[:3]}\n"  # Show first 3 samples
+            sample_str = "\nSamples: " + "; ".join([f"{col}:{samples[0] if samples else 'N/A'}" for col, samples in sample_data.items()])
 
-        prompt += """
-INSTRUCTIONS:
-1. Map each source column to the most appropriate target field
-2. Provide a confidence score (0-100%) for each mapping
-3. Explain your reasoning for each mapping
-4. Suggest any data transformations needed
-5. If no good match exists, suggest "UNMAPPED"
+        prompt = f"""Map columns to targets. Return JSON only.
 
-RESPONSE FORMAT (JSON):
-{
-  "mappings": [
-    {
-      "source_field": "source_column_name",
-      "target_field": "target_field_name_or_UNMAPPED",
-      "confidence": 95.0,
-      "reasoning": "explanation of why this mapping makes sense",
-      "suggested_transformation": "optional transformation description"
-    }
-  ]
-}
+Columns: {column_names}
+Targets: {self.target_fields}{sample_str}
 
-Consider these mapping patterns:
-- Cliente/Customer/Nome/Lead → Last Name
-- Telefone/Phone/Tel/Celular → Phone
-- E-mail/Email → Email
-- Volume/Patrimônio/Financial → Patrimônio Financeiro
-- Estado/State/Province → State/Province
-- Descrição/Description → Description
-- Alias/Owner/Atribuir → OwnerId
+Patterns: Cliente/Nome→Last Name, Telefone→Phone, Email→Email, Volume/Patrimônio→Patrimônio Financeiro, Estado→State/Province, Descrição→Description, Atribuir/Owner→OwnerId
 
-Respond with valid JSON only.
-"""
+JSON format:
+{{"mappings":[{{"source_field":"col","target_field":"target","confidence":95,"reasoning":"brief reason"}}]}}"""
         return prompt
 
     def _parse_ai_mapping_response(self, ai_response: str, column_names: List[str]) -> List[FieldMapping]:
@@ -219,25 +307,37 @@ Respond with valid JSON only.
         """Fallback rule-based mapping when AI is not available."""
         self.logger.info("Using rule-based column mapping")
 
-        # Define mapping rules
+        # Enhanced mapping rules with comprehensive patterns and fuzzy matching
         mapping_rules = {
-            # Name fields
-            r'cliente|customer|nome|name|last.*name|lead': 'Last Name',
-            # Phone fields
-            r'telefone|phone|tel|celular|mobile': 'Phone',
-            r'telefone.*adicional|additional.*phone|phone.*2': 'Telefone Adcional',
+            # Name fields (more comprehensive)
+            r'(cliente|customer|nome|name|last.*name|lead|client|person|pessoa|individual|contato)': 'Last Name',
+
+            # Phone fields (primary phone) - exclude additional phone patterns
+            r'(telefone|phone|tel|celular|mobile|fone|contact)(?!.*(adicional|additional|extra|segundo|second|2))': 'Phone',
+
+            # Additional phone fields
+            r'(telefone.*(adicional|extra|segundo|2)|phone.*(additional|extra|second|2)|tel.*(adicional|extra|2))': 'Telefone Adcional',
+
             # Email fields
-            r'e-?mail|email': 'Email',
-            # Financial fields
-            r'volume|patrimonio|patrimônio|financial|valor|value': 'Patrimônio Financeiro',
-            # Location fields
-            r'estado|state|province|provincia': 'State/Province',
-            # Description fields
-            r'descri[çc][aã]o|description|obs|observa[çc][aã]o': 'Description',
-            # Owner fields
-            r'alias|owner|respons[aá]vel|vendedor|atribuir': 'OwnerId',
-            # Type fields
-            r'tipo|type|categoria|category': 'Tipo'
+            r'(e-?mail|email|correio|electronic.*mail)': 'Email',
+
+            # Financial/wealth fields (expanded)
+            r'(volume|patrimonio|patrimônio|financial|wealth|assets|valor|value|renda|income|capital|money|dinheiro)': 'Patrimônio Financeiro',
+
+            # Location fields (expanded)
+            r'(estado|state|province|provincia|uf|region|regiao|location|local|endereco|address)': 'State/Province',
+
+            # Description fields (expanded)
+            r'(descri[çc][aã]o|description|desc|notes|obs|observa[çc][aã]o|comment|comentario|detalhes|details)': 'Description',
+
+            # Owner/assignment fields (expanded)
+            r'(alias|owner|respons[aá]vel|vendedor|atribuir|assigned|agent|agente|seller|consultor|advisor)': 'OwnerId',
+
+            # Type/category fields (expanded)
+            r'(tipo|type|categoria|category|class|classe|segment|segmento|classification)': 'Tipo',
+
+            # Millionaire flag (new)
+            r'(mais.*milhao|maismilhao|millionaire|million|rico|wealthy|high.*net)': 'maisdeMilhao__c'
         }
 
         mappings = []
@@ -245,10 +345,31 @@ Respond with valid JSON only.
             best_match = None
             best_confidence = 0.0
 
-            col_lower = col_name.lower()
+            col_lower = col_name.lower().strip()
             for pattern, target_field in mapping_rules.items():
-                if re.search(pattern, col_lower):
-                    confidence = 85.0  # High confidence for rule-based matches
+                match = re.search(pattern, col_lower)
+                if match:
+                    # Calculate confidence based on match quality
+                    match_length = len(match.group())
+                    col_length = len(col_lower)
+
+                    # Base confidence for pattern match
+                    confidence = 85.0
+
+                    # Boost confidence for exact or near-exact matches
+                    if match_length / col_length > 0.8:
+                        confidence = 95.0
+                    elif match_length / col_length > 0.6:
+                        confidence = 90.0
+
+                    # Boost confidence for common exact matches
+                    exact_matches = {
+                        'cliente': 'Last Name', 'telefone': 'Phone', 'email': 'Email',
+                        'estado': 'State/Province', 'tipo': 'Tipo', 'alias': 'OwnerId'
+                    }
+                    if col_lower in exact_matches and exact_matches[col_lower] == target_field:
+                        confidence = 98.0
+
                     if confidence > best_confidence:
                         best_match = target_field
                         best_confidence = confidence
@@ -278,7 +399,7 @@ Respond with valid JSON only.
 
     def validate_data_quality(self, field_name: str, data_samples: List[str], target_field: str = None) -> DataValidation:
         """
-        Use AI to validate data quality and suggest improvements.
+        Use AI to validate data quality with caching and smart fallbacks.
 
         Args:
             field_name: Name of the field being validated
@@ -288,14 +409,47 @@ Respond with valid JSON only.
         Returns:
             DataValidation object with issues and suggestions
         """
-        if not self.ai_enabled or not self.openai_client:
-            return self._rule_based_validation(field_name, data_samples, target_field)
+        # Generate cache key for this validation request
+        cache_key = self._get_cache_key((field_name, target_field, tuple(data_samples[:3])))
 
-        try:
-            return self._ai_powered_validation(field_name, data_samples, target_field)
-        except Exception as e:
-            self.logger.error(f"AI validation failed, falling back to rule-based: {e}")
-            return self._rule_based_validation(field_name, data_samples, target_field)
+        # Check cache first
+        if cache_key in self.validation_cache:
+            self.logger.debug(f"Using cached validation for {field_name}")
+            self.api_usage_stats['cache_hits'] += 1
+            return self.validation_cache[cache_key]
+
+        self.api_usage_stats['cache_misses'] += 1
+
+        # Use rule-based validation for simple cases or when AI is disabled
+        if not self.ai_enabled or not self.openai_client or self._should_skip_ai_validation(field_name, target_field):
+            self.api_usage_stats['ai_skipped'] += 1
+            validation = self._rule_based_validation(field_name, data_samples, target_field)
+        else:
+            try:
+                validation = self._ai_powered_validation(field_name, data_samples, target_field)
+            except Exception as e:
+                self.logger.error(f"AI validation failed, falling back to rule-based: {e}")
+                validation = self._rule_based_validation(field_name, data_samples, target_field)
+
+        # Cache the result
+        self.validation_cache[cache_key] = validation
+        self._save_cache()
+
+        return validation
+
+    def _should_skip_ai_validation(self, field_name: str, target_field: str = None) -> bool:
+        """Determine if AI validation can be skipped for simple cases."""
+        # Skip AI for standard fields that rule-based validation handles well
+        simple_fields = ['Phone', 'Email', 'Last Name', 'State/Province']
+        if target_field in simple_fields:
+            return True
+
+        # Skip AI for fields with obvious patterns
+        field_lower = field_name.lower()
+        if any(pattern in field_lower for pattern in ['phone', 'telefone', 'email', 'nome', 'name']):
+            return True
+
+        return False
 
     def _ai_powered_validation(self, field_name: str, data_samples: List[str], target_field: str = None) -> DataValidation:
         """Use AI to validate data quality."""
@@ -304,15 +458,19 @@ Respond with valid JSON only.
         prompt = self._create_validation_prompt(field_name, data_samples, target_field)
 
         try:
-            response = self.openai_client.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+            response = self.openai_client.chat.completions.create(
+                model=self.config.get('ai_processing', {}).get('model', 'gpt-3.5-turbo'),
                 messages=[
-                    {"role": "system", "content": "You are an expert data quality analyst specializing in lead/customer data validation."},
+                    {"role": "system", "content": "Data quality analyst. Validate and suggest fixes."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,
-                max_tokens=1500
+                max_tokens=200,  # Reduced token limit for validation
+                stop=["}\n\n", "```"]  # Stop sequences
             )
+
+            # Track API usage
+            self._track_api_usage(response, 'validation')
 
             ai_response = response.choices[0].message.content
             return self._parse_validation_response(ai_response, field_name, data_samples)
@@ -322,40 +480,15 @@ Respond with valid JSON only.
             raise
 
     def _create_validation_prompt(self, field_name: str, data_samples: List[str], target_field: str = None) -> str:
-        """Create a prompt for AI data validation."""
-        prompt = f"""
-Analyze the following data samples from field "{field_name}" and identify quality issues.
+        """Create an optimized, concise prompt for AI data validation."""
+        prompt = f"""Validate data quality. Return JSON only.
 
-FIELD NAME: {field_name}
-TARGET FIELD: {target_field or "Unknown"}
+Field: {field_name} → {target_field or 'Unknown'}
+Samples: {data_samples[:3]}
 
-DATA SAMPLES:
-{json.dumps(data_samples[:10], indent=2)}
+Check: formats, missing values, patterns, types, encoding
 
-VALIDATION CRITERIA:
-- Check for formatting consistency
-- Identify invalid or suspicious entries
-- Look for missing or incomplete data
-- Validate against expected data types
-- Check for common data entry errors
-
-For specific field types:
-- Phone numbers: Should be numeric, proper length, valid format
-- Emails: Should have valid email format
-- Names: Should be properly capitalized, no numbers/symbols
-- Financial data: Should be numeric, reasonable ranges
-- Addresses/States: Should be valid locations
-
-RESPONSE FORMAT (JSON):
-{{
-  "issues_found": ["list of specific issues identified"],
-  "suggestions": ["list of specific improvement suggestions"],
-  "confidence": 85.0,
-  "data_quality_score": 75.0
-}}
-
-Respond with valid JSON only.
-"""
+JSON: {{"issues_found":["issue"],"suggestions":["fix"],"confidence":85}}"""
         return prompt
 
     def _parse_validation_response(self, ai_response: str, field_name: str, data_samples: List[str]) -> DataValidation:

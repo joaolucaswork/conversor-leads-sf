@@ -1,45 +1,89 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
-// Assuming you will have an authStore
-// import { useAuthStore } from '../store/authStore'; // Adjust path as needed
+import Chip from '@mui/material/Chip';
+import Box from '@mui/material/Box';
+import { electronAPI, isElectron, isBrowser, getEnvironmentInfo } from '../utils/environment';
+import { useAuthStore } from '../store/authStore';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  // const { login, isAuthenticated } = useAuthStore(state => ({ login: state.login, isAuthenticated: state.isAuthenticated }));
+  const { isAuthenticated } = useAuthStore(state => ({
+    isAuthenticated: state.isAuthenticated
+  }));
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // If already authenticated, redirect away from login
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     navigate('/'); // Or to a designated post-login page
-  //   }
-  // }, [isAuthenticated, navigate]);
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/'); // Redirect to home page after successful authentication
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async () => {
     setError(null);
     setLoading(true);
     try {
-      if (!window.electronAPI || !window.electronAPI.salesforceGetAuthUrl || !window.electronAPI.sendSalesforceOpenAuthWindow) {
-        throw new Error('Salesforce API functions are not available. Is preload script working?');
-      }
-      const authUrl = await window.electronAPI.salesforceGetAuthUrl();
-      if (authUrl) {
-        // The main process will open the auth window and handle the callback.
-        // The main window (e.g., App.jsx or authStore) should listen for 'salesforce:oauth-callback' or 'salesforce:oauth-error'.
-        window.electronAPI.sendSalesforceOpenAuthWindow(authUrl);
-        // setLoading(false); // Main process handles the rest of the flow.
-        // Potentially show a message "Authentication window opened..."
+      // Log environment info for debugging
+      console.log('Environment info:', getEnvironmentInfo());
+
+      if (isBrowser()) {
+        // Browser mode - use optimized OAuth flow
+        const { generateBrowserOAuthUrl, openOAuthPopup } = await import('../utils/browserOAuth');
+
+        console.log('Login: Starting browser OAuth flow...');
+        const authUrl = await generateBrowserOAuthUrl();
+
+        if (authUrl) {
+          console.log('Login: Opening OAuth popup...');
+
+          try {
+            // Open popup and wait for result
+            const tokenData = await openOAuthPopup(authUrl);
+
+            console.log('Login: OAuth popup completed successfully');
+
+            // Update auth store with successful login
+            login(tokenData);
+
+            // Navigate to home page
+            navigate('/');
+
+          } catch (popupError) {
+            console.error('Login: OAuth popup failed:', popupError);
+            throw popupError;
+          }
+        } else {
+          throw new Error('Failed to generate OAuth URL.');
+        }
       } else {
-        throw new Error('Failed to get Salesforce authorization URL from main process.');
+        // Electron mode - use existing implementation
+        const authUrl = await electronAPI.getSalesforceAuthUrl();
+        if (authUrl) {
+          electronAPI.sendSalesforceOpenAuthWindow(authUrl);
+          setLoading(false); // Reset loading state after opening auth window
+        } else {
+          throw new Error('Failed to get Salesforce authorization URL.');
+        }
       }
     } catch (err) {
       console.error('Login Error:', err);
-      setError(err.message || 'An unexpected error occurred during login.');
+
+      // Provide environment-specific error messages
+      let errorMessage = err.message || 'An unexpected error occurred during login.';
+      if (isBrowser() && err.message.includes('Popup blocked')) {
+        errorMessage = 'Popup blocked. Please allow popups for this site and try again.';
+      } else if (isBrowser() && err.message.includes('OAuth popup was closed')) {
+        errorMessage = 'Login was cancelled. Please try again.';
+      }
+
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -88,15 +132,32 @@ const LoginPage = () => {
   */
 
   return (
-    <Container maxWidth="xs" sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Container maxWidth="xs" sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Typography component="h1" variant="h5">
-        Salesforce Login
+        {t('login.title')}
       </Typography>
+
+      {/* Environment indicator */}
+      <Box sx={{ mt: 2, mb: 2 }}>
+        <Chip
+          label={isElectron() ? t('login.electronApp') : t('login.browserMode')}
+          color={isElectron() ? 'success' : 'warning'}
+          size="small"
+        />
+      </Box>
+
       {error && (
         <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
           {error}
         </Alert>
       )}
+
+      {isBrowser() && (
+        <Alert severity="info" sx={{ mt: 2, width: '100%' }}>
+          {t('login.browserModeInfo')}
+        </Alert>
+      )}
+
       <Button
         type="button"
         fullWidth
@@ -105,10 +166,14 @@ const LoginPage = () => {
         onClick={handleLogin}
         disabled={loading}
       >
-        {loading ? 'Opening Salesforce...' : 'Login with Salesforce'}
+        {loading ? t('login.loggingIn') : t('login.loginButton')}
       </Button>
+
       <Typography variant="body2" color="text.secondary" align="center">
-        Clicking "Login" will open a Salesforce authentication window. Please complete the login there.
+        {isElectron()
+          ? t('login.electronInstructions')
+          : t('login.browserInstructions')
+        }
       </Typography>
     </Container>
   );

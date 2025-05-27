@@ -1,0 +1,118 @@
+{
+  "Lead": {
+    "field_mappings": {
+      "Last Name": "LastName",
+      "Lead": "LastName",
+      "Cliente": "LastName",
+      "Telefone Adcional": "MobilePhone",
+      "Telefone": "Phone",
+      "Phone": "Phone",
+      "E-mail": "Email",
+      "Email": "Email",
+      "Description": "Description",
+      "Descrição": "Description",
+      "Patrimônio Financeiro": "PatrimonioFinanceiro_Lead__c",
+      "Tipo": "LeadSource",
+      "State/Province": "State",
+      "Estado": "State",
+      "OwnerId": "OwnerId",
+      "Atribuir": "OwnerId",
+      "maisdeMilhao__c": "maisdeMilhao__c"
+    },
+    "required_fields": ["LastName"],
+    "optional_fields": [
+      "Phone",
+      "Email",
+      "MobilePhone",
+      "Description",
+      "LeadSource",
+      "State",
+      "OwnerId"
+    ],
+    "custom_fields": ["maisdeMilhao__c", "PatrimonioFinanceiro_Lead__c"],
+    "field_descriptions": {
+      "LastName": "Lead's last name or company name (required)",
+      "Phone": "Primary phone number",
+      "MobilePhone": "Additional/mobile phone number",
+      "Email": "Primary email address",
+      "Description": "Lead description or notes",
+      "PatrimonioFinanceiro_Lead__c": "Custom field for financial patrimony information",
+      "LeadSource": "Source of the lead (e.g., 'Pessoa Física')",
+      "State": "State or province",
+      "OwnerId": "Salesforce user ID who owns this lead",
+      "maisdeMilhao__c": "Custom field for million+ indicator"
+    },
+    "data_transformations": {
+      "Patrimônio Financeiro": {
+        "target_field": "PatrimonioFinanceiro_Lead__c",
+        "type": "numeric",
+        "description": "Convert financial patrimony to custom field"
+      },
+      "Tipo": {
+        "target_field": "LeadSource",
+        "type": "string",
+        "description": "Map lead type to lead source"
+      }
+    }
+  },
+  "Contact": {
+    "field_mappings": {
+      "Last Name": "LastName",
+      "Telefone Adcional": "MobilePhone",
+      "Phone": "Phone",
+      "Email": "Email",
+      "Description": "Description",
+      "State/Province": "MailingState",
+      "OwnerId": "OwnerId"
+    },
+    "required_fields": ["LastName"],
+    "optional_fields": [
+      "Phone",
+      "Email",
+      "MobilePhone",
+      "Description",
+      "MailingState",
+      "OwnerId"
+    ]
+  },
+  "Account": {
+    "field_mappings": {
+      "Last Name": "Name",
+      "Phone": "Phone",
+      "Email": "PersonEmail",
+      "Description": "Description",
+      "Patrimônio Financeiro": "AnnualRevenue",
+      "State/Province": "BillingState",
+      "OwnerId": "OwnerId"
+    },
+    "required_fields": ["Name"],
+    "optional_fields": [
+      "Phone",
+      "PersonEmail",
+      "Description",
+      "AnnualRevenue",
+      "BillingState",
+      "OwnerId"
+    ]
+  },
+  "mapping_rules": {
+    "preserve_unmapped_fields": false,
+    "skip_empty_values": true,
+    "validate_required_fields": true,
+    "log_mapping_details": true,
+    "fallback_strategies": {
+      "missing_required": "error",
+      "unmapped_fields": "warn",
+      "invalid_data_types": "convert_or_skip"
+    }
+  },
+  "common_field_aliases": {
+    "Cliente": "Last Name",
+    "Nome": "Last Name",
+    "Telefone": "Phone",
+    "Celular": "Telefone Adcional",
+    "E-mail": "Email",
+    "Estado": "State/Province",
+    "Descrição": "Description"
+  }
+}

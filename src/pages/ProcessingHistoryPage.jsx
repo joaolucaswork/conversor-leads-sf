@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, Box, CircularProgress, Alert, Button, Pagination, IconButton, Tooltip
@@ -8,14 +9,15 @@ import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { format } from 'date-fns';
 
-import { 
-  getProcessingHistory as getHistoryService, 
+import {
+  getProcessingHistory as getHistoryService,
   downloadProcessedFile as downloadFileService,
   getJobLogs as getJobLogsService // Import the new service
 } from '../services/apiService';
 import LogViewerModal from '../components/LogViewerModal'; // Import the modal
 
 const ProcessingHistoryPage = () => {
+  const { t } = useTranslation();
   const [historyItems, setHistoryItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // For history list
   const [error, setError] = useState(null); // For history list
@@ -25,7 +27,7 @@ const ProcessingHistoryPage = () => {
     totalItems: 0,
     totalPages: 0,
   });
-  
+
   // State for individual item actions
   const [downloading, setDownloading] = useState({});
   const [downloadError, setDownloadError] = useState({});
@@ -51,12 +53,12 @@ const ProcessingHistoryPage = () => {
       }));
     } catch (err) {
       console.error('Error fetching processing history:', err);
-      setError(err.message || 'Failed to fetch processing history.');
+      setError(err.message || t('history.fetchError', { defaultValue: 'Failed to fetch processing history.' }));
       setHistoryItems([]);
     } finally {
       setIsLoading(false); // Loading for the main history list
     }
-  }, [pagination.limit]);
+  }, [pagination.limit, t]);
 
   useEffect(() => {
     fetchHistory(pagination.page);
@@ -81,7 +83,7 @@ const ProcessingHistoryPage = () => {
           filename = filenameMatch[1];
         }
       }
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
@@ -107,7 +109,7 @@ const ProcessingHistoryPage = () => {
       setCurrentLogs(logsData || []);
     } catch (err) {
       console.error(`Error fetching logs for job ${pId}:`, err);
-      setLogError(err.message || 'Failed to fetch logs.');
+      setLogError(err.message || t('history.fetchLogsError', { defaultValue: 'Failed to fetch logs.' }));
     } finally {
       setIsLoadingLogs(false);
     }
@@ -127,16 +129,16 @@ const ProcessingHistoryPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ width: '100%' }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Processing History
+        {t('history.title')}
       </Typography>
 
       {/* Main history list loading/error indicators */}
       {isLoading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
           <CircularProgress />
-          <Typography sx={{ ml: 2 }}>Loading history...</Typography>
+          <Typography sx={{ ml: 2 }}>{t('history.loading', { defaultValue: 'Loading history...' })}</Typography>
         </Box>
       )}
       {error && (
@@ -144,7 +146,7 @@ const ProcessingHistoryPage = () => {
       )}
 
       {!isLoading && !error && historyItems.length === 0 && (
-        <Typography sx={{ mt: 2, textAlign: 'center' }}>No processing history found.</Typography>
+        <Typography sx={{ mt: 2, textAlign: 'center' }}>{t('history.noHistory')}</Typography>
       )}
 
       {!isLoading && !error && historyItems.length > 0 && (
@@ -154,11 +156,11 @@ const ProcessingHistoryPage = () => {
               <Table stickyHeader aria-label="processing history table">
                 <TableHead>
                   <TableRow>
-                    <TableCell>File Name</TableCell>
-                    <TableCell>Uploaded At</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Record Count</TableCell>
-                    <TableCell align="center">Actions</TableCell>
+                    <TableCell>{t('history.fileName')}</TableCell>
+                    <TableCell>{t('history.uploadDate')}</TableCell>
+                    <TableCell>{t('history.status')}</TableCell>
+                    <TableCell align="right">{t('history.recordsProcessed')}</TableCell>
+                    <TableCell align="center">{t('history.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -167,7 +169,7 @@ const ProcessingHistoryPage = () => {
                       <TableCell component="th" scope="row">{item.fileName}</TableCell>
                       <TableCell>{item.uploadedAt ? format(new Date(item.uploadedAt), 'Pp') : 'N/A'}</TableCell>
                       <TableCell>
-                        <Typography 
+                        <Typography
                           variant="body2"
                           color={
                             item.status === 'completed' ? 'success.main' :
@@ -181,9 +183,9 @@ const ProcessingHistoryPage = () => {
                       <TableCell align="right">{item.recordCount || 'N/A'}</TableCell>
                       <TableCell align="center">
                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                          <Tooltip title="View Logs">
-                            <IconButton 
-                              size="small" 
+                          <Tooltip title={t('history.viewLogs', { defaultValue: 'View Logs' })}>
+                            <IconButton
+                              size="small"
                               onClick={() => handleOpenLogModal(item.processingId)}
                             >
                               <VisibilityIcon fontSize="small" />
@@ -191,7 +193,7 @@ const ProcessingHistoryPage = () => {
                           </Tooltip>
                           {/* ... (Download button logic remains the same) ... */}
                           {item.status === 'completed' && item.resultUrl && (
-                            <Tooltip title="Re-download Processed File">
+                            <Tooltip title={t('history.downloadFile', { defaultValue: 'Re-download Processed File' })}>
                               <span>
                                 <IconButton
                                   size="small"
@@ -231,14 +233,14 @@ const ProcessingHistoryPage = () => {
         </>
       )}
       <LogViewerModal
-        isOpen={isLogModalOpen}
+        open={isLogModalOpen}
         onClose={handleCloseLogModal}
         logs={currentLogs}
         isLoading={isLoadingLogs}
         error={logError}
         processingId={selectedProcessingIdForLogs}
       />
-    </Container>
+    </Box>
   );
 };
 

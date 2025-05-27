@@ -1,13 +1,20 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { electronAPI, isElectron, isBrowser } from "../utils/environment";
 
-// Helper to call electron API, simplifies store actions
+// Helper to call electron API with fallbacks, simplifies store actions
 const callElectronApi = async (apiFunction, ...args) => {
-  if (!window.electronAPI || typeof window.electronAPI[apiFunction] !== 'function') {
-    const errorMsg = `Electron API function ${apiFunction} is not available. Ensure preload script exposes it and it's correctly named.`;
-    console.error(errorMsg);
-    throw new Error(errorMsg);
+  try {
+    if (electronAPI[apiFunction]) {
+      return await electronAPI[apiFunction](...args);
+    } else {
+      throw new Error(
+        `API function ${apiFunction} is not available in current environment`
+      );
+    }
+  } catch (err) {
+    console.error(`Error calling ${apiFunction}:`, err);
+    throw err;
   }
-  return window.electronAPI[apiFunction](...args);
 };
 
 export const useSettingsStore = create((set, get) => ({
@@ -17,22 +24,50 @@ export const useSettingsStore = create((set, get) => ({
   errorApiKeyStatus: null,
   // For managing the post-login prompt snackbar
   showApiKeyMissingPrompt: false,
+  // Developer Mode state - enabled by default
+  developerMode: true,
+  isDeveloperModeLoading: true,
 
   // Actions
   checkOpenAIApiKeyPresence: async () => {
     set({ isLoadingApiKeyStatus: true, errorApiKeyStatus: null });
     try {
-      const storedKey = await callElectronApi('getStoreValue', 'openai_api_key');
-      set({ 
-        openAIApiKeyIsSet: !!storedKey, 
-        isLoadingApiKeyStatus: false 
+      // Try the dedicated OpenAI API key function first, fallback to general store
+      let storedKey;
+      if (
+        isElectron() &&
+        window.electronAPI &&
+        window.electronAPI.getOpenAIApiKey
+      ) {
+        storedKey = await window.electronAPI.getOpenAIApiKey();
+      } else {
+        storedKey = await callElectronApi("getStoreValue", "openai_api_key");
+      }
+
+      set({
+        openAIApiKeyIsSet: !!storedKey,
+        isLoadingApiKeyStatus: false,
       });
     } catch (err) {
-      console.error('Error checking OpenAI API key presence:', err);
-      set({ 
-        errorApiKeyStatus: 'Failed to check API key status.', 
-        isLoadingApiKeyStatus: false 
-      });
+      console.error("Error checking OpenAI API key presence:", err);
+
+      // Provide environment-specific error handling
+      if (
+        isBrowser() &&
+        err.message.includes("not available in current environment")
+      ) {
+        // In browser mode, assume no API key is set and don't show error
+        set({
+          openAIApiKeyIsSet: false,
+          isLoadingApiKeyStatus: false,
+          errorApiKeyStatus: null,
+        });
+      } else {
+        set({
+          errorApiKeyStatus: "Failed to check API key status.",
+          isLoadingApiKeyStatus: false,
+        });
+      }
     }
   },
 
@@ -45,6 +80,41 @@ export const useSettingsStore = create((set, get) => ({
   // Actions for Snackbar prompt
   openApiKeyMissingPrompt: () => set({ showApiKeyMissingPrompt: true }),
   closeApiKeyMissingPrompt: () => set({ showApiKeyMissingPrompt: false }),
+
+  // Developer Mode actions
+  loadDeveloperMode: async () => {
+    set({ isDeveloperModeLoading: true });
+    try {
+      let storedMode;
+      if (isElectron() && window.electronAPI) {
+        storedMode = await window.electronAPI.getStoreValue("developer_mode");
+      } else {
+        const stored = localStorage.getItem("developer_mode");
+        storedMode = stored ? JSON.parse(stored) : null;
+      }
+
+      // Default to true if not set
+      const developerMode = storedMode !== null ? storedMode : true;
+      set({ developerMode, isDeveloperModeLoading: false });
+    } catch (err) {
+      console.error("Error loading developer mode:", err);
+      set({ developerMode: true, isDeveloperModeLoading: false }); // Default to enabled
+    }
+  },
+
+  setDeveloperMode: async (enabled) => {
+    try {
+      if (isElectron() && window.electronAPI) {
+        await window.electronAPI.setStoreValue("developer_mode", enabled);
+      } else {
+        localStorage.setItem("developer_mode", JSON.stringify(enabled));
+      }
+      set({ developerMode: enabled });
+    } catch (err) {
+      console.error("Error saving developer mode:", err);
+      throw err;
+    }
+  },
 }));
 
 // Initialize API key presence when the store is created/app starts.

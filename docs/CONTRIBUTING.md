@@ -39,34 +39,39 @@ We welcome feature suggestions! Please:
 ### Local Development
 
 1. **Fork and clone the repository**:
+
    ```bash
    git clone https://github.com/yourusername/ai-enhanced-leads-processor.git
    cd ai-enhanced-leads-processor
    ```
 
 2. **Create a virtual environment**:
+
    ```bash
    python -m venv venv
-   
+
    # Windows
    venv\Scripts\activate
-   
+
    # Linux/macOS
    source venv/bin/activate
    ```
 
 3. **Install dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Set up environment variables**:
+
    ```bash
    cp examples/.env.sample config/.env
    # Edit config/.env and add your OpenAI API key
    ```
 
 5. **Run tests to verify setup**:
+
    ```bash
    python quick_start.py test
    ```
@@ -74,6 +79,7 @@ We welcome feature suggestions! Please:
 ### Development Workflow
 
 1. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -84,24 +90,27 @@ We welcome feature suggestions! Please:
    - Update documentation as needed
 
 3. **Test your changes**:
+
    ```bash
    # Run all tests
    python -m pytest tests/
-   
+
    # Run specific test
    python tests/test_your_feature.py
-   
+
    # Test with real data
    python quick_start.py test
    ```
 
 4. **Commit your changes**:
+
    ```bash
    git add .
    git commit -m "feat: add your feature description"
    ```
 
 5. **Push and create a pull request**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -162,17 +171,17 @@ Use Google-style docstrings:
 def intelligent_column_mapping(self, df: pd.DataFrame, sample_data: Optional[List] = None) -> Tuple[pd.DataFrame, List[FieldMapping]]:
     """
     Perform intelligent column mapping using AI and rule-based fallback.
-    
+
     Args:
         df: Input DataFrame with original column names
         sample_data: Optional sample data for AI context
-        
+
     Returns:
         Tuple of (mapped DataFrame, list of field mappings)
-        
+
     Raises:
         ProcessingError: If mapping fails completely
-        
+
     Example:
         >>> processor = AIEnhancedLeadsProcessor()
         >>> df_mapped, mappings = processor.intelligent_column_mapping(df)
@@ -216,26 +225,29 @@ tests/
 ### Writing Tests
 
 1. **Use descriptive test names**:
+
    ```python
    def test_ai_mapping_with_high_confidence_returns_ai_results():
        """Test that high-confidence AI mappings are used over rules."""
    ```
 
 2. **Follow AAA pattern** (Arrange, Act, Assert):
+
    ```python
    def test_description_formatting_with_concatenated_words():
        # Arrange
        processor = AIEnhancedLeadsProcessor()
        input_description = "ModeradoRegular"
-       
+
        # Act
        result = processor.format_description_ai(input_description)
-       
+
        # Assert
        assert result == "Moderado; Regular"
    ```
 
 3. **Test edge cases**:
+
    ```python
    def test_description_formatting_with_empty_input():
        processor = AIEnhancedLeadsProcessor()
@@ -244,10 +256,13 @@ tests/
    ```
 
 4. **Mock external dependencies**:
+
    ```python
-   @patch('openai.ChatCompletion.create')
-   def test_ai_mapping_fallback_on_api_error(mock_openai):
-       mock_openai.side_effect = OpenAIError("API Error")
+   @patch('openai.OpenAI')
+   def test_ai_mapping_fallback_on_api_error(mock_openai_class):
+       mock_client = Mock()
+       mock_openai_class.return_value = mock_client
+       mock_client.chat.completions.create.side_effect = OpenAIError("API Error")
        # Test fallback behavior
    ```
 
@@ -299,11 +314,13 @@ Update `CHANGELOG.md` following [Keep a Changelog](https://keepachangelog.com/) 
 ### Before Submitting
 
 1. **Ensure all tests pass**:
+
    ```bash
    python -m pytest tests/ -v
    ```
 
 2. **Check code quality**:
+
    ```bash
    black --check core/ tools/ tests/
    flake8 core/ tools/ tests/

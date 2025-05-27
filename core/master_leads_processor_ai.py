@@ -346,7 +346,7 @@ class AIEnhancedLeadsProcessor:
 
     def ai_enhanced_data_validation(self, df: pd.DataFrame, mappings: List[FieldMapping] = None) -> Dict[str, DataValidation]:
         """
-        Use AI to validate data quality across all fields.
+        Use AI to validate data quality across all fields with optimized batching.
 
         Args:
             df: DataFrame to validate
@@ -355,41 +355,51 @@ class AIEnhancedLeadsProcessor:
         Returns:
             Dictionary of field validations
         """
-        self.logger.info("Starting AI-enhanced data validation")
+        self.logger.info("Starting optimized AI-enhanced data validation")
         self.ai_stats['validations_attempted'] += 1
 
         validations = {}
 
         try:
+            # Prepare validation data for all columns
+            validation_requests = []
             for column in df.columns:
                 try:
                     # Get sample data for validation - handle pandas Series properly
                     column_data = df[column].dropna()
                     if len(column_data) > 0:
-                        sample_data = column_data.astype(str).tolist()[:10]
-                    else:
-                        sample_data = []
-
-                    if sample_data:  # Only validate if we have data
-                        validation = self.ai_mapper.validate_data_quality(
-                            field_name=column,
-                            data_samples=sample_data,
-                            target_field=column
-                        )
-                        validations[column] = validation
-
-                        # Log validation results
-                        if validation.issues_found:
-                            self.logger.warning(f"Data quality issues in {column}: {len(validation.issues_found)} issues")
-                            for issue in validation.issues_found:
-                                self.logger.warning(f"  - {issue}")
-                        else:
-                            self.logger.info(f"Data quality validation passed for {column}")
+                        sample_data = column_data.astype(str).tolist()[:5]  # Reduced sample size
+                        if sample_data:  # Only validate if we have data
+                            validation_requests.append({
+                                'field_name': column,
+                                'sample_data': sample_data,
+                                'target_field': column
+                            })
                 except Exception as e:
-                    self.logger.warning(f"Failed to validate column {column}: {e}")
+                    self.logger.warning(f"Failed to prepare validation for column {column}: {e}")
+                    continue
+
+            # Process validations (AI mapper handles caching and smart fallbacks)
+            for request in validation_requests:
+                try:
+                    validation = self.ai_mapper.validate_data_quality(
+                        field_name=request['field_name'],
+                        data_samples=request['sample_data'],
+                        target_field=request['target_field']
+                    )
+                    validations[request['field_name']] = validation
+
+                    # Log validation results
+                    if validation.issues_found:
+                        self.logger.warning(f"Data quality issues in {request['field_name']}: {len(validation.issues_found)} issues")
+                    else:
+                        self.logger.debug(f"Data quality validation passed for {request['field_name']}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to validate column {request['field_name']}: {e}")
                     continue
 
             self.ai_stats['validations_successful'] += 1
+            self.logger.info(f"Completed validation for {len(validations)} fields")
             return validations
 
         except Exception as e:
@@ -398,22 +408,37 @@ class AIEnhancedLeadsProcessor:
             return {}
 
     def clean_phone_number_ai(self, phone: Any) -> str:
-        """AI-enhanced phone number cleaning."""
+        """AI-enhanced phone number cleaning with better NaN handling."""
         # Handle pandas Series or individual values
         if hasattr(phone, 'isna'):
             # This is a pandas Series
             if phone.isna().any():
                 return ''
-        elif pd.isna(phone):
+        elif pd.isna(phone) or phone is None:
             return ''
 
-        if phone == '' or phone == 'NA':
+        # Handle various representations of missing/invalid data
+        if phone == '' or phone == 'NA' or str(phone).lower() in ['nan', 'null', 'none']:
             return ''
 
-        # Convert to string and remove decimal points
-        phone_str = str(phone).replace('.0', '')
-        # Remove any non-digit characters
-        cleaned = re.sub(r'[^0-9]', '', phone_str)
+        # Convert to string and handle float representations
+        phone_str = str(phone)
+
+        # Remove decimal points from float representations
+        if '.0' in phone_str:
+            phone_str = phone_str.replace('.0', '')
+
+        # Check if it's just 'nan' after string conversion
+        if phone_str.lower() == 'nan':
+            return ''
+
+        # Remove any non-digit characters (keep + for international numbers)
+        cleaned = re.sub(r'[^\d+]', '', phone_str)
+
+        # Validate minimum length for a phone number
+        if len(cleaned) < 8:
+            return ''
+
         return cleaned
 
     def format_name_ai(self, name: Any) -> str:
@@ -769,6 +794,9 @@ class AIEnhancedLeadsProcessor:
         total_issues = sum(len(v.issues_found) for v in validations.values())
         total_suggestions = sum(len(v.suggestions) for v in validations.values())
 
+        # Get API usage statistics
+        api_usage_stats = self.ai_mapper.get_api_usage_stats() if hasattr(self.ai_mapper, 'get_api_usage_stats') else {}
+
         summary = {
             "processing_date": datetime.now().isoformat(),
             "input_file": input_file,
@@ -783,7 +811,8 @@ class AIEnhancedLeadsProcessor:
                     "total_issues_found": total_issues,
                     "total_suggestions": total_suggestions
                 },
-                "ai_stats": self.ai_stats
+                "ai_stats": self.ai_stats,
+                "api_usage": api_usage_stats
             },
             "lead_distribution": df['OwnerId'].value_counts().to_dict(),
             "columns": list(df.columns),
@@ -818,17 +847,21 @@ class AIEnhancedLeadsProcessor:
 
     def _print_ai_summary(self, summary: Dict[str, Any]):
         """Print AI processing summary to console."""
-        print("\n" + "="*70)
-        print("AI-ENHANCED PROCESSING SUMMARY")
-        print("="*70)
-        print(f"📄 Input file: {summary['input_file']}")
-        print(f"📁 Output file: {summary['output_file']}")
-        print(f"💾 Backup file: {summary['backup_file']}")
-        print(f"📊 Total records processed: {summary['total_records']}")
+        try:
+            print("\n" + "="*70)
+            print("AI-ENHANCED PROCESSING SUMMARY")
+            print("="*70)
+            print(f"Input file: {summary['input_file']}")
+            print(f"Output file: {summary['output_file']}")
+            print(f"Backup file: {summary['backup_file']}")
+            print(f"Total records processed: {summary['total_records']}")
 
-        ai_info = summary['ai_processing']
-        print(f"\n🤖 AI PROCESSING:")
-        print(f"  • AI enabled: {'✅' if ai_info['ai_enabled'] else '❌'}")
+            ai_info = summary['ai_processing']
+            print(f"\nAI PROCESSING:")
+            print(f"  • AI enabled: {'YES' if ai_info['ai_enabled'] else 'NO'}")
+        except UnicodeEncodeError:
+            # Fallback for systems with encoding issues
+            self.logger.info("Processing summary completed - check log files for details")
 
         if ai_info.get('mapping_summary'):
             mapping = ai_info['mapping_summary']
@@ -851,12 +884,28 @@ class AIEnhancedLeadsProcessor:
         print(f"    - Validation attempts: {stats.get('validations_attempted', 0)}")
         print(f"    - Fallbacks to rules: {stats.get('fallbacks_to_rules', 0)}")
 
-        print(f"\n📈 LEAD DISTRIBUTION:")
-        for alias, count in summary['lead_distribution'].items():
-            if alias:
-                print(f"  • {alias}: {count} leads")
+        # Display API usage statistics
+        api_usage = ai_info.get('api_usage', {})
+        if api_usage:
+            print(f"  • API usage optimization:")
+            print(f"    - Total API calls: {api_usage.get('total_calls', 0)}")
+            print(f"    - Tokens used: {api_usage.get('total_tokens_used', 0)}")
+            print(f"    - Estimated cost: ${api_usage.get('estimated_cost', 0):.4f}")
+            print(f"    - Cache hit ratio: {api_usage.get('cache_hit_ratio', 0):.1%}")
+            print(f"    - AI skip ratio: {api_usage.get('ai_skip_ratio', 0):.1%}")
+            print(f"    - Cache hits: {api_usage.get('cache_hits', 0)}")
+            print(f"    - AI calls skipped: {api_usage.get('ai_skipped', 0)}")
 
-        print("="*70)
+        try:
+            print(f"\nLEAD DISTRIBUTION:")
+            for alias, count in summary['lead_distribution'].items():
+                if alias:
+                    print(f"  • {alias}: {count} leads")
+
+            print("="*70)
+        except UnicodeEncodeError:
+            # Fallback for systems with encoding issues
+            self.logger.info("Lead distribution summary completed - check log files for details")
 
 def main():
     """Main CLI interface for AI-enhanced processing."""
@@ -887,12 +936,35 @@ def main():
         # Process the file
         output_file = processor.process_file_ai(args.input_file, args.output)
 
-        print(f"\n✅ AI-enhanced processing completed successfully!")
-        print(f"📁 Output file: {output_file}")
+        try:
+            print(f"\nAI-enhanced processing completed successfully!")
+            print(f"Output file: {output_file}")
+        except UnicodeEncodeError:
+            print(f"\nProcessing completed successfully!")
+            print(f"Output file: {output_file}")
 
     except Exception as e:
-        print(f"\n❌ Error during AI-enhanced processing: {e}")
+        try:
+            print(f"\nError during AI-enhanced processing: {e}")
+        except UnicodeEncodeError:
+            print(f"\nError during processing: {e}")
         sys.exit(1)
+
+# Wrapper function for backend API integration
+def process_leads_with_ai(input_file: str, output_file: str = None, config_file: str = None) -> str:
+    """
+    Wrapper function for AI-enhanced leads processing.
+
+    Args:
+        input_file: Path to input file
+        output_file: Optional output file path
+        config_file: Optional configuration file path
+
+    Returns:
+        Path to processed output file
+    """
+    processor = AIEnhancedLeadsProcessor(config_file=config_file)
+    return processor.process_file_ai(input_file, output_file)
 
 if __name__ == "__main__":
     main()

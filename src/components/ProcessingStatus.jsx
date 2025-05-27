@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import Button from '@mui/material/Button';
@@ -17,13 +17,27 @@ import { Link as RouterLink } from 'react-router-dom'; // For navigation
 import { downloadProcessedFile as downloadFileService } from '../services/apiService'; // Import the download service
 import CircularProgress from '@mui/material/CircularProgress'; // For loading indicator on button
 
+// Import AI statistics components
+import AIStatsDisplay from './AIStatsDisplay';
+import ProcessingIndicators from './ProcessingIndicators';
+import ProcessingSummary from './ProcessingSummary';
+import { useSettingsStore } from '../store/settingsStore';
+import { useTranslation } from 'react-i18next';
+
 // This should ideally come from an environment variable or be consistent with apiService.
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 // No longer needed here if downloadUrl from backend is absolute, or apiService handles base URL.
 
 const ProcessingStatus = ({ statusData, processingId, error }) => {
+  const { t } = useTranslation();
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState(null);
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
+
+  // Get developer mode state
+  const { developerMode } = useSettingsStore(state => ({
+    developerMode: state.developerMode,
+  }));
 
   if (error) {
     return (
@@ -31,7 +45,7 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <ErrorOutlineIcon color="error" sx={{ mr: 1 }} />
           <Typography variant="h6" component="div" color="error">
-            Error Fetching Status
+            {t('processing.errorFetchingStatus', { defaultValue: 'Error Fetching Status' })}
           </Typography>
         </Box>
         <Typography color="text.secondary">{error}</Typography>
@@ -48,9 +62,11 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
     progress,
     currentStage,
     message, // General message from backend
-    resultUrl, // e.g., /api/v1/leads/results/unique_processing_job_id_string (relative)
+    resultUrl, // e.g., /leads/download/unique_processing_job_id_string (relative)
     previewUrl, // e.g., /api/v1/leads/preview/unique_processing_job_id_string (relative) - new assumption
     fileName, // Added for context
+    aiStats, // AI processing statistics
+    apiUsage, // API usage statistics
   } = statusData;
 
   const isCompleted = status === 'completed';
@@ -71,16 +87,49 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
 
   // const fullDownloadUrl = resultUrl; // Assuming resultUrl is absolute or handled by apiService
 
+  // Function to translate backend messages
+  const translateBackendMessage = (message) => {
+    if (!message) return '';
+
+    // Common backend message patterns and their translations
+    const messagePatterns = {
+      'File uploaded successfully, processing started': t('processing.messages.fileUploadedProcessingStarted', { defaultValue: 'Arquivo enviado com sucesso, processamento iniciado' }),
+      'File uploaded successfully, processing queued': t('processing.messages.fileUploadedProcessingQueued', { defaultValue: 'Arquivo enviado com sucesso, processamento na fila' }),
+      'Starting file processing...': t('processing.messages.startingFileProcessing', { defaultValue: 'Iniciando processamento do arquivo...' }),
+      'Processing completed successfully': t('processing.messages.processingCompletedSuccessfully', { defaultValue: 'Processamento concluído com sucesso' }),
+      'Starting AI-enhanced processing...': t('processing.messages.startingAiProcessing', { defaultValue: 'Iniciando processamento com IA...' }),
+      'Processing failed': t('processing.messages.processingFailed', { defaultValue: 'Processamento falhou' }),
+      'File processing not completed': t('processing.messages.fileProcessingNotCompleted', { defaultValue: 'Processamento do arquivo não concluído' }),
+      'Processing job not found': t('processing.messages.processingJobNotFound', { defaultValue: 'Trabalho de processamento não encontrado' }),
+      'Processed file not found': t('processing.messages.processedFileNotFound', { defaultValue: 'Arquivo processado não encontrado' })
+    };
+
+    // Check for exact matches first
+    if (messagePatterns[message]) {
+      return messagePatterns[message];
+    }
+
+    // Check for partial matches for dynamic messages
+    for (const [pattern, translation] of Object.entries(messagePatterns)) {
+      if (message.includes(pattern)) {
+        return translation;
+      }
+    }
+
+    // If no pattern matches, return the original message
+    return message;
+  };
+
   const handleDownload = async () => {
     if (!resultUrl) {
-      setDownloadError('No download URL available.');
+      setDownloadError(t('processing.messages.noDownloadUrl', { defaultValue: 'No download URL available.' }));
       return;
     }
     setIsDownloading(true);
     setDownloadError(null);
     try {
-      const response = await downloadFileService(resultUrl); // resultUrl is e.g., /api/v1/leads/results/{id}/download
-      
+      const response = await downloadFileService(resultUrl); // resultUrl is e.g., /leads/download/{id}
+
       let filename = `processed_leads_${processingId}.csv`; // Default filename
       const contentDisposition = response.headers['content-disposition'];
       if (contentDisposition) {
@@ -89,8 +138,8 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
           filename = filenameMatch[1];
         }
       }
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
@@ -101,7 +150,7 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
 
     } catch (err) {
       console.error('Download error:', err);
-      setDownloadError(err.message || 'Failed to download file.');
+      setDownloadError(err.message || t('processing.messages.downloadFailed', { defaultValue: 'Failed to download file.' }));
     } finally {
       setIsDownloading(false);
     }
@@ -112,21 +161,21 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         {statusIcon}
         <Typography variant="h6" component="div" color={`${statusColor}.main`}>
-          Processing Status: {status ? status.replace(/_/g, ' ').toUpperCase() : 'Loading...'}
+          {t('processing.title')}: {status ? t(`processing.stages.${status}`, { defaultValue: status.replace(/_/g, ' ').toUpperCase() }) : t('common.loading')}
         </Typography>
       </Box>
-      
-      {fileName && <Typography variant="subtitle1" color="text.secondary" gutterBottom>File: {fileName}</Typography>}
-      
+
+      {fileName && <Typography variant="subtitle1" color="text.secondary" gutterBottom>{t('common.file')}: {fileName}</Typography>}
+
       {currentStage && (
         <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          Current Stage: {currentStage.replace(/_/g, ' ')}
+          {t('processing.stage')}: {t(`processing.stages.${currentStage}`, { defaultValue: currentStage.replace(/_/g, ' ') })}
         </Typography>
       )}
 
       {message && (
         <Typography variant="body2" sx={{ my: 1 }}>
-          {message}
+          {translateBackendMessage(message)}
         </Typography>
       )}
 
@@ -139,6 +188,40 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
         </Box>
       )}
 
+      {/* AI Statistics Display - Only show in developer mode */}
+      {developerMode && (isProcessing || isCompleted) && (aiStats || apiUsage) && (
+        <AIStatsDisplay
+          aiStats={aiStats || {}}
+          apiUsage={apiUsage || {}}
+          isProcessing={isProcessing}
+          showDetailed={showDetailedStats}
+          onToggleDetailed={() => setShowDetailedStats(!showDetailedStats)}
+        />
+      )}
+
+      {/* Real-time Processing Indicators - Only show in developer mode */}
+      {developerMode && isProcessing && (
+        <ProcessingIndicators
+          currentStage={currentStage}
+          apiUsage={apiUsage || {}}
+          isProcessing={isProcessing}
+          progress={progress}
+        />
+      )}
+
+      {/* Post-Processing Summary - Only show in developer mode */}
+      {developerMode && isCompleted && (aiStats || apiUsage) && (
+        <ProcessingSummary
+          aiStats={aiStats || {}}
+          apiUsage={apiUsage || {}}
+          processingInfo={{ fileName, recordCount: statusData.recordCount }}
+          onViewDetails={() => {
+            // Navigate to detailed report or open modal
+            console.log('View detailed report for:', processingId);
+          }}
+        />
+      )}
+
       {isCompleted && resultUrl && (
         <Button
           variant="contained"
@@ -148,11 +231,11 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
           sx={{ mt: 2 }}
           startIcon={isDownloading ? <CircularProgress size={20} color="inherit" /> : null}
         >
-          {isDownloading ? 'Downloading...' : 'Download Processed File'}
+          {isDownloading ? t('common.loading') : t('processing.download')}
         </Button>
       )}
 
-      {canPreview && (
+      {developerMode && canPreview && (
          <Button
           variant="outlined"
           color="info"
@@ -160,15 +243,15 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
           to={`/preview/${processingId}`} // Navigate to the preview page
           sx={{ mt: 2, mr: isCompleted ? 1 : 0 }} // Add margin if download button is also present
         >
-          View AI Mappings / Preview
+          {t('processing.preview')}
         </Button>
       )}
-      
+
       {isFailed && (
         <Typography color="error.main" sx={{ mt: 1 }}>
-          Processing failed. Please check logs or try again.
+          {t('processing.stages.failed')}. {t('processing.checkLogsOrRetry', { defaultValue: 'Please check logs or try again.' })}
           {/* Optionally, add a link to logs if available:
-              <Link href={`/api/v1/leads/history/${processingId}/logs`} target="_blank" component={RouterLink}>View Logs</Link> 
+              <Link href={`/api/v1/leads/history/${processingId}/logs`} target="_blank" component={RouterLink}>View Logs</Link>
           */}
         </Typography>
       )}

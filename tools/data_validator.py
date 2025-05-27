@@ -413,5 +413,20 @@ def main():
         print(f"❌ Validation failed: {e}")
         sys.exit(1)
 
+# Wrapper function for backend API integration
+def validate_data(file_path: str, config_file: str = None) -> Dict[str, Any]:
+    """
+    Wrapper function for data validation.
+
+    Args:
+        file_path: Path to file to validate
+        config_file: Optional configuration file path
+
+    Returns:
+        Validation results dictionary
+    """
+    validator = DataValidator(config_file=config_file)
+    return validator.validate_file(file_path)
+
 if __name__ == "__main__":
     main()

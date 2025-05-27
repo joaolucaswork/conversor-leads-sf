@@ -444,18 +444,22 @@ class LeadsProcessor:
         self.logger.info(f"Processing summary saved to: {summary_path}")
 
         # Print summary to console
-        print("\n" + "="*50)
-        print("PROCESSING SUMMARY")
-        print("="*50)
-        print(f"Input file: {input_file}")
-        print(f"Output file: {output_file}")
-        print(f"Backup file: {backup_path}")
-        print(f"Total records processed: {len(df)}")
-        print("\nLead Distribution:")
-        for alias, count in summary["lead_distribution"].items():
-            if alias:
-                print(f"  {alias}: {count} leads")
-        print("="*50)
+        try:
+            print("\n" + "="*50)
+            print("PROCESSING SUMMARY")
+            print("="*50)
+            print(f"Input file: {input_file}")
+            print(f"Output file: {output_file}")
+            print(f"Backup file: {backup_path}")
+            print(f"Total records processed: {len(df)}")
+            print("\nLead Distribution:")
+            for alias, count in summary["lead_distribution"].items():
+                if alias:
+                    print(f"  {alias}: {count} leads")
+            print("="*50)
+        except UnicodeEncodeError:
+            # Fallback for systems with encoding issues
+            self.logger.info("Processing summary completed - check log files for details")
 
 def main():
     """Main CLI interface."""
@@ -476,12 +480,35 @@ def main():
         # Process the file
         output_file = processor.process_file(args.input_file, args.output)
 
-        print(f"\n✅ Processing completed successfully!")
-        print(f"📁 Output file: {output_file}")
+        try:
+            print(f"\nProcessing completed successfully!")
+            print(f"Output file: {output_file}")
+        except UnicodeEncodeError:
+            print(f"\nProcessing completed successfully!")
+            print(f"Output file: {output_file}")
 
     except Exception as e:
-        print(f"\n❌ Error during processing: {e}")
+        try:
+            print(f"\nError during processing: {e}")
+        except UnicodeEncodeError:
+            print(f"\nError during processing: {e}")
         sys.exit(1)
+
+# Wrapper function for backend API integration
+def process_leads_traditional(input_file: str, output_file: str = None, config_file: str = None) -> str:
+    """
+    Wrapper function for traditional leads processing.
+
+    Args:
+        input_file: Path to input file
+        output_file: Optional output file path
+        config_file: Optional configuration file path
+
+    Returns:
+        Path to processed output file
+    """
+    processor = LeadsProcessor(config_file=config_file)
+    return processor.process_file(input_file, output_file)
 
 if __name__ == "__main__":
     main()

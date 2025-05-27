@@ -58,9 +58,9 @@ const MappingPreviewPage = () => {
     try {
       // For now, confirmedMappings is an empty array as per task spec.
       // This will need to be updated if user can edit mappings.
-      const response = await confirmProcessingService(processingId, []); 
+      const response = await confirmProcessingService(processingId, []);
       setConfirmSuccess(response.message || 'Processing confirmed and initiated successfully. Redirecting...');
-      
+
       // Redirect to HomePage after a short delay to show success message
       setTimeout(() => {
         navigate('/'); // Navigate to HomePage where ProcessingStatus component will pick up new status
@@ -75,7 +75,7 @@ const MappingPreviewPage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 1, mb: 4 }}>
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={() => navigate('/')}
@@ -112,8 +112,8 @@ const MappingPreviewPage = () => {
               {/* <Button variant="outlined" sx={{ mr: 2 }} disabled={isConfirming}>
                 Edit Mappings (Future)
               </Button> */}
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="primary"
                 onClick={handleConfirmAndProceed}
                 disabled={isConfirming || isLoadingPreview || !!previewError} // Disable if loading preview, error in preview, or currently confirming
@@ -124,7 +124,7 @@ const MappingPreviewPage = () => {
             {isConfirming && <CircularProgress size={24} sx={{ ml: 2, position: 'absolute', right: '20px', bottom: '20px' }} />}
           </>
         )}
-        
+
         {!isLoadingPreview && !previewError && !previewData && (
           <Typography sx={{ mt: 2 }}>No preview data found for this processing ID.</Typography>
         )}
