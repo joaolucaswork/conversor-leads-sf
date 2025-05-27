@@ -8,9 +8,8 @@ const { AuthorizationCode } = require("simple-oauth2"); // Will be used later
 // Initialize electron-store
 const store = new Store();
 
-// Salesforce OAuth Configuration (loaded from .env)
-const sfHost =
-  process.env.SALESFORCE_LOGIN_URL || "https://login.salesforce.com";
+// Salesforce OAuth Configuration - Hardcoded for Reino Capital
+const sfHost = "https://reino-capital.my.salesforce.com";
 const sfClientId = process.env.SALESFORCE_CLIENT_ID;
 const sfClientSecret = process.env.SALESFORCE_CLIENT_SECRET;
 const sfRedirectUri = process.env.SALESFORCE_REDIRECT_URI;
@@ -116,34 +115,8 @@ app.whenReady().then(() => {
     // The above is now preferred at app startup before it's ready.
   }
 
-  // Load OpenAI API key from store or config/.env file into environment on startup
-  let apiKey = store.get("openai_api_key");
-
-  // If no API key in store, try to load from config/.env file
-  if (!apiKey) {
-    const configPath = path.join(__dirname, "..", "config", ".env");
-    if (require("fs").existsSync(configPath)) {
-      try {
-        const configContent = require("fs").readFileSync(configPath, "utf8");
-        const envMatch = configContent.match(/OPENAI_API_KEY=(.+)/);
-        if (envMatch && envMatch[1]) {
-          apiKey = envMatch[1].trim();
-          // Store it in Electron store for future use
-          store.set("openai_api_key", apiKey);
-          console.log("OpenAI API key loaded from config/.env and stored");
-        }
-      } catch (error) {
-        console.error("Error reading config/.env file:", error);
-      }
-    }
-  }
-
-  if (apiKey) {
-    process.env.OPENAI_API_KEY = apiKey;
-    console.log("OpenAI API key loaded into environment");
-  } else {
-    console.log("No OpenAI API key found in store or config/.env");
-  }
+  // OpenAI API key is now hardcoded in the AI field mapper module
+  console.log("Using Reino Capital's production OpenAI API key");
 
   // Remove the default menu bar (File, Edit, View, Window, Help)
   Menu.setApplicationMenu(null);
@@ -168,19 +141,16 @@ ipcMain.handle("set-store-value", async (event, { key, value }) => {
   store.set(key, value);
 });
 
-// OpenAI API Key management for Python integration
+// OpenAI API Key is now hardcoded in the AI field mapper module
+// These handlers are maintained for backward compatibility but return fixed values
 ipcMain.handle("get-openai-api-key", async (event) => {
-  return store.get("openai_api_key");
+  return "Reino Capital API Key (Hardcoded)";
 });
 
 ipcMain.handle("set-openai-api-key", async (event, apiKey) => {
-  store.set("openai_api_key", apiKey);
-  // Also set as environment variable for current process
-  if (apiKey) {
-    process.env.OPENAI_API_KEY = apiKey;
-  } else {
-    delete process.env.OPENAI_API_KEY;
-  }
+  // No-op function maintained for compatibility
+  console.log("API key modification is disabled in production version");
+  return true;
 });
 
 // Python script execution with environment variables
@@ -195,14 +165,9 @@ ipcMain.handle(
       // Prepare environment variables
       const env = { ...process.env };
 
-      // Ensure OpenAI API key is available
-      const apiKey = store.get("openai_api_key");
-      if (apiKey) {
-        env.OPENAI_API_KEY = apiKey;
-        console.log("OpenAI API key loaded for Python script execution");
-      } else {
-        console.log("No OpenAI API key found in store");
-      }
+      // OpenAI API key is now hardcoded in the backend
+      // This is maintained for backward compatibility
+      console.log("Using Reino Capital's production OpenAI API key for Python script execution");
 
       // Construct the full script path
       const scriptPath = path.join(__dirname, "..", script);

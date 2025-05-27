@@ -19,67 +19,28 @@ const callElectronApi = async (apiFunction, ...args) => {
 
 export const useSettingsStore = create((set, get) => ({
   // State
-  openAIApiKeyIsSet: false,
-  isLoadingApiKeyStatus: true,
+  openAIApiKeyIsSet: true, // Always true since API key is hardcoded for Reino Capital
+  isLoadingApiKeyStatus: false, 
   errorApiKeyStatus: null,
-  // For managing the post-login prompt snackbar
-  showApiKeyMissingPrompt: false,
   // Developer Mode state - enabled by default
   developerMode: true,
   isDeveloperModeLoading: true,
 
   // Actions
   checkOpenAIApiKeyPresence: async () => {
-    set({ isLoadingApiKeyStatus: true, errorApiKeyStatus: null });
-    try {
-      // Try the dedicated OpenAI API key function first, fallback to general store
-      let storedKey;
-      if (
-        isElectron() &&
-        window.electronAPI &&
-        window.electronAPI.getOpenAIApiKey
-      ) {
-        storedKey = await window.electronAPI.getOpenAIApiKey();
-      } else {
-        storedKey = await callElectronApi("getStoreValue", "openai_api_key");
-      }
-
-      set({
-        openAIApiKeyIsSet: !!storedKey,
-        isLoadingApiKeyStatus: false,
-      });
-    } catch (err) {
-      console.error("Error checking OpenAI API key presence:", err);
-
-      // Provide environment-specific error handling
-      if (
-        isBrowser() &&
-        err.message.includes("not available in current environment")
-      ) {
-        // In browser mode, assume no API key is set and don't show error
-        set({
-          openAIApiKeyIsSet: false,
-          isLoadingApiKeyStatus: false,
-          errorApiKeyStatus: null,
-        });
-      } else {
-        set({
-          errorApiKeyStatus: "Failed to check API key status.",
-          isLoadingApiKeyStatus: false,
-        });
-      }
-    }
+    // Always return true since API key is hardcoded for Reino Capital
+    set({
+      openAIApiKeyIsSet: true,
+      isLoadingApiKeyStatus: false,
+      errorApiKeyStatus: null
+    });
+    console.log("OpenAI API key is pre-configured for Reino Capital");
   },
 
-  // This action is called by OpenAIApiKeyForm directly saving via electronAPI.
-  // This store action mainly updates the status for other parts of the app.
+  // This action is maintained for compatibility but now always sets to true
   setOpenAIApiKeyStatus: (isSet) => {
-    set({ openAIApiKeyIsSet: isSet, showApiKeyMissingPrompt: false }); // Hide prompt once key is set
+    set({ openAIApiKeyIsSet: true }); // Always true
   },
-
-  // Actions for Snackbar prompt
-  openApiKeyMissingPrompt: () => set({ showApiKeyMissingPrompt: true }),
-  closeApiKeyMissingPrompt: () => set({ showApiKeyMissingPrompt: false }),
 
   // Developer Mode actions
   loadDeveloperMode: async () => {

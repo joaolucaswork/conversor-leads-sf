@@ -246,13 +246,17 @@ def get_output_path(processing_id: str, original_filename: str) -> Path:
 
 # OAuth utility functions
 def get_salesforce_oauth_config():
-    """Get Salesforce OAuth configuration from environment variables"""
+    """Get hardcoded Salesforce OAuth configuration for Reino Capital."""
+    # Reino Capital specific Salesforce instance
+    reino_capital_domain = "https://reino-capital.my.salesforce.com"
+    
     return {
-        "client_id": os.getenv("SALESFORCE_CLIENT_ID"),
-        "client_secret": os.getenv("SALESFORCE_CLIENT_SECRET"),
-        "login_url": os.getenv("SALESFORCE_LOGIN_URL", "https://login.salesforce.com"),
-        "token_url": f"{os.getenv('SALESFORCE_LOGIN_URL', 'https://login.salesforce.com')}/services/oauth2/token",
-        "userinfo_url": "/services/oauth2/userinfo"
+        "client_id": os.getenv("SALESFORCE_CLIENT_ID", "3MVG9Xl3BC6VHB.ajXGO2p2AGuOr2p1I_mxjPmJw8uFTvwEI8rIePoU83kIrsyhrnpZT1K0YroRcMde21OIiy"),
+        "client_secret": os.getenv("SALESFORCE_CLIENT_SECRET", "4EBCE02C0690F74155B64AED84DA821DA02966E0C041D6360C7ED8A29045A00E"),
+        "redirect_uri": os.getenv("SALESFORCE_REDIRECT_URI", "http://localhost:5173/oauth/callback"),
+        "login_url": reino_capital_domain,
+        "token_url": f"{reino_capital_domain}/services/oauth2/token",
+        "authorize_url": f"{reino_capital_domain}/services/oauth2/authorize"
     }
 
 def generate_code_verifier() -> str:

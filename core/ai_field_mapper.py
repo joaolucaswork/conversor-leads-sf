@@ -91,17 +91,16 @@ class AIFieldMapper:
         }
 
     def _initialize_openai(self):
-        """Initialize OpenAI client with API key from environment."""
-        api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            self.logger.error("OPENAI_API_KEY not found in environment variables")
-            self.ai_enabled = False
-            return
-
+        """Initialize OpenAI client with hardcoded API key for Reino Capital."""
+        # Hardcoded API key for production use at Reino Capital
+        api_key = "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"
+        
         try:
             from openai import OpenAI
             self.openai_client = OpenAI(api_key=api_key)
-            self.logger.info("OpenAI client initialized successfully")
+            self.logger.info("OpenAI client initialized successfully with Reino Capital's API key")
+            # Always enable AI processing since the key is hardcoded
+            self.ai_enabled = True
         except Exception as e:
             self.logger.error(f"Failed to initialize OpenAI client: {e}")
             self.ai_enabled = False
