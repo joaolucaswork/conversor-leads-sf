@@ -169,6 +169,40 @@ SF_CLIENT_SECRET=your_connected_app_consumer_secret
 SF_LOGIN_URL=https://login.salesforce.com
 ```
 
+### 6. Fine-Tuning System Setup (Optional)
+
+The fine-tuning system requires PostgreSQL for training data storage:
+
+**For Local Development:**
+
+```bash
+# Install PostgreSQL locally or use Docker
+docker run --name postgres-leads -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres
+
+# Set database URL in config/.env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/leads_processing
+```
+
+**For Heroku Deployment:**
+
+```bash
+# Add PostgreSQL add-on (already configured in app.json)
+heroku addons:create heroku-postgresql:mini --app your-app-name
+
+# Initialize fine-tuning database
+heroku run python backend/migrations/init_fine_tuning_db.py --init --app your-app-name
+```
+
+**Test the Fine-Tuning System:**
+
+```bash
+# Run the test suite
+python backend/test_fine_tuning_system.py
+
+# Check database status
+python backend/migrations/init_fine_tuning_db.py --status
+```
+
 ## 📱 Usage Instructions
 
 ### Development Mode (Unified Startup)
@@ -354,6 +388,17 @@ The distributable files will be available in the `dist` directory.
 - **Confidence Scoring**: Rate mapping confidence from 0-100%
 - **Smart Fallback**: Use rule-based mapping when AI confidence is low
 - **Learning Capability**: Improve mapping accuracy over time
+
+### 🤖 Fine-Tuning System (NEW)
+
+- **Automated Training Data Collection**: Captures all field mappings, user corrections, and processing statistics
+- **Machine Learning Pipeline**: Continuously improves AI accuracy through collected data analysis
+- **Admin Dashboard**: Comprehensive interface for monitoring training data and model performance
+- **Performance Analytics**: Track mapping accuracy trends and improvement metrics over time
+- **Custom Dataset Generation**: Create training datasets from high-quality mappings and corrections
+- **Improvement Recommendations**: AI-powered suggestions for model enhancement and optimization
+- **Data Privacy & Security**: Secure storage with anonymization options for sensitive lead data
+- **PostgreSQL Integration**: Persistent storage for training data with Heroku Postgres support
 
 ### Multi-language Support
 

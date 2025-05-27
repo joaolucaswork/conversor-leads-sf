@@ -32,6 +32,7 @@ import { isElectron, isBrowser, logEnvironmentInfo } from './utils/environment';
 // Page Imports
 import HomePage from './pages/HomePage';
 import MappingPreviewPage from './pages/MappingPreviewPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 import SettingsPage from './pages/SettingsPage'; // Import the real SettingsPage component
 import SalesforcePage from './pages/SalesforcePage'; // Import the Salesforce integration page
@@ -223,6 +224,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SalesforcePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboardPage />
                 </ProtectedRoute>
               }
             />

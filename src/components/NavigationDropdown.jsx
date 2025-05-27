@@ -17,6 +17,7 @@ import {
   Cloud as SalesforceIcon,
   Settings as SettingsIcon,
   Login as LoginIcon,
+  Analytics as AdminIcon,
 } from '@mui/icons-material';
 import HamburgerIcon from './HamburgerIcon';
 
@@ -36,6 +37,7 @@ const NavigationDropdown = ({ isAuthenticated = false }) => {
   const authenticatedMenuItems = [
     { text: t('navigation.home'), icon: <HomeIcon />, path: '/', ariaLabel: t('navigation.ariaLabels.home') },
     { text: t('navigation.salesforce'), icon: <SalesforceIcon />, path: '/salesforce', ariaLabel: t('navigation.ariaLabels.salesforce') },
+    { text: t('navigation.admin', 'Admin Dashboard'), icon: <AdminIcon />, path: '/admin', ariaLabel: t('navigation.ariaLabels.admin', 'Open admin dashboard') },
     { text: t('navigation.settings'), icon: <SettingsIcon />, path: '/settings', ariaLabel: t('navigation.ariaLabels.settings') },
   ];
 
