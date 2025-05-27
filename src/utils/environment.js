@@ -282,12 +282,16 @@ const generateBrowserOAuthUrl = async () => {
   try {
     console.log("Browser OAuth: Starting OAuth URL generation");
 
-    // Get OAuth configuration from backend
-    const response = await fetch(
-      `${
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-      }/api/v1/oauth/config`
-    );
+    // Get OAuth configuration from backend with production detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/api/v1/oauth/config`);
     if (!response.ok) {
       throw new Error("Failed to get OAuth configuration");
     }
@@ -412,18 +416,22 @@ const exchangeCodeInBrowser = async (code) => {
       "ms)"
     );
 
-    const response = await fetch(
-      `${
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-      }/api/v1/oauth/token`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
+    // Use production URL detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
       }
-    );
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/api/v1/oauth/token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
 
     const responseTime = Date.now() - startTime;
     console.log(
@@ -609,9 +617,15 @@ const getUserProfileInBrowser = async (retryCount = 0) => {
       tokenLength: authData.accessToken?.length || 0,
     });
 
-    // Use backend proxy to avoid CORS issues
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    // Use backend proxy to avoid CORS issues with production detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const baseUrl = getApiBaseUrl();
 
     console.log(
       "Browser: Making request to:",
@@ -923,9 +937,15 @@ const getSalesforceObjectsInBrowser = async () => {
       };
     }
 
-    // Use backend API for objects
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    // Use backend API for objects with production detection
+    const getApiBaseUrl = () => {
+      if (import.meta.env.PROD) {
+        return window.location.origin;
+      }
+      return import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+    };
+
+    const baseUrl = getApiBaseUrl();
     const response = await fetch(`${baseUrl}/api/v1/salesforce/objects`, {
       method: "POST",
       headers: {
