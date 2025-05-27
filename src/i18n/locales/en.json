@@ -206,6 +206,7 @@
     "recordsProcessed": "Records Processed",
     "actions": "Actions",
     "view": "View",
+    "viewData": "View Data",
     "download": "Download",
     "delete": "Delete",
     "processing": "Processing",
@@ -219,6 +220,21 @@
     "downloadFile": "Re-download Processed File",
     "logsTitle": "Processing Logs for Job ID: {{processingId}}",
     "loadingLogs": "Loading logs...",
+    "dataViewer": {
+      "title": "File Data Viewer",
+      "fileName": "File: {{fileName}}",
+      "recordCount": "{{count}} records total",
+      "loading": "Loading file data...",
+      "loadingError": "Failed to load file data",
+      "noData": "No data available",
+      "page": "Page {{current}} of {{total}}",
+      "recordsPerPage": "Records per page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "closeViewer": "Close viewer",
+      "fullScreen": "Full screen view",
+      "backToList": "Back to list"
+    },
     "noLogs": "No logs available for this processing job.",
     "timestamp": "Timestamp",
     "level": "Level",
@@ -420,6 +436,20 @@
     "file": "File",
     "records": "Records",
     "processed": "Processed"
+  },
+  "salesforce": {
+    "fields": {
+      "lastName": "Last Name",
+      "mobilePhone": "Mobile Phone",
+      "phone": "Phone",
+      "email": "Email",
+      "description": "Description",
+      "financialAssets": "Financial Assets",
+      "leadSource": "Lead Source",
+      "state": "State/Province",
+      "owner": "Owner",
+      "millionPlus": "Million Plus"
+    }
   },
   "profile": {
     "name": "Name",

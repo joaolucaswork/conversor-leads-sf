@@ -37,7 +37,8 @@ import {
   Clear as ClearIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  TableChart as DataViewIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
@@ -54,9 +55,15 @@ import ProcessingHistorySection from './ProcessingHistorySection';
 import StatusDot from './StatusDot';
 import StatusLegend from './StatusLegend';
 import DuplicateHandlingDialog from './DuplicateHandlingDialog';
+import FileDataViewerModal from './FileDataViewerModal';
+import { useNavigate } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const UnifiedFilesHistorySection = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Language store to ensure re-render when language changes
   const { currentLanguage } = useLanguageStore(state => ({
@@ -117,6 +124,11 @@ const UnifiedFilesHistorySection = () => {
 
   // Auto-refresh state
   const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
+
+  // File data viewer modal state
+  const [fileViewerModalOpen, setFileViewerModalOpen] = useState(false);
+  const [selectedFileProcessingId, setSelectedFileProcessingId] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState(null);
 
   const loadSalesforceObjects = async () => {
     try {
@@ -232,6 +244,26 @@ const UnifiedFilesHistorySection = () => {
       console.error('Download failed:', error);
       setError(`Download failed: ${error.message}`);
     }
+  };
+
+  const handleViewFileData = (processingId, fileName) => {
+    if (isMobile) {
+      // Navigate to full-screen page on mobile
+      navigate(`/file-viewer/${processingId}`, {
+        state: { fileName }
+      });
+    } else {
+      // Open modal on desktop
+      setSelectedFileProcessingId(processingId);
+      setSelectedFileName(fileName);
+      setFileViewerModalOpen(true);
+    }
+  };
+
+  const handleFullScreenFileViewer = (processingId, fileName) => {
+    navigate(`/file-viewer/${processingId}`, {
+      state: { fileName }
+    });
   };
 
   const handleUploadToSalesforce = (file) => {
@@ -701,23 +733,42 @@ const UnifiedFilesHistorySection = () => {
                   pt: { xs: 0, sm: 0 },
                   gap: { xs: 1, sm: 1 }
                 }}>
-                  <Button
-                    size="small"
-                    onClick={() => handleDownloadFile(file)}
-                    variant="text"
-                    sx={{
-                      minWidth: 'auto',
-                      minHeight: 32,
-                      p: 1,
-                      color: 'text.secondary',
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                        color: 'text.primary'
-                      }
-                    }}
-                  >
-                    <DownloadIcon fontSize="small" />
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      size="small"
+                      onClick={() => handleViewFileData(file.processingId, file.fileName)}
+                      variant="text"
+                      sx={{
+                        minWidth: 'auto',
+                        minHeight: { xs: 44, sm: 32 }, // Touch-friendly on mobile
+                        p: 1,
+                        color: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'primary.light',
+                          color: 'primary.contrastText'
+                        }
+                      }}
+                    >
+                      <DataViewIcon fontSize="small" />
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => handleDownloadFile(file)}
+                      variant="text"
+                      sx={{
+                        minWidth: 'auto',
+                        minHeight: { xs: 44, sm: 32 }, // Touch-friendly on mobile
+                        p: 1,
+                        color: 'text.secondary',
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                          color: 'text.primary'
+                        }
+                      }}
+                    >
+                      <DownloadIcon fontSize="small" />
+                    </Button>
+                  </Box>
                   <Button
                     size="medium"
                     variant="contained"
@@ -1166,6 +1217,15 @@ const UnifiedFilesHistorySection = () => {
         duplicates={duplicatesDetected}
         onResolve={handleDuplicateResolution}
         loading={uploading}
+      />
+
+      {/* File Data Viewer Modal */}
+      <FileDataViewerModal
+        open={fileViewerModalOpen}
+        onClose={() => setFileViewerModalOpen(false)}
+        processingId={selectedFileProcessingId}
+        fileName={selectedFileName}
+        onFullScreen={handleFullScreenFileViewer}
       />
     </Paper>
   );

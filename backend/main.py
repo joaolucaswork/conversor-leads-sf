@@ -17,7 +17,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status, Request
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse
@@ -25,6 +25,15 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 import httpx
+
+# Import pandas for file viewing functionality
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+    print("[SUCCESS] Pandas imported successfully for file viewing")
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("[WARNING] Pandas not available - file viewing functionality will be limited")
 
 # Database imports
 from sqlalchemy.orm import Session
@@ -154,14 +163,17 @@ def get_cors_origins():
             print(f"[INFO] Added production origin: {heroku_url}")
 
         print(f"[INFO] Production CORS configured with origins: {origins}")
+    else:
+        print(f"[INFO] Development CORS configured with origins: {origins}")
 
     return origins
 
+# Add CORS middleware with enhanced configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allow_headers=[
         "Accept",
         "Accept-Language",
@@ -171,9 +183,13 @@ app.add_middleware(
         "X-Requested-With",
         "Origin",
         "Access-Control-Request-Method",
-        "Access-Control-Request-Headers"
+        "Access-Control-Request-Headers",
+        "X-Admin-Token",
+        "Cache-Control",
+        "Pragma"
     ],
     expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Mount static files for production (React build)
@@ -947,10 +963,31 @@ async def preview_page(processing_id: str):
     else:
         return {"message": "Preview page - React app not found", "redirect": "/"}
 
+@app.middleware("http")
+async def cors_debug_middleware(request: Request, call_next):
+    """Debug middleware to log CORS requests"""
+    origin = request.headers.get("origin")
+    method = request.method
+
+    # Log CORS-related requests
+    if origin or method == "OPTIONS":
+        print(f"[CORS] {method} {request.url.path} from origin: {origin}")
+        print(f"[CORS] Headers: {dict(request.headers)}")
+
+    response = await call_next(request)
+
+    # Log response headers for CORS debugging
+    if origin or method == "OPTIONS":
+        print(f"[CORS] Response headers: {dict(response.headers)}")
+
+    return response
+
 @app.options("/{path:path}")
-async def options_handler(path: str):
-    """Handle CORS preflight requests"""
-    return {"message": "CORS preflight handled"}
+async def options_handler(path: str, request: Request):
+    """Handle CORS preflight requests with enhanced logging"""
+    origin = request.headers.get("origin")
+    print(f"[CORS] OPTIONS preflight for path: {path} from origin: {origin}")
+    return {"message": "CORS preflight handled", "path": path, "origin": origin}
 
 @app.get("/api/v1/health")
 async def health_check():
@@ -963,6 +1000,101 @@ async def health_check():
         "processing_modules": PROCESSING_MODULES_AVAILABLE,
         "cors_enabled": True
     }
+
+@app.post("/api/v1/test/create-sample-data")
+async def create_sample_data(token: str = Depends(verify_token)):
+    """Create sample processed data for testing the view functionality"""
+    try:
+        # Generate a test processing ID
+        processing_id = f"test_{int(time.time())}"
+
+        # Create sample data
+        sample_data = [
+            {
+                "First Name": "João",
+                "Last Name": "Silva",
+                "Email": "joao.silva@example.com",
+                "Phone": "(11) 99999-1111",
+                "Company": "Empresa ABC",
+                "Lead Source": "Website",
+                "Status": "New"
+            },
+            {
+                "First Name": "Maria",
+                "Last Name": "Santos",
+                "Email": "maria.santos@example.com",
+                "Phone": "(11) 99999-2222",
+                "Company": "Empresa XYZ",
+                "Lead Source": "Email Campaign",
+                "Status": "Qualified"
+            },
+            {
+                "First Name": "Pedro",
+                "Last Name": "Oliveira",
+                "Email": "pedro.oliveira@example.com",
+                "Phone": "(11) 99999-3333",
+                "Company": "Startup DEF",
+                "Lead Source": "Social Media",
+                "Status": "Contacted"
+            }
+        ]
+
+        # Create output directory if it doesn't exist
+        output_dir = Path("data/output")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create CSV file
+        output_path = output_dir / f"test_leads_{processing_id}.csv"
+
+        # Try pandas first, fallback to manual CSV creation
+        try:
+            import pandas as pd
+            df = pd.DataFrame(sample_data)
+            df.to_csv(output_path, index=False, encoding='utf-8')
+            print(f"[INFO] Sample CSV created using pandas: {output_path}")
+        except ImportError:
+            # Fallback to manual CSV creation
+            import csv
+            with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
+                if sample_data:
+                    fieldnames = sample_data[0].keys()
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(sample_data)
+            print(f"[INFO] Sample CSV created using csv module: {output_path}")
+
+        # Create processing job entry
+        processing_jobs[processing_id] = {
+            "processingId": processing_id,
+            "fileName": f"test_leads_{processing_id}.csv",
+            "status": "completed",
+            "progress": 100,
+            "currentStage": "completed",
+            "message": "Test data created successfully",
+            "outputPath": str(output_path),
+            "completedAt": datetime.now().isoformat(),
+            "startedAt": datetime.now().isoformat(),
+            "resultUrl": f"/api/v1/leads/download/{processing_id}",
+            "previewUrl": f"/api/v1/leads/view/{processing_id}"
+        }
+
+        print(f"[INFO] Created test data with processing_id: {processing_id}")
+        print(f"[INFO] Output file: {output_path}")
+
+        return {
+            "success": True,
+            "processing_id": processing_id,
+            "message": "Sample data created successfully",
+            "records_created": len(sample_data),
+            "view_url": f"/api/v1/leads/view/{processing_id}",
+            "download_url": f"/api/v1/leads/download/{processing_id}"
+        }
+
+    except Exception as e:
+        print(f"[ERROR] Failed to create sample data: {str(e)}")
+        import traceback
+        print(f"[ERROR] Full traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to create sample data: {str(e)}")
 
 @app.post("/api/v1/leads/upload")
 async def upload_file(
@@ -1279,6 +1411,128 @@ async def get_processing_history(
     except Exception as e:
         print(f"[ERROR] Error in get_processing_history: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@app.get("/api/v1/leads/view/{processing_id}")
+async def view_processed_file_data(
+    processing_id: str,
+    page: int = Query(1, ge=1, description="Page number (1-based)"),
+    limit: int = Query(50, ge=1, le=1000, description="Records per page"),
+    token: str = Depends(verify_token)
+):
+    """Get processed file data as JSON for viewing"""
+    print(f"[INFO] View request for processing_id: {processing_id}, page: {page}, limit: {limit}")
+
+    try:
+        # Check if processing job exists
+        job = processing_jobs.get(processing_id)
+        if not job:
+            print(f"[ERROR] Processing job not found: {processing_id}")
+            print(f"[DEBUG] Available jobs: {list(processing_jobs.keys())}")
+            raise HTTPException(status_code=404, detail="Processing job not found")
+
+        print(f"[INFO] Job found: {job['fileName']}, status: {job['status']}")
+
+        if job["status"] != "completed":
+            print(f"[ERROR] File processing not completed. Status: {job['status']}")
+            raise HTTPException(status_code=400, detail=f"File processing not completed. Status: {job['status']}")
+
+        output_path = Path(job["outputPath"])
+        print(f"[INFO] Checking output path: {output_path}")
+
+        if not output_path.exists():
+            print(f"[ERROR] Processed file not found at: {output_path}")
+            # List files in the directory for debugging
+            parent_dir = output_path.parent
+            if parent_dir.exists():
+                files = list(parent_dir.glob("*"))
+                print(f"[DEBUG] Files in {parent_dir}: {files}")
+            raise HTTPException(status_code=404, detail="Processed file not found")
+
+        # Check pandas availability
+        try:
+            import pandas as pd
+            print("[INFO] Pandas available for file viewing")
+        except ImportError:
+            print("[ERROR] Pandas not available for file viewing")
+            raise HTTPException(status_code=503, detail="File viewing functionality not available - pandas not installed")
+
+        try:
+            print(f"[INFO] Reading CSV file: {output_path}")
+
+            # Try different encodings
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            df = None
+
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(output_path, encoding=encoding)
+                    print(f"[INFO] Successfully read CSV with {encoding} encoding")
+                    break
+                except UnicodeDecodeError:
+                    print(f"[WARNING] Failed to read with {encoding} encoding, trying next...")
+                    continue
+
+            if df is None:
+                raise Exception("Could not read CSV file with any supported encoding")
+
+            print(f"[INFO] CSV loaded successfully: {len(df)} records, {len(df.columns)} columns")
+            print(f"[DEBUG] Columns: {df.columns.tolist()}")
+
+            # Calculate pagination
+            total_records = len(df)
+            total_pages = (total_records + limit - 1) // limit if total_records > 0 else 0
+            start_idx = (page - 1) * limit
+            end_idx = start_idx + limit
+
+            print(f"[INFO] Pagination: total_records={total_records}, total_pages={total_pages}, start_idx={start_idx}, end_idx={end_idx}")
+
+            # Get paginated data
+            paginated_df = df.iloc[start_idx:end_idx]
+
+            # Convert to records (list of dictionaries)
+            records = paginated_df.to_dict('records')
+
+            # Get column information
+            columns = df.columns.tolist()
+
+            response_data = {
+                "success": True,
+                "data": {
+                    "records": records,
+                    "columns": columns,
+                    "pagination": {
+                        "page": page,
+                        "limit": limit,
+                        "total_records": total_records,
+                        "total_pages": total_pages,
+                        "has_next": page < total_pages,
+                        "has_previous": page > 1
+                    },
+                    "file_info": {
+                        "processing_id": processing_id,
+                        "file_name": job["fileName"],
+                        "processed_at": job.get("completedAt"),
+                        "record_count": total_records
+                    }
+                }
+            }
+
+            print(f"[INFO] Returning {len(records)} records for page {page}")
+            return response_data
+
+        except Exception as e:
+            print(f"[ERROR] Failed to read processed file {output_path}: {str(e)}")
+            import traceback
+            print(f"[ERROR] Full traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=f"Failed to read processed file: {str(e)}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Unexpected error in view_processed_file_data: {str(e)}")
+        import traceback
+        print(f"[ERROR] Full traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/v1/leads/download/{processing_id}")
 async def download_processed_file(

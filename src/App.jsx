@@ -37,6 +37,7 @@ import { isElectron, isBrowser, logEnvironmentInfo } from './utils/environment';
 import HomePage from './pages/HomePage';
 import MappingPreviewPage from './pages/MappingPreviewPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import FileDataViewerPage from './pages/FileDataViewerPage';
 
 import SettingsPage from './pages/SettingsPage'; // Import the real SettingsPage component
 
@@ -267,6 +268,11 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path="/file-viewer/:processingId" element={
+              <ProtectedRoute>
+                <FileDataViewerPage />
+              </ProtectedRoute>
+            } />
 
             <Route
               path="/"

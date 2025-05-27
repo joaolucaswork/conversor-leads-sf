@@ -385,6 +385,35 @@ export const clearReadyFiles = async () => {
 };
 
 /**
+ * Gets processed file data for viewing.
+ * @param {string} processingId - The processing ID of the file.
+ * @param {number} page - Page number (1-based, default: 1).
+ * @param {number} limit - Records per page (default: 50).
+ * @returns {Promise<Object>} - The file data with pagination info.
+ */
+export const getProcessedFileData = async (
+  processingId,
+  page = 1,
+  limit = 50
+) => {
+  if (!processingId) {
+    throw new Error("Processing ID is required.");
+  }
+  try {
+    const response = await apiClient.get(`/leads/view/${processingId}`, {
+      params: { page, limit },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error getting processed file data for ${processingId}:`,
+      error.originalError || error
+    );
+    throw error;
+  }
+};
+
+/**
  * Downloads a processed file.
  * @param {string} downloadUrl - The specific URL to download the file from (e.g., /leads/download/some-id).
  * @returns {Promise<AxiosResponse<Blob>>} - The Axios response object containing the file blob and headers.
@@ -496,6 +525,7 @@ export const apiService = {
   // File operations
   uploadFile,
   downloadProcessedFile,
+  getProcessedFileData,
 
   // Processing operations
   getProcessingStatus,

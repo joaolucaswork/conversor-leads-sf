@@ -206,6 +206,7 @@
     "recordsProcessed": "Registros Processados",
     "actions": "Ações",
     "view": "Visualizar",
+    "viewData": "Ver Dados",
     "download": "Baixar",
     "delete": "Excluir",
     "processing": "Processando",
@@ -219,6 +220,21 @@
     "downloadFile": "Baixar Arquivo Processado",
     "logsTitle": "Logs de Processamento para Job ID: {{processingId}}",
     "loadingLogs": "Carregando logs...",
+    "dataViewer": {
+      "title": "Visualizador de Dados do Arquivo",
+      "fileName": "Arquivo: {{fileName}}",
+      "recordCount": "{{count}} registros no total",
+      "loading": "Carregando dados do arquivo...",
+      "loadingError": "Falha ao carregar dados do arquivo",
+      "noData": "Nenhum dado disponível",
+      "page": "Página {{current}} de {{total}}",
+      "recordsPerPage": "Registros por página",
+      "previousPage": "Página anterior",
+      "nextPage": "Próxima página",
+      "closeViewer": "Fechar visualizador",
+      "fullScreen": "Visualização em tela cheia",
+      "backToList": "Voltar à lista"
+    },
     "noLogs": "Nenhum log disponível para este job de processamento.",
     "timestamp": "Timestamp",
     "level": "Nível",
@@ -422,6 +438,20 @@
     "file": "Arquivo",
     "records": "Registros",
     "processed": "Processado"
+  },
+  "salesforce": {
+    "fields": {
+      "lastName": "Sobrenome",
+      "mobilePhone": "Telefone Celular",
+      "phone": "Telefone",
+      "email": "Email",
+      "description": "Descrição",
+      "financialAssets": "Patrimônio Financeiro",
+      "leadSource": "Origem do Lead",
+      "state": "Estado/Província",
+      "owner": "Proprietário",
+      "millionPlus": "Mais de Milhão"
+    }
   },
   "profile": {
     "name": "Nome",

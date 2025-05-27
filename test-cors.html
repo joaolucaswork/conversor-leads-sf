@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS and Backend Connectivity Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Create Sample Data</h2>
+        <button onclick="createSampleData()">Create Sample Data</button>
+        <div id="sample-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: View File Data</h2>
+        <input type="text" id="processing-id" placeholder="Enter processing ID" style="width: 300px; padding: 5px;">
+        <button onclick="testViewData()">Test View Data</button>
+        <div id="view-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Processing History</h2>
+        <button onclick="testHistory()">Test History Endpoint</button>
+        <div id="history-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        
+        async function makeRequest(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer demo-token'
+                }
+            };
+            
+            const finalOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            };
+            
+            console.log(`Making request to: ${url}`);
+            console.log('Options:', finalOptions);
+            
+            try {
+                const response = await fetch(url, finalOptions);
+                const data = await response.json();
+                
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                console.error('Request failed:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            const className = result.success ? 'success' : 'error';
+            
+            element.className = className;
+            element.innerHTML = `
+                <h3>${result.success ? 'Success' : 'Error'}</h3>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        }
+        
+        async function testHealth() {
+            const result = await makeRequest(`${API_BASE}/health`);
+            displayResult('health-result', result);
+        }
+        
+        async function createSampleData() {
+            const result = await makeRequest(`${API_BASE}/test/create-sample-data`, {
+                method: 'POST'
+            });
+            displayResult('sample-result', result);
+            
+            // If successful, populate the processing ID field
+            if (result.success && result.data.processing_id) {
+                document.getElementById('processing-id').value = result.data.processing_id;
+            }
+        }
+        
+        async function testViewData() {
+            const processingId = document.getElementById('processing-id').value;
+            if (!processingId) {
+                alert('Please enter a processing ID or create sample data first');
+                return;
+            }
+            
+            const result = await makeRequest(`${API_BASE}/leads/view/${processingId}?page=1&limit=10`);
+            displayResult('view-result', result);
+        }
+        
+        async function testHistory() {
+            const result = await makeRequest(`${API_BASE}/leads/history?page=1&limit=10`);
+            displayResult('history-result', result);
+        }
+        
+        // Auto-run health check on page load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

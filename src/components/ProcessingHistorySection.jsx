@@ -28,6 +28,7 @@ import {
   Visibility as ViewIcon,
   Article as LogsIcon,
   Clear as ClearIcon,
+  TableChart as DataViewIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +40,8 @@ import {
 } from '../services/apiService';
 import { useGlobalProcessingEvents } from '../hooks/useProcessingEvents';
 import LogViewerModal from './LogViewerModal';
+import FileDataViewerModal from './FileDataViewerModal';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const ProcessingHistorySection = ({
   maxItems = 5,
@@ -49,6 +52,8 @@ const ProcessingHistorySection = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { addListener } = useGlobalProcessingEvents();
   const [historyItems, setHistoryItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +71,11 @@ const ProcessingHistorySection = ({
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [logsError, setLogsError] = useState(null);
+
+  // File data viewer modal state
+  const [fileViewerModalOpen, setFileViewerModalOpen] = useState(false);
+  const [selectedFileProcessingId, setSelectedFileProcessingId] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState(null);
 
   const fetchHistory = useCallback(async (pageToFetch = 1) => {
     setIsLoading(true);
@@ -162,6 +172,26 @@ const ProcessingHistorySection = ({
 
   const handlePreviewClick = (processingId) => {
     navigate(`/preview/${processingId}`);
+  };
+
+  const handleViewFileData = (processingId, fileName) => {
+    if (isMobile) {
+      // Navigate to full-screen page on mobile
+      navigate(`/file-viewer/${processingId}`, {
+        state: { fileName }
+      });
+    } else {
+      // Open modal on desktop
+      setSelectedFileProcessingId(processingId);
+      setSelectedFileName(fileName);
+      setFileViewerModalOpen(true);
+    }
+  };
+
+  const handleFullScreenFileViewer = (processingId, fileName) => {
+    navigate(`/file-viewer/${processingId}`, {
+      state: { fileName }
+    });
   };
 
   const getStatusColor = (status) => {
@@ -288,6 +318,15 @@ const ProcessingHistorySection = ({
                               <DownloadIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title={t('history.viewData')}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewFileData(item.processingId, item.fileName)}
+                              color="primary"
+                            >
+                              <DataViewIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           <Tooltip title={t('history.view')}>
                             <IconButton
                               size="small"
@@ -378,27 +417,51 @@ const ProcessingHistorySection = ({
 
               <CardActions sx={{ px: 1.5, pb: 1.5, pt: 0 }}>
                 {item.status === 'completed' && (
-                  <Button
-                    size="small"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => handleDownloadFile(item)}
-                    variant="outlined"
-                    sx={{
-                      minHeight: 36,
-                      fontSize: '0.8125rem',
-                      px: 2,
-                      fontWeight: 500,
-                      width: '100%',
-                      borderColor: 'divider',
-                      color: 'text.primary',
-                      '&:hover': {
-                        borderColor: 'text.secondary',
-                        backgroundColor: 'action.hover'
-                      }
-                    }}
-                  >
-                    Download
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                    <Button
+                      size="small"
+                      startIcon={<DataViewIcon />}
+                      onClick={() => handleViewFileData(item.processingId, item.fileName)}
+                      variant="outlined"
+                      sx={{
+                        minHeight: 44, // Touch-friendly
+                        fontSize: '0.8125rem',
+                        px: 2,
+                        fontWeight: 500,
+                        flex: 1,
+                        borderColor: 'primary.main',
+                        color: 'primary.main',
+                        '&:hover': {
+                          borderColor: 'primary.dark',
+                          backgroundColor: 'primary.light',
+                          color: 'primary.contrastText'
+                        }
+                      }}
+                    >
+                      {t('history.viewData')}
+                    </Button>
+                    <Button
+                      size="small"
+                      startIcon={<DownloadIcon />}
+                      onClick={() => handleDownloadFile(item)}
+                      variant="outlined"
+                      sx={{
+                        minHeight: 44, // Touch-friendly
+                        fontSize: '0.8125rem',
+                        px: 2,
+                        fontWeight: 500,
+                        flex: 1,
+                        borderColor: 'divider',
+                        color: 'text.primary',
+                        '&:hover': {
+                          borderColor: 'text.secondary',
+                          backgroundColor: 'action.hover'
+                        }
+                      }}
+                    >
+                      Download
+                    </Button>
+                  </Box>
                 )}
               </CardActions>
             </Card>
@@ -428,6 +491,15 @@ const ProcessingHistorySection = ({
         processingId={selectedJobId}
         isLoading={isLoadingLogs}
         error={logsError}
+      />
+
+      {/* File Data Viewer Modal */}
+      <FileDataViewerModal
+        open={fileViewerModalOpen}
+        onClose={() => setFileViewerModalOpen(false)}
+        processingId={selectedFileProcessingId}
+        fileName={selectedFileName}
+        onFullScreen={handleFullScreenFileViewer}
       />
     </Box>
   );
