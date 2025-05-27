@@ -36,9 +36,11 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { apiService } from '../services/apiService';
+import { useAuthStore } from '../store/authStore';
 
 const AdminDashboardPage = () => {
   const { t } = useTranslation();
+  const authStore = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [trainingSummary, setTrainingSummary] = useState(null);
@@ -58,21 +60,40 @@ const AdminDashboardPage = () => {
       setLoading(true);
       setError(null);
 
+      console.log('🔍 Admin Dashboard: Starting data load...');
+      console.log('🔑 Auth state:', {
+        isAuthenticated: authStore.isAuthenticated,
+        hasToken: !!authStore.accessToken
+      });
+
       // Load training data summary
-      const summaryResponse = await apiService.get('/api/v1/training/summary');
+      console.log('📊 Loading training data summary...');
+      const summaryResponse = await apiService.get('/training/summary');
+      console.log('✅ Training summary loaded:', summaryResponse);
       setTrainingSummary(summaryResponse);
 
       // Load improvement recommendations
-      const recommendationsResponse = await apiService.get('/api/v1/training/recommendations');
+      console.log('💡 Loading improvement recommendations...');
+      const recommendationsResponse = await apiService.get('/training/recommendations');
+      console.log('✅ Recommendations loaded:', recommendationsResponse);
       setRecommendations(recommendationsResponse.recommendations || []);
 
       // Load field mapping patterns
-      const patternsResponse = await apiService.get('/api/v1/training/field-patterns');
+      console.log('🗺️ Loading field mapping patterns...');
+      const patternsResponse = await apiService.get('/training/field-patterns');
+      console.log('✅ Field patterns loaded:', patternsResponse);
       setFieldPatterns(patternsResponse);
 
+      console.log('🎉 Admin Dashboard: All data loaded successfully');
+
     } catch (err) {
-      console.error('Failed to load dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again.');
+      console.error('❌ Failed to load dashboard data:', err);
+      console.error('❌ Error details:', {
+        message: err.message,
+        status: err.status,
+        response: err.response?.data
+      });
+      setError(`Failed to load dashboard data: ${err.message}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -81,7 +102,7 @@ const AdminDashboardPage = () => {
   const handleGenerateDataset = async () => {
     try {
       setGenerating(true);
-      const response = await apiService.post('/api/v1/training/generate-dataset', {
+      const response = await apiService.post('/training/generate-dataset', {
         dataset_name: datasetName || 'auto_generated',
         min_confidence: minConfidence
       });
@@ -242,7 +263,7 @@ const AdminDashboardPage = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {t('admin.dashboard.lastUpdated', 'Last updated')}: {
-                  trainingSummary?.last_updated 
+                  trainingSummary?.last_updated
                     ? new Date(trainingSummary.last_updated).toLocaleString()
                     : 'Never'
                 }
@@ -267,9 +288,9 @@ const AdminDashboardPage = () => {
                     <CardContent>
                       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                         <Typography variant="subtitle2">{rec.type}</Typography>
-                        <Chip 
-                          label={rec.priority} 
-                          size="small" 
+                        <Chip
+                          label={rec.priority}
+                          size="small"
                           color={getPriorityColor(rec.priority)}
                         />
                       </Box>
@@ -277,10 +298,10 @@ const AdminDashboardPage = () => {
                         {rec.description}
                       </Typography>
                       {rec.field_name && (
-                        <Chip 
-                          label={`Field: ${rec.field_name}`} 
-                          size="small" 
-                          variant="outlined" 
+                        <Chip
+                          label={`Field: ${rec.field_name}`}
+                          size="small"
+                          variant="outlined"
                           sx={{ mt: 1 }}
                         />
                       )}
@@ -325,8 +346,8 @@ const AdminDashboardPage = () => {
           <Button onClick={() => setGenerateDatasetDialog(false)}>
             {t('common.cancel', 'Cancel')}
           </Button>
-          <Button 
-            onClick={handleGenerateDataset} 
+          <Button
+            onClick={handleGenerateDataset}
             variant="contained"
             disabled={generating}
           >

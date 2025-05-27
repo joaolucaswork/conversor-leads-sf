@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import LoginPage from './pages/LoginPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import CertificateProtectedRoute from './components/CertificateProtectedRoute';
 import UserProfileHeader from './components/UserProfileHeader';
 import NavigationDropdown from './components/NavigationDropdown';
 import SalesforceStatusBar from './components/SalesforceStatusBar';
@@ -230,9 +231,9 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <CertificateProtectedRoute>
                   <AdminDashboardPage />
-                </ProtectedRoute>
+                </CertificateProtectedRoute>
               }
             />
                 {/* Add other routes here */}

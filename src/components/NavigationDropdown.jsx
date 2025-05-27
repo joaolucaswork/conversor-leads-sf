@@ -34,10 +34,10 @@ const NavigationDropdown = ({ isAuthenticated = false }) => {
   const open = Boolean(anchorEl);
 
   // Navigation items for authenticated users
+  // Note: Admin Dashboard is hidden from navigation and only accessible via direct URL with certificate authentication
   const authenticatedMenuItems = [
     { text: t('navigation.home'), icon: <HomeIcon />, path: '/', ariaLabel: t('navigation.ariaLabels.home') },
     { text: t('navigation.salesforce'), icon: <SalesforceIcon />, path: '/salesforce', ariaLabel: t('navigation.ariaLabels.salesforce') },
-    { text: t('navigation.admin', 'Admin Dashboard'), icon: <AdminIcon />, path: '/admin', ariaLabel: t('navigation.ariaLabels.admin', 'Open admin dashboard') },
     { text: t('navigation.settings'), icon: <SettingsIcon />, path: '/settings', ariaLabel: t('navigation.ariaLabels.settings') },
   ];
 

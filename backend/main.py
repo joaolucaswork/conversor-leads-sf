@@ -33,6 +33,9 @@ from models.training_data import ProcessingJob
 from services.training_data_service import TrainingDataService
 from services.fine_tuning_service import FineTuningService
 
+# Certificate authentication imports
+from middleware.certificate_auth import verify_admin_certificate
+
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
@@ -1311,7 +1314,8 @@ async def clear_ready_files(
 @app.get("/api/v1/training/summary")
 async def get_training_data_summary(
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
 ):
     """Get summary of collected training data"""
     try:
@@ -1336,7 +1340,8 @@ async def get_training_data_summary(
 async def add_user_correction(
     correction: UserCorrectionRequest,
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
 ):
     """Add user correction for training data improvement"""
     try:
@@ -1389,7 +1394,8 @@ async def add_user_correction(
 @app.get("/api/v1/training/recommendations")
 async def get_improvement_recommendations(
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
 ):
     """Get recommendations for model improvement"""
     try:
@@ -1429,7 +1435,8 @@ async def generate_training_dataset(
     dataset_name: str = "auto_generated",
     min_confidence: float = 80.0,
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
 ):
     """Generate a training dataset from collected data"""
     try:
@@ -1460,7 +1467,8 @@ async def generate_training_dataset(
 @app.get("/api/v1/training/field-patterns")
 async def get_field_mapping_patterns(
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
 ):
     """Get field mapping patterns for analysis"""
     try:

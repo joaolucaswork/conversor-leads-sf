@@ -373,6 +373,34 @@ The distributable files will be available in the `dist` directory.
 - **Batch Processing**: Process multiple files in batch mode
 - **Export Options**: Save processed data in various formats
 
+### 🔐 Admin Panel Security
+
+- **Certificate-Based Authentication**: Secure admin access using client certificates
+- **Hidden Navigation**: Admin panel not visible in main navigation menu
+- **Dual Protection**: Requires both Salesforce authentication AND client certificate
+- **Direct URL Access**: Available only via `/admin` route
+- **Enterprise-Grade Security**: Production-ready certificate validation
+
+#### Setting Up Admin Panel Security
+
+1. **Generate Certificates**:
+
+   ```bash
+   python generate-certificates-simple.py
+   ```
+
+2. **Install Client Certificate**:
+   - File: `certificates/admin-client.p12`
+   - Password: `admin123`
+   - Install in your browser (Chrome: Settings → Privacy → Certificates → Import)
+
+3. **Access Admin Panel**:
+   - Navigate to: `http://localhost:5173/admin`
+   - Browser will prompt for certificate selection
+   - Select "Admin Client" certificate
+
+📖 **Detailed Guide**: [Admin Security Guide](ADMIN_SECURITY_GUIDE.md)
+
 ### Salesforce Integration
 
 - **Direct Upload**: Upload leads directly to Salesforce
