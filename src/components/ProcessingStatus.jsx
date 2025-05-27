@@ -157,18 +157,65 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 3, mt: 3, borderColor: `${statusColor}.main`, borderLeft: '5px solid' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+    <Paper
+      elevation={2}
+      sx={{
+        p: { xs: 2, sm: 2.5, md: 3 },
+        mt: { xs: 2, sm: 3 },
+        borderColor: `${statusColor}.main`,
+        borderLeft: '5px solid',
+        borderRadius: { xs: 2, sm: 2 }
+      }}
+    >
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        mb: { xs: 1.5, sm: 1 },
+        flexWrap: 'wrap',
+        gap: { xs: 0.5, sm: 0 }
+      }}>
         {statusIcon}
-        <Typography variant="h6" component="div" color={`${statusColor}.main`}>
+        <Typography
+          variant="h6"
+          component="div"
+          color={`${statusColor}.main`}
+          sx={{
+            fontSize: { xs: '1.125rem', sm: '1.25rem' },
+            fontWeight: { xs: 600, sm: 500 },
+            lineHeight: 1.3,
+            wordBreak: 'break-word'
+          }}
+        >
           {t('processing.title')}: {status ? t(`processing.stages.${status}`, { defaultValue: status.replace(/_/g, ' ').toUpperCase() }) : t('common.loading')}
         </Typography>
       </Box>
 
-      {fileName && <Typography variant="subtitle1" color="text.secondary" gutterBottom>{t('common.file')}: {fileName}</Typography>}
+      {fileName && (
+        <Typography
+          variant="subtitle1"
+          color="text.secondary"
+          gutterBottom
+          sx={{
+            fontSize: { xs: '1rem', sm: '1rem' },
+            fontWeight: { xs: 500, sm: 400 },
+            wordBreak: 'break-word',
+            mb: { xs: 1.5, sm: 1 }
+          }}
+        >
+          {t('common.file')}: {fileName}
+        </Typography>
+      )}
 
       {currentStage && (
-        <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{
+            fontStyle: 'italic',
+            fontSize: { xs: '0.9375rem', sm: '1rem' },
+            mb: { xs: 1, sm: 0.5 }
+          }}
+        >
           {t('processing.stage')}: {t(`processing.stages.${currentStage}`, { defaultValue: currentStage.replace(/_/g, ' ') })}
         </Typography>
       )}
@@ -215,10 +262,6 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
           aiStats={aiStats || {}}
           apiUsage={apiUsage || {}}
           processingInfo={{ fileName, recordCount: statusData.recordCount }}
-          onViewDetails={() => {
-            // Navigate to detailed report or open modal
-            console.log('View detailed report for:', processingId);
-          }}
         />
       )}
 

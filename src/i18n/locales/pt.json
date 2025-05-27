@@ -28,7 +28,7 @@
     "loggedInInfo": "Logado no Salesforce. URL da Instância: {{instanceUrl}}",
     "uploadTitle": "Envie Seu Arquivo de Dados de Leads",
     "filesAndHistory": "Arquivos e Histórico de Processamento",
-    "readyFiles": "Prontos para Upload",
+    "processedFiles": "Processados",
     "recentActivity": "Atividade Recente de Processamento",
     "clearFiles": "Limpar Arquivos",
     "clearHistory": "Limpar Histórico",
@@ -39,10 +39,11 @@
     "clearFilesError": "Erro ao limpar arquivos: {{error}}",
     "clearHistoryError": "Erro ao limpar histórico: {{error}}",
     "noFilesToClear": "Nenhum arquivo foi encontrado para limpar.",
-    "noReadyFiles": "Nenhum arquivo processado disponível para upload.",
-    "noReadyFilesDescription": "Processe alguns arquivos de leads primeiro, depois retorne aqui para enviá-los ao Salesforce.",
+    "noProcessedFiles": "Nenhum arquivo processado disponível.",
+    "noProcessedFilesDescription": "Processe alguns arquivos de leads primeiro, depois retorne aqui para enviá-los ao Salesforce.",
     "fileAutoAdded": "{{fileName}} foi processado e está pronto para upload",
-    "autoRefreshing": "Atualizando automaticamente..."
+    "autoRefreshing": "Atualizando automaticamente...",
+    "filesReadyForUpload": "{{count}} arquivo(s) pronto(s) para upload"
   },
   "settings": {
     "title": "Configurações da Aplicação",
@@ -241,6 +242,8 @@
     "cancel": "Cancelar",
     "retry": "Tentar Novamente",
     "dropHere": "Solte o arquivo aqui...",
+    "dragDropOrClick": "Arraste e solte seu arquivo aqui ou clique para selecionar",
+    "releaseToUpload": "Solte o arquivo aqui para fazer upload",
     "processWithAI": "Processar com IA",
     "processRuleBased": "Processar (Baseado em Regras)",
     "processLeads": "Processar Leads",
@@ -323,6 +326,47 @@
       "intelligentMapping": "Mapeamento inteligente e validação de campos",
       "traditionalMapping": "Processamento com regras de mapeamento tradicionais",
       "processingFinished": "Processamento finalizado com sucesso"
+    },
+    "aiSummary": {
+      "title": "Processamento Concluído - Resumo de Otimização de IA",
+      "optimizationScore": "Pontuação de Otimização",
+      "totalCost": "Custo Total",
+      "cacheHitRate": "Taxa de Acerto do Cache",
+      "apiCallsMade": "Chamadas de API Realizadas",
+      "perRecord": "por registro",
+      "cacheHits": "acertos de cache",
+      "tokens": "tokens",
+      "excellent": "Excelente",
+      "good": "Bom",
+      "needsWork": "Precisa Melhorar",
+      "recommendations": "Recomendações de Otimização",
+      "detailedBreakdown": "Detalhamento do Processamento",
+      "aiProcessingStats": "Estatísticas de Processamento de IA",
+      "apiUsageDetails": "Detalhes de Uso da API",
+      "comparisonTitle": "Comparação com Sessão Anterior",
+      "costDifference": "Diferença de Custo",
+      "tokenDifference": "Diferença de Tokens",
+      "apiCallsDifference": "Diferença de Chamadas de API",
+      "mappingAttempts": "Tentativas de Mapeamento",
+      "mappingSuccesses": "Sucessos de Mapeamento",
+      "validationAttempts": "Tentativas de Validação",
+      "ruleBasedFallbacks": "Fallbacks Baseados em Regras",
+      "mappingApiCalls": "Chamadas de API de Mapeamento",
+      "validationApiCalls": "Chamadas de API de Validação",
+      "cacheMisses": "Perdas de Cache",
+      "aiOperationsSkipped": "Operações de IA Puladas",
+      "recommendations": {
+        "cache": "Processe estruturas de arquivo similares para melhorar a eficácia do cache",
+        "optimization": "Considere aprimorar padrões baseados em regras para reduzir dependência de IA",
+        "cost": "Alto custo por arquivo - considere usar tamanhos de amostra menores",
+        "success": "Excelente otimização! As configurações atuais estão bem ajustadas para eficiência de custo"
+      },
+      "efficiency": {
+        "excellent": "Excelente",
+        "good": "Bom",
+        "fair": "Razoável",
+        "needsImprovement": "Precisa Melhorar"
+      }
     }
   },
   "mapping": {

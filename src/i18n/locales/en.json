@@ -28,7 +28,7 @@
     "loggedInInfo": "Logged in with Salesforce. Instance URL: {{instanceUrl}}",
     "uploadTitle": "Upload Your Lead Data File",
     "filesAndHistory": "Files & Processing History",
-    "readyFiles": "Ready for Upload",
+    "processedFiles": "Processed",
     "recentActivity": "Recent Processing Activity",
     "clearFiles": "Clear Files",
     "clearHistory": "Clear History",
@@ -39,10 +39,11 @@
     "clearFilesError": "Error clearing files: {{error}}",
     "clearHistoryError": "Error clearing history: {{error}}",
     "noFilesToClear": "No files were found to clear.",
-    "noReadyFiles": "No processed files available for upload.",
-    "noReadyFilesDescription": "Process some lead files first, then return here to upload them to Salesforce.",
+    "noProcessedFiles": "No processed files available.",
+    "noProcessedFilesDescription": "Process some lead files first, then return here to upload them to Salesforce.",
     "fileAutoAdded": "{{fileName}} has been processed and is now ready for upload",
-    "autoRefreshing": "Auto-refreshing..."
+    "autoRefreshing": "Auto-refreshing...",
+    "filesReadyForUpload": "{{count}} file(s) ready for upload"
   },
   "settings": {
     "title": "Application Settings",
@@ -323,6 +324,47 @@
       "intelligentMapping": "Intelligent field mapping and validation",
       "traditionalMapping": "Processing with traditional mapping rules",
       "processingFinished": "Processing finished successfully"
+    },
+    "aiSummary": {
+      "title": "Processing Complete - AI Optimization Summary",
+      "optimizationScore": "Optimization Score",
+      "totalCost": "Total Cost",
+      "cacheHitRate": "Cache Hit Rate",
+      "apiCallsMade": "API Calls Made",
+      "perRecord": "per record",
+      "cacheHits": "cache hits",
+      "tokens": "tokens",
+      "excellent": "Excellent",
+      "good": "Good",
+      "needsWork": "Needs Work",
+      "recommendations": "Optimization Recommendations",
+      "detailedBreakdown": "Detailed Processing Breakdown",
+      "aiProcessingStats": "AI Processing Statistics",
+      "apiUsageDetails": "API Usage Details",
+      "comparisonTitle": "Comparison with Previous Session",
+      "costDifference": "Cost Difference",
+      "tokenDifference": "Token Difference",
+      "apiCallsDifference": "API Calls Difference",
+      "mappingAttempts": "Mapping Attempts",
+      "mappingSuccesses": "Mapping Successes",
+      "validationAttempts": "Validation Attempts",
+      "ruleBasedFallbacks": "Rule-based Fallbacks",
+      "mappingApiCalls": "Mapping API Calls",
+      "validationApiCalls": "Validation API Calls",
+      "cacheMisses": "Cache Misses",
+      "aiOperationsSkipped": "AI Operations Skipped",
+      "recommendations": {
+        "cache": "Process similar file structures to improve cache effectiveness",
+        "optimization": "Consider enhancing rule-based patterns to reduce AI dependency",
+        "cost": "High cost per file - consider using smaller sample sizes",
+        "success": "Excellent optimization! Current settings are well-tuned for cost efficiency"
+      },
+      "efficiency": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "fair": "Fair",
+        "needsImprovement": "Needs Improvement"
+      }
     }
   },
   "mapping": {

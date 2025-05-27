@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -39,9 +40,9 @@ const ProcessingSummary = ({
   aiStats = {},
   apiUsage = {},
   processingInfo = {},
-  onViewDetails,
   previousSession = null
 }) => {
+  const { t } = useTranslation();
   const [expandedSection, setExpandedSection] = useState(false);
 
   // Calculate metrics
@@ -68,9 +69,9 @@ const ProcessingSummary = ({
     return {
       costPerRecord,
       tokensPerRecord,
-      efficiency: costPerRecord < 0.001 ? 'Excellent' :
-                 costPerRecord < 0.005 ? 'Good' :
-                 costPerRecord < 0.01 ? 'Fair' : 'Needs Improvement'
+      efficiency: costPerRecord < 0.001 ? t('processing.aiSummary.efficiency.excellent') :
+                 costPerRecord < 0.005 ? t('processing.aiSummary.efficiency.good') :
+                 costPerRecord < 0.01 ? t('processing.aiSummary.efficiency.fair') : t('processing.aiSummary.efficiency.needsImprovement')
     };
   }
 
@@ -81,7 +82,7 @@ const ProcessingSummary = ({
       recs.push({
         type: 'cache',
         priority: 'high',
-        message: 'Process similar file structures to improve cache effectiveness',
+        message: t('processing.aiSummary.recommendations.cache'),
         icon: <CacheIcon />
       });
     }
@@ -90,7 +91,7 @@ const ProcessingSummary = ({
       recs.push({
         type: 'optimization',
         priority: 'medium',
-        message: 'Consider enhancing rule-based patterns to reduce AI dependency',
+        message: t('processing.aiSummary.recommendations.optimization'),
         icon: <RuleIcon />
       });
     }
@@ -99,7 +100,7 @@ const ProcessingSummary = ({
       recs.push({
         type: 'cost',
         priority: 'high',
-        message: 'High cost per file - consider using smaller sample sizes',
+        message: t('processing.aiSummary.recommendations.cost'),
         icon: <MoneyIcon />
       });
     }
@@ -108,7 +109,7 @@ const ProcessingSummary = ({
       recs.push({
         type: 'success',
         priority: 'info',
-        message: 'Excellent optimization! Current settings are well-tuned for cost efficiency',
+        message: t('processing.aiSummary.recommendations.success'),
         icon: <CheckCircleIcon />
       });
     }
@@ -144,7 +145,7 @@ const ProcessingSummary = ({
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center' }}>
             <CompareIcon sx={{ mr: 1 }} />
-            Comparison with Previous Session
+            {t('processing.aiSummary.comparisonTitle')}
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
@@ -154,7 +155,7 @@ const ProcessingSummary = ({
                 <Typography variant="h6" color={costDiff <= 0 ? 'success.main' : 'error.main'}>
                   {costDiff > 0 ? '+' : ''}{costDiff.toFixed(4)}
                 </Typography>
-                <Typography variant="caption">Cost Difference</Typography>
+                <Typography variant="caption">{t('processing.aiSummary.costDifference')}</Typography>
               </Box>
             </Grid>
             <Grid item xs={4}>
@@ -162,7 +163,7 @@ const ProcessingSummary = ({
                 <Typography variant="h6" color={tokenDiff <= 0 ? 'success.main' : 'error.main'}>
                   {tokenDiff > 0 ? '+' : ''}{tokenDiff}
                 </Typography>
-                <Typography variant="caption">Token Difference</Typography>
+                <Typography variant="caption">{t('processing.aiSummary.tokenDifference')}</Typography>
               </Box>
             </Grid>
             <Grid item xs={4}>
@@ -170,7 +171,7 @@ const ProcessingSummary = ({
                 <Typography variant="h6" color={callsDiff <= 0 ? 'success.main' : 'error.main'}>
                   {callsDiff > 0 ? '+' : ''}{callsDiff}
                 </Typography>
-                <Typography variant="caption">API Calls Difference</Typography>
+                <Typography variant="caption">{t('processing.aiSummary.apiCallsDifference')}</Typography>
               </Box>
             </Grid>
           </Grid>
@@ -184,7 +185,7 @@ const ProcessingSummary = ({
       <CardContent>
         <Typography variant="h5" component="h2" sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
           <CheckCircleIcon sx={{ mr: 1, color: 'success.main' }} />
-          Processing Complete - AI Optimization Summary
+          {t('processing.aiSummary.title')}
         </Typography>
 
         {/* Main Metrics */}
@@ -195,10 +196,10 @@ const ProcessingSummary = ({
                 {optimizationScore}
               </Typography>
               <Typography variant="body2" color="primary.contrastText">
-                Optimization Score
+                {t('processing.aiSummary.optimizationScore')}
               </Typography>
               <Chip
-                label={optimizationScore >= 80 ? 'Excellent' : optimizationScore >= 60 ? 'Good' : 'Needs Work'}
+                label={optimizationScore >= 80 ? t('processing.aiSummary.excellent') : optimizationScore >= 60 ? t('processing.aiSummary.good') : t('processing.aiSummary.needsWork')}
                 size="small"
                 color={getScoreColor(optimizationScore)}
                 sx={{ mt: 1 }}
@@ -212,10 +213,10 @@ const ProcessingSummary = ({
                 ${(apiUsage.estimated_cost || 0).toFixed(4)}
               </Typography>
               <Typography variant="body2" color="success.contrastText">
-                Total Cost
+                {t('processing.aiSummary.totalCost')}
               </Typography>
               <Typography variant="caption" color="success.contrastText">
-                ${costEfficiency.costPerRecord.toFixed(6)} per record
+                ${costEfficiency.costPerRecord.toFixed(6)} {t('processing.aiSummary.perRecord')}
               </Typography>
             </Paper>
           </Grid>
@@ -226,10 +227,10 @@ const ProcessingSummary = ({
                 {((apiUsage.cache_hit_ratio || 0) * 100).toFixed(1)}%
               </Typography>
               <Typography variant="body2" color="info.contrastText">
-                Cache Hit Rate
+                {t('processing.aiSummary.cacheHitRate')}
               </Typography>
               <Typography variant="caption" color="info.contrastText">
-                {apiUsage.cache_hits || 0} cache hits
+                {apiUsage.cache_hits || 0} {t('processing.aiSummary.cacheHits')}
               </Typography>
             </Paper>
           </Grid>
@@ -240,10 +241,10 @@ const ProcessingSummary = ({
                 {apiUsage.total_calls || 0}
               </Typography>
               <Typography variant="body2" color="warning.contrastText">
-                API Calls Made
+                {t('processing.aiSummary.apiCallsMade')}
               </Typography>
               <Typography variant="caption" color="warning.contrastText">
-                {(apiUsage.total_tokens_used || 0).toLocaleString()} tokens
+                {(apiUsage.total_tokens_used || 0).toLocaleString()} {t('processing.aiSummary.tokens')}
               </Typography>
             </Paper>
           </Grid>
@@ -253,7 +254,7 @@ const ProcessingSummary = ({
         {recommendations.length > 0 && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Optimization Recommendations
+              {t('processing.aiSummary.recommendations')}
             </Typography>
             {recommendations.map((rec, index) => (
               <Alert
@@ -271,31 +272,31 @@ const ProcessingSummary = ({
         {/* Detailed Breakdown */}
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">Detailed Processing Breakdown</Typography>
+            <Typography variant="subtitle1">{t('processing.aiSummary.detailedBreakdown')}</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>
-                  AI Processing Statistics
+                  {t('processing.aiSummary.aiProcessingStats')}
                 </Typography>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableBody>
                       <TableRow>
-                        <TableCell>Mapping Attempts</TableCell>
+                        <TableCell>{t('processing.aiSummary.mappingAttempts')}</TableCell>
                         <TableCell align="right">{aiStats.mappings_attempted || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Mapping Successes</TableCell>
+                        <TableCell>{t('processing.aiSummary.mappingSuccesses')}</TableCell>
                         <TableCell align="right">{aiStats.mappings_successful || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Validation Attempts</TableCell>
+                        <TableCell>{t('processing.aiSummary.validationAttempts')}</TableCell>
                         <TableCell align="right">{aiStats.validations_attempted || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Rule-based Fallbacks</TableCell>
+                        <TableCell>{t('processing.aiSummary.ruleBasedFallbacks')}</TableCell>
                         <TableCell align="right">{aiStats.fallbacks_to_rules || 0}</TableCell>
                       </TableRow>
                     </TableBody>
@@ -305,25 +306,25 @@ const ProcessingSummary = ({
 
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold' }}>
-                  API Usage Details
+                  {t('processing.aiSummary.apiUsageDetails')}
                 </Typography>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableBody>
                       <TableRow>
-                        <TableCell>Mapping API Calls</TableCell>
+                        <TableCell>{t('processing.aiSummary.mappingApiCalls')}</TableCell>
                         <TableCell align="right">{apiUsage.mapping_calls || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Validation API Calls</TableCell>
+                        <TableCell>{t('processing.aiSummary.validationApiCalls')}</TableCell>
                         <TableCell align="right">{apiUsage.validation_calls || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>Cache Misses</TableCell>
+                        <TableCell>{t('processing.aiSummary.cacheMisses')}</TableCell>
                         <TableCell align="right">{apiUsage.cache_misses || 0}</TableCell>
                       </TableRow>
                       <TableRow>
-                        <TableCell>AI Operations Skipped</TableCell>
+                        <TableCell>{t('processing.aiSummary.aiOperationsSkipped')}</TableCell>
                         <TableCell align="right">{apiUsage.ai_skipped || 0}</TableCell>
                       </TableRow>
                     </TableBody>
@@ -336,21 +337,7 @@ const ProcessingSummary = ({
 
         <ComparisonSection />
 
-        {/* Action Buttons */}
-        <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-          {onViewDetails && (
-            <Button variant="outlined" onClick={onViewDetails}>
-              View Detailed Report
-            </Button>
-          )}
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<CheckCircleIcon />}
-          >
-            Processing Complete
-          </Button>
-        </Box>
+
       </CardContent>
     </Card>
   );

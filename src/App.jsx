@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter, BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter, BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { ptBR, enUS } from '@mui/material/locale';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -11,7 +11,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert'; // For Snackbar content
 import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import useTheme from '@mui/material/styles/useTheme';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // Import i18n configuration
 import './i18n/config';
@@ -23,7 +27,6 @@ import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CertificateProtectedRoute from './components/CertificateProtectedRoute';
 import UserProfileHeader from './components/UserProfileHeader';
-import NavigationDropdown from './components/NavigationDropdown';
 import SalesforceStatusBar from './components/SalesforceStatusBar';
 import { useAuthStore, setupOAuthListeners } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore'; // Import the new settings store
@@ -36,10 +39,57 @@ import MappingPreviewPage from './pages/MappingPreviewPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 
 import SettingsPage from './pages/SettingsPage'; // Import the real SettingsPage component
-import SalesforcePage from './pages/SalesforcePage'; // Import the Salesforce integration page
 
 // ... other page imports remain the same
 
+
+// BackButton component that uses router hooks
+const BackButton = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
+
+  // Only show back button when NOT on home page
+  const isHomePage = location.pathname === '/';
+
+  if (isHomePage) {
+    return null;
+  }
+
+  const handleBack = () => {
+    // Use browser's back functionality
+    navigate(-1);
+  };
+
+  return (
+    <Tooltip title={t('common.back', { defaultValue: 'Back' })}>
+      <IconButton
+        onClick={handleBack}
+        sx={{
+          minHeight: { xs: 44, sm: 40 }, // Material Design touch target minimum
+          minWidth: { xs: 44, sm: 40 },
+          color: 'text.primary',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+          '&:focus': {
+            backgroundColor: 'action.focus',
+          },
+          // Material Design ripple effect
+          '&:active': {
+            backgroundColor: 'action.selected',
+          },
+        }}
+        size={isMobile ? 'medium' : 'small'}
+        aria-label={t('common.back', { defaultValue: 'Back' })}
+      >
+        <ArrowBackIcon fontSize={isMobile ? 'medium' : 'small'} />
+      </IconButton>
+    </Tooltip>
+  );
+};
 
 // Create theme with locale support
 const createAppTheme = (language) => {
@@ -183,22 +233,28 @@ function App() {
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                minHeight: '64px', // Maintain some height for the hamburger menu and profile
+                justifyContent: 'space-between', // Space between back button and profile
+                minHeight: '64px', // Maintain some height for the header
                 px: 2,
               }}
             >
-              {/* Navigation Dropdown */}
-              <NavigationDropdown isAuthenticated={isAuthenticated} />
+              {/* Left side - Back Button */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <BackButton />
+              </Box>
 
-              {/* Spacer to push UserProfileHeader to the right */}
-              <Box sx={{ flexGrow: 1 }} />
-
-              {/* Only show UserProfileHeader when authenticated */}
-              {isAuthenticated && <UserProfileHeader />}
+              {/* Right side - User Profile Header */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                {isAuthenticated && <UserProfileHeader />}
+              </Box>
             </Box>
 
             {/* Main Content Container */}
-            <Container sx={{ mt: 1, flexGrow: 1, pb: 8 }}>
+            <Container sx={{
+              mt: 1,
+              flexGrow: 1,
+              pb: { xs: 12, sm: 10 } // Increased bottom padding to prevent status bar overlap
+            }}>
               {authError && <Alert severity="error" sx={{ mb: 2 }}>Auth Error: {typeof authError === 'object' ? JSON.stringify(authError) : authError}</Alert>}
               {/* Add settingsError display if needed */}
               <Routes>
@@ -220,14 +276,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/salesforce"
-              element={
-                <ProtectedRoute>
-                  <SalesforcePage />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/admin"
               element={

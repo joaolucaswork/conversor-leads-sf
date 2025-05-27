@@ -25,17 +25,26 @@ import { useSettingsStore } from '../store/settingsStore';
 const StyledDropzonePaper = styled(Paper, {
   shouldForwardProp: (prop) => prop !== 'isDragActive' && prop !== 'hasError',
 })(({ theme, isDragActive, hasError }) => ({
-  padding: theme.spacing(3),
+  padding: theme.spacing(4, 3),
   textAlign: 'center',
   border: `2px dashed ${hasError ? theme.palette.error.main : (isDragActive ? theme.palette.primary.main : theme.palette.divider)}`,
   backgroundColor: isDragActive ? theme.palette.action.hover : theme.palette.background.paper,
   transition: 'border .24s ease-in-out, background-color .24s ease-in-out',
-  minHeight: 150,
+  minHeight: 200,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
   cursor: 'pointer',
+  borderRadius: theme.spacing(2),
+  '&:hover': {
+    borderColor: isDragActive ? theme.palette.primary.main : theme.palette.text.secondary,
+    backgroundColor: theme.palette.action.hover,
+  },
+  [theme.breakpoints.down('sm')]: {
+    minHeight: 180,
+    padding: theme.spacing(3, 2),
+  },
 }));
 
 const acceptedFileTypes = {
@@ -86,8 +95,8 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
     accept: acceptedFileTypes,
     maxSize: maxFileSize,
     multiple: false, // Allow only single file upload
-    noClick: true, // Disable opening file dialog on click of dropzone, use button instead
-    noKeyboard: true,
+    noClick: false, // Enable clicking anywhere in the dropzone to open file dialog
+    noKeyboard: false, // Enable keyboard navigation
   });
 
   const handleUpload = () => {
@@ -112,18 +121,50 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
       <StyledDropzonePaper {...getRootProps()} isDragActive={isDragActive} hasError={!!fileError}>
         <input {...getInputProps()} />
         <LottieFileIcon
-          size={72}
+          size={isDragActive ? 80 : 72}
           isDragActive={isDragActive}
-          sx={{ mb: 2 }}
+          sx={{ mb: { xs: 2, sm: 2.5 } }}
         />
-        {isDragActive ? (
-          <Typography>{t('fileUpload.dropHere')}</Typography>
-        ) : (
-          <Typography>{t('fileUpload.dragDrop')}</Typography>
-        )}
-        <Button variant="outlined" onClick={open} sx={{ mt: 2 }}>
-          {t('fileUpload.selectFile')}
-        </Button>
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: { xs: '1.125rem', sm: '1.25rem' },
+            fontWeight: { xs: 600, sm: 500 },
+            textAlign: 'center',
+            px: { xs: 2, sm: 1 },
+            mb: { xs: 1, sm: 1.5 },
+            color: isDragActive ? 'primary.main' : 'text.primary'
+          }}
+        >
+          {isDragActive ? t('fileUpload.dropHere') : t('fileUpload.selectFile')}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            fontSize: { xs: '0.875rem', sm: '0.875rem' },
+            textAlign: 'center',
+            px: { xs: 2, sm: 1 },
+            lineHeight: 1.5
+          }}
+        >
+          {isDragActive
+            ? t('fileUpload.releaseToUpload', { defaultValue: 'Solte o arquivo aqui para fazer upload' })
+            : t('fileUpload.dragDropOrClick', { defaultValue: 'Arraste e solte seu arquivo aqui ou clique para selecionar' })
+          }
+        </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            fontSize: { xs: '0.75rem', sm: '0.75rem' },
+            textAlign: 'center',
+            mt: { xs: 1.5, sm: 2 },
+            opacity: 0.8
+          }}
+        >
+          Excel (.xlsx, .xls) ou CSV • Máx. 10MB
+        </Typography>
       </StyledDropzonePaper>
 
       {fileError && (
@@ -233,7 +274,12 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
           )}
 
           {!isUploading && (
-            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Box sx={{
+              mt: 2,
+              display: 'flex',
+              gap: { xs: 1.5, sm: 1 },
+              flexDirection: { xs: 'column', sm: 'row' }
+            }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -244,13 +290,31 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
                     ? (useAiEnhancement ? <PsychologyIcon /> : <GavelIcon />)
                     : <PsychologyIcon />
                 }
+                sx={{
+                  minHeight: { xs: 48, sm: 36 },
+                  fontSize: { xs: '0.9375rem', sm: '0.875rem' },
+                  fontWeight: { xs: 600, sm: 500 },
+                  px: { xs: 3, sm: 2 },
+                  flex: { xs: 1, sm: 'none' }
+                }}
               >
                 {developerMode
                   ? (useAiEnhancement ? t('fileUpload.processWithAI') : t('fileUpload.processRuleBased'))
                   : t('fileUpload.processLeads')
                 }
               </Button>
-              <Button variant="outlined" color="secondary" onClick={handleRemoveFile} disabled={isUploading}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleRemoveFile}
+                disabled={isUploading}
+                sx={{
+                  minHeight: { xs: 44, sm: 36 },
+                  fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                  px: { xs: 2, sm: 1.5 },
+                  flex: { xs: 1, sm: 'none' }
+                }}
+              >
                 {t('fileUpload.remove')}
               </Button>
             </Box>
@@ -274,7 +338,6 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
       {uploadSuccessMessage && (
         <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
           {uploadSuccessMessage}
-          <Button onClick={handleRemoveFile} size="small" sx={{ ml: 2 }}>{t('fileUpload.uploadAnother', { defaultValue: 'Upload Another File' })}</Button>
         </Alert>
       )}
     </Box>

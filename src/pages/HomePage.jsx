@@ -145,9 +145,6 @@ const HomePage = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 1 }}>
       <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, mb: 4 }}>
-        <Typography variant="h5" component="h2" gutterBottom sx={{ mb: 3 }}>
-          {t('home.uploadTitle')}
-        </Typography>
         <FileUpload
           onFileUpload={handleFileUpload}
           isUploading={isUploading} // From upload state
