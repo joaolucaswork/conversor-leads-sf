@@ -119,14 +119,7 @@
     "loggingIn": "Opening Salesforce...",
     "error": "Login error: {{error}}",
     "success": "Login successful!",
-    "electronApp": "Electron App",
-    "browserMode": "Browser Mode",
-    "browserModeInfo": "You're running in browser mode. OAuth authentication is fully functional.",
-    "electronInstructions": "Clicking \"Login\" will open a Salesforce authentication window. Please complete the login there.",
-    "browserInstructions": "Clicking \"Login\" will open a Salesforce authentication popup window. Please complete the login there.",
-    "browserModeDetected": "Browser mode detected. OAuth authentication is fully functional in this environment.",
-    "authUrlError": "Failed to get Salesforce authorization URL.",
-    "electronRequired": "This feature requires the Electron application. Please use the desktop version for full OAuth functionality."
+    "authUrlError": "Failed to get Salesforce authorization URL."
   },
   "profile": {
     "title": "User Profile",

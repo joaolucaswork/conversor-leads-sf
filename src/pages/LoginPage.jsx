@@ -137,24 +137,9 @@ const LoginPage = () => {
         {t('login.title')}
       </Typography>
 
-      {/* Environment indicator */}
-      <Box sx={{ mt: 2, mb: 2 }}>
-        <Chip
-          label={isElectron() ? t('login.electronApp') : t('login.browserMode')}
-          color={isElectron() ? 'success' : 'warning'}
-          size="small"
-        />
-      </Box>
-
       {error && (
         <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
           {error}
-        </Alert>
-      )}
-
-      {isBrowser() && (
-        <Alert severity="info" sx={{ mt: 2, width: '100%' }}>
-          {t('login.browserModeInfo')}
         </Alert>
       )}
 
@@ -170,10 +155,7 @@ const LoginPage = () => {
       </Button>
 
       <Typography variant="body2" color="text.secondary" align="center">
-        {isElectron()
-          ? t('login.electronInstructions')
-          : t('login.browserInstructions')
-        }
+        {t('login.description')}
       </Typography>
     </Container>
   );

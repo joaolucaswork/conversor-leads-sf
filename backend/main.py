@@ -126,16 +126,40 @@ async def startup_event():
         print("[INFO] Continuing with in-memory storage fallback")
 
 # Configure CORS for frontend access
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+def get_cors_origins():
+    """Get CORS origins based on environment"""
+    # Always include localhost for development
+    origins = [
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:3000"
-    ],  # Vite and React dev servers
+    ]
+
+    # In production, also allow the current domain
+    is_production = (
+        os.getenv("NODE_ENV") == "production" or
+        os.getenv("PYTHON_ENV") == "production" or
+        os.getenv("PORT")  # Heroku sets PORT
+    )
+
+    if is_production:
+        # Get the Heroku app URL
+        heroku_app_name = os.getenv("HEROKU_APP_NAME")
+        if heroku_app_name:
+            heroku_url = f"https://{heroku_app_name}.herokuapp.com"
+            origins.append(heroku_url)
+            print(f"[INFO] Added production origin: {heroku_url}")
+
+        print(f"[INFO] Production CORS configured with origins: {origins}")
+
+    return origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[

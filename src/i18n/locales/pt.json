@@ -119,14 +119,7 @@
     "loggingIn": "Abrindo Salesforce...",
     "error": "Erro ao fazer login: {{error}}",
     "success": "Login realizado com sucesso!",
-    "electronApp": "Aplicativo Electron",
-    "browserMode": "Modo Navegador",
-    "browserModeInfo": "Você está executando no modo navegador. A autenticação OAuth está totalmente funcional.",
-    "electronInstructions": "Clicar em \"Entrar\" abrirá uma janela de autenticação do Salesforce. Complete o login lá.",
-    "browserInstructions": "Clicar em \"Entrar\" abrirá uma janela popup de autenticação do Salesforce. Complete o login lá.",
-    "browserModeDetected": "Modo navegador detectado. A autenticação OAuth está totalmente funcional neste ambiente.",
-    "authUrlError": "Falha ao obter URL de autorização do Salesforce.",
-    "electronRequired": "Este recurso requer o aplicativo Electron. Use a versão desktop para funcionalidade OAuth completa."
+    "authUrlError": "Falha ao obter URL de autorização do Salesforce."
   },
   "profile": {
     "title": "Perfil do Usuário",
