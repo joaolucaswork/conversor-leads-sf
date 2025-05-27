@@ -90,11 +90,20 @@ heroku open
 # Check build logs
 heroku logs --tail
 
+# If build fails with "vite: not found" error:
+# This is fixed in the latest version, but if you encounter it:
+# 1. Ensure vite is in devDependencies in package.json
+# 2. The heroku-postbuild script should handle the build
+
 # Restart the app
 heroku restart
 
 # Check dyno status
 heroku ps
+
+# Force rebuild if needed
+git commit --allow-empty -m "Force rebuild"
+git push heroku main
 ```
 
 ### Environment Issues
