@@ -129,6 +129,13 @@ app.add_middleware(
 # Mount static files for production (React build)
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
+    # Mount assets directory for JS/CSS files
+    assets_dir = static_dir / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+        print(f"[INFO] Assets mounted from {assets_dir}")
+
+    # Mount static files for other resources
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     print(f"[INFO] Static files mounted from {static_dir}")
 
@@ -1133,6 +1140,30 @@ async def clear_ready_files(
     except Exception as e:
         print(f"[ERROR] Error clearing ready files: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear ready files: {str(e)}")
+
+# Catch-all route for serving static files (must be last)
+@app.get("/{file_path:path}")
+async def serve_static_files(file_path: str):
+    """Serve static files for React app"""
+    static_dir = Path(__file__).parent / "static"
+
+    # Skip API routes
+    if file_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    # Handle specific static file requests
+    if file_path.endswith(('.js', '.css', '.svg', '.png', '.jpg', '.ico', '.json')):
+        file_full_path = static_dir / file_path
+        if file_full_path.exists():
+            return FileResponse(str(file_full_path))
+
+    # For all other routes, serve index.html (SPA routing)
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+
+    # Fallback to 404
+    raise HTTPException(status_code=404, detail="File not found")
 
 if __name__ == "__main__":
     # Get port from environment variable (Heroku sets PORT)
