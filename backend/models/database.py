@@ -60,8 +60,9 @@ def check_db_connection():
     Check if database connection is working
     """
     try:
+        from sqlalchemy import text
         db = SessionLocal()
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db.close()
         print("[SUCCESS] Database connection verified")
         return True
