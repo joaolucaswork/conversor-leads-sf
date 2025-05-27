@@ -480,4 +480,39 @@ export const getProcessingStatus = async (processingId) => {
   }
 };
 
+// Create an apiService object that includes all the functions and the client
+export const apiService = {
+  // HTTP client
+  client: apiClient,
+
+  // File operations
+  uploadFile,
+  downloadProcessedFile,
+
+  // Processing operations
+  getProcessingStatus,
+  confirmProcessing,
+  getLeadPreview,
+
+  // History operations
+  getProcessingHistory,
+  clearProcessingHistory,
+  clearReadyFiles,
+
+  // Configuration operations
+  getLeadDistributionSettings,
+  updateLeadDistributionSettings,
+  getAiSettings,
+  updateAiSettings,
+
+  // Logging operations
+  getJobLogs,
+
+  // Generic HTTP methods for fine-tuning endpoints
+  get: (url, config) => apiClient.get(url, config),
+  post: (url, data, config) => apiClient.post(url, data, config),
+  put: (url, data, config) => apiClient.put(url, data, config),
+  delete: (url, config) => apiClient.delete(url, config),
+};
+
 export default apiClient; // Exporting the configured axios instance can be useful too.
