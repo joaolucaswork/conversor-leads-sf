@@ -26,14 +26,15 @@ from pydantic import BaseModel
 import uvicorn
 import httpx
 
-# Import pandas for file viewing functionality
+# Import pandas and numpy for file viewing functionality
 try:
     import pandas as pd
+    import numpy as np
     PANDAS_AVAILABLE = True
-    print("[SUCCESS] Pandas imported successfully for file viewing")
+    print("[SUCCESS] Pandas and numpy imported successfully for file viewing")
 except ImportError:
     PANDAS_AVAILABLE = False
-    print("[WARNING] Pandas not available - file viewing functionality will be limited")
+    print("[WARNING] Pandas/numpy not available - file viewing functionality will be limited")
 
 # Database imports
 from sqlalchemy.orm import Session
@@ -142,7 +143,7 @@ def make_json_safe(obj):
     elif isinstance(obj, (pd.Timestamp, pd.Timedelta)):
         return str(obj)
     elif isinstance(obj, float):
-        if not pd.api.types.is_finite(obj):
+        if not np.isfinite(obj):
             return None
         return obj
     elif hasattr(obj, 'item'):  # numpy scalars
@@ -1518,7 +1519,7 @@ async def view_processed_file_data(
                 if df_cleaned[col].dtype in ['float64', 'float32']:
                     # Replace any remaining non-finite values
                     df_cleaned[col] = df_cleaned[col].apply(
-                        lambda x: None if pd.isna(x) or not pd.api.types.is_finite(x) else x
+                        lambda x: None if pd.isna(x) or not np.isfinite(x) else x
                     )
 
             print(f"[INFO] Data cleaned: replaced NaN/Infinity values with None")
