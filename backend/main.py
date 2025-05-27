@@ -1110,6 +1110,67 @@ async def process_file_background(processing_id: str):
                 if hasattr(processor.ai_mapper, 'get_api_usage_stats'):
                     job["aiStats"] = processor.ai_stats
                     job["apiUsage"] = processor.ai_mapper.get_api_usage_stats()
+
+                # Store field mappings and AI data for fine-tuning
+                try:
+                    from models.database import SessionLocal
+                    from services.training_data_service import TrainingDataService
+
+                    db = SessionLocal()
+                    try:
+                        training_service = TrainingDataService(db)
+
+                        # Find the processing job in database
+                        from models.training_data import ProcessingJob
+                        db_job = db.query(ProcessingJob).filter(
+                            ProcessingJob.processing_id == processing_id
+                        ).first()
+
+                        if db_job:
+                            # Store field mappings if available
+                            if hasattr(processor, 'field_mappings') and processor.field_mappings:
+                                # Convert field mappings to database format
+                                mappings_data = []
+                                for i, mapping in enumerate(processor.field_mappings):
+                                    mapping_dict = {
+                                        'original_column': mapping.source_field,
+                                        'column_index': i,
+                                        'sample_data': [],  # Could be enhanced to include sample data
+                                        'mapped_field': mapping.target_field,
+                                        'confidence': mapping.confidence,
+                                        'method': 'ai',
+                                        'reasoning': mapping.reasoning
+                                    }
+                                    mappings_data.append(mapping_dict)
+
+                                training_service.store_field_mappings(db_job.id, mappings_data)
+                                print(f"[INFO] Stored {len(mappings_data)} field mappings for fine-tuning")
+
+                            # Update processing job with completion data
+                            # Count records safely
+                            record_count = 0
+                            if processed_file_path:
+                                try:
+                                    import pandas as pd
+                                    df_result = pd.read_csv(processed_file_path)
+                                    record_count = len(df_result)
+                                except Exception as count_error:
+                                    print(f"[WARNING] Could not count records for fine-tuning: {count_error}")
+
+                            training_service.update_processing_job(
+                                db_job.id,
+                                status="completed",
+                                ai_stats=processor.ai_stats,
+                                api_usage=processor.ai_mapper.get_api_usage_stats() if hasattr(processor.ai_mapper, 'get_api_usage_stats') else {},
+                                record_count=record_count
+                            )
+                            print(f"[INFO] Updated processing job status and AI statistics for fine-tuning")
+
+                    finally:
+                        db.close()
+                except Exception as e:
+                    print(f"[WARNING] Failed to store fine-tuning data: {e}")
+                    # Continue processing even if fine-tuning data storage fails
             else:
                 processed_file_path = process_leads_traditional(input_path, output_path)
 
@@ -1342,6 +1403,71 @@ async def clear_ready_files(
         print(f"[ERROR] Error clearing ready files: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear ready files: {str(e)}")
 
+# Admin Debug Endpoints
+
+@app.get("/api/v1/admin/debug/jobs")
+async def debug_processing_jobs(
+    token: str = Depends(verify_token),
+    cert_verification: dict = Depends(verify_admin_certificate)
+):
+    """Debug endpoint to see all processing jobs and history"""
+    try:
+        # Get current jobs with status breakdown
+        jobs_by_status = {}
+        for job_id, job in processing_jobs.items():
+            status = job.get("status", "unknown")
+            if status not in jobs_by_status:
+                jobs_by_status[status] = []
+            jobs_by_status[status].append({
+                "processingId": job_id,
+                "fileName": job.get("fileName"),
+                "uploadedAt": job.get("uploadedAt"),
+                "status": status,
+                "progress": job.get("progress", 0),
+                "currentStage": job.get("currentStage"),
+                "message": job.get("message")
+            })
+
+        # Get history summary
+        history_summary = []
+        for item in processing_history:
+            history_summary.append({
+                "processingId": item.get("processingId"),
+                "fileName": item.get("fileName"),
+                "uploadedAt": item.get("uploadedAt"),
+                "completedAt": item.get("completedAt"),
+                "status": item.get("status"),
+                "recordCount": item.get("recordCount")
+            })
+
+        return {
+            "success": True,
+            "timestamp": datetime.utcnow().isoformat(),
+            "processing_jobs": {
+                "total": len(processing_jobs),
+                "by_status": jobs_by_status
+            },
+            "processing_history": {
+                "total": len(processing_history),
+                "items": history_summary
+            },
+            "summary": {
+                "total_all_time": len(processing_jobs) + len(processing_history),
+                "currently_processing": len([j for j in processing_jobs.values() if j.get("status") in ["queued", "processing"]]),
+                "completed_total": len([j for j in processing_jobs.values() if j.get("status") == "completed"]) + len(processing_history),
+                "failed_total": len([j for j in processing_jobs.values() if j.get("status") == "failed"])
+            }
+        }
+
+    except Exception as e:
+        print(f"[ERROR] Debug endpoint failed: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "processing_jobs_count": len(processing_jobs),
+            "processing_history_count": len(processing_history)
+        }
+
 # Admin Authentication API Endpoints
 
 @app.post("/api/v1/admin/authenticate")
@@ -1442,15 +1568,21 @@ async def get_training_data_summary(
         print(f"[INFO] Using in-memory fallback for admin dashboard")
 
         # Enhanced fallback using in-memory data
+        # Count ALL jobs (including in-progress ones)
         total_jobs = len(processing_jobs) + len(processing_history)
         completed_jobs = len([job for job in processing_jobs.values() if job.get("status") == "completed"])
         completed_history = len([item for item in processing_history if item.get("status") == "completed"])
 
-        # Calculate recent jobs (last 7 days)
+        # Count jobs by status for better visibility
+        processing_count = len([job for job in processing_jobs.values() if job.get("status") in ["queued", "processing"]])
+        failed_count = len([job for job in processing_jobs.values() if job.get("status") == "failed"])
+
+        # Calculate recent jobs (last 7 days) - include ALL statuses
         from datetime import datetime, timedelta
         seven_days_ago = datetime.now() - timedelta(days=7)
         recent_jobs = 0
 
+        # Count recent jobs from processing_jobs (all statuses)
         for job in processing_jobs.values():
             try:
                 upload_time = datetime.fromisoformat(job.get("uploadedAt", ""))
@@ -1459,6 +1591,7 @@ async def get_training_data_summary(
             except:
                 pass
 
+        # Count recent jobs from processing_history
         for item in processing_history:
             try:
                 upload_time = datetime.fromisoformat(item.get("uploadedAt", ""))
@@ -1466,6 +1599,15 @@ async def get_training_data_summary(
                     recent_jobs += 1
             except:
                 pass
+
+        print(f"[INFO] Admin Dashboard Stats:")
+        print(f"  - Total jobs: {total_jobs}")
+        print(f"  - Completed: {completed_jobs + completed_history}")
+        print(f"  - Processing: {processing_count}")
+        print(f"  - Failed: {failed_count}")
+        print(f"  - Recent (7 days): {recent_jobs}")
+        print(f"  - In processing_jobs: {len(processing_jobs)}")
+        print(f"  - In processing_history: {len(processing_history)}")
 
         return TrainingDataSummary(
             total_processing_jobs=total_jobs,

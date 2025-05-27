@@ -755,6 +755,9 @@ class AIEnhancedLeadsProcessor:
         # AI-enhanced column mapping
         df_mapped, field_mappings = self.intelligent_column_mapping(df, sample_data)
 
+        # Store field mappings for fine-tuning data collection
+        self.field_mappings = field_mappings
+
         # AI-enhanced data validation
         validations = self.ai_enhanced_data_validation(df_mapped, field_mappings)
 

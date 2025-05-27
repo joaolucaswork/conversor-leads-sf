@@ -53,23 +53,43 @@ class TrainingDataService:
 
     def update_processing_job(
         self,
-        processing_id: str,
-        **updates
-    ) -> Optional[ProcessingJob]:
+        job_id: int,
+        status: str = None,
+        ai_stats: Dict[str, Any] = None,
+        api_usage: Dict[str, Any] = None,
+        record_count: int = None,
+        **kwargs
+    ) -> ProcessingJob:
         """
-        Update processing job with new information
+        Update an existing processing job with completion data
         """
-        job = self.db.query(ProcessingJob).filter(
-            ProcessingJob.processing_id == processing_id
-        ).first()
+        job = self.db.query(ProcessingJob).filter(ProcessingJob.id == job_id).first()
 
-        if job:
-            for key, value in updates.items():
+        if not job:
+            raise ValueError(f"Processing job {job_id} not found")
+
+        # Update fields if provided
+        if status:
+            job.status = status
+        if ai_stats:
+            job.ai_stats = ai_stats
+        if api_usage:
+            job.api_usage = api_usage
+        if record_count:
+            job.record_count = record_count
+
+        # Update any additional fields
+        for key, value in kwargs.items():
+            if hasattr(job, key):
                 setattr(job, key, value)
 
-            job.updated_at = datetime.utcnow()
-            self.db.commit()
-            self.db.refresh(job)
+        # Set completion timestamp if status is completed
+        if status == "completed":
+            from sqlalchemy.sql import func
+            job.completed_at = func.now()
+
+        self.db.commit()
+        self.db.refresh(job)
 
         return job
 
@@ -100,6 +120,50 @@ class TrainingDataService:
 
         self.db.commit()
         return field_mappings
+
+    def update_processing_job(
+        self,
+        processing_job_id: int,
+        status: str = None,
+        ai_stats: Dict[str, Any] = None,
+        api_usage: Dict[str, Any] = None,
+        record_count: int = None,
+        **kwargs
+    ) -> ProcessingJob:
+        """
+        Update processing job with completion data
+        """
+        job = self.db.query(ProcessingJob).filter(
+            ProcessingJob.id == processing_job_id
+        ).first()
+
+        if not job:
+            raise ValueError(f"Processing job {processing_job_id} not found")
+
+        # Update fields if provided
+        if status is not None:
+            job.status = status
+        if ai_stats is not None:
+            job.ai_stats = ai_stats
+        if api_usage is not None:
+            job.api_usage = api_usage
+        if record_count is not None:
+            job.record_count = record_count
+
+        # Update any additional fields
+        for key, value in kwargs.items():
+            if hasattr(job, key) and value is not None:
+                setattr(job, key, value)
+
+        # Set completion timestamp if status is completed
+        if status == "completed":
+            from sqlalchemy.sql import func
+            job.completed_at = func.now()
+
+        self.db.commit()
+        self.db.refresh(job)
+
+        return job
 
     def store_file_upload(
         self,
