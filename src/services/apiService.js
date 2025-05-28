@@ -9,10 +9,9 @@ const getApiBaseUrl = () => {
     return window.location.origin + "/api/v1";
   }
 
-  // In development, use environment variable or localhost
-  return (
-    (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000") + "/api/v1"
-  );
+  // In development, use relative URLs to leverage Vite's proxy
+  // This avoids CORS issues by routing through the Vite dev server
+  return "/api/v1";
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -160,7 +159,7 @@ apiClient.interceptors.response.use(
         customError.isCorsError = true;
         customError.message =
           "CORS Error: The backend server is not allowing requests from this origin. " +
-          "Please check that the backend server is running on localhost:8000 and has CORS properly configured for localhost:5173.";
+          "Please check that the backend server is running on localhost:8000 and has CORS properly configured for the frontend port.";
       }
       // Check for specific connection errors
       else if (

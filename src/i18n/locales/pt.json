@@ -8,12 +8,14 @@
   },
   "navigation": {
     "home": "Início",
+    "calendar": "Calendário",
     "salesforce": "Salesforce",
     "history": "Histórico",
     "settings": "Configurações",
     "login": "Login",
     "ariaLabels": {
       "home": "Navegar para a página inicial",
+      "calendar": "Navegar para o Calendário",
       "salesforce": "Navegar para integração Salesforce",
       "settings": "Navegar para Configurações",
       "login": "Navegar para página de Login",

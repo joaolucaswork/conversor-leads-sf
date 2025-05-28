@@ -37,6 +37,7 @@
     "@lottiefiles/dotlottie-react": "^0.13.5",
     "@mui/icons-material": "^5.0.0",
     "@mui/material": "^5.0.0",
+    "@mui/x-date-pickers": "^8.4.0",
     "axios": "^1.0.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",

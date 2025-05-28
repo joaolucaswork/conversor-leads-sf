@@ -16,6 +16,7 @@ import useTheme from '@mui/material/styles/useTheme';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import MenuIcon from '@mui/icons-material/Menu';
 
 // Import i18n configuration
 import './i18n/config';
@@ -28,6 +29,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import UserProfileHeader from './components/UserProfileHeader';
 import SalesforceStatusBar from './components/SalesforceStatusBar';
 import GlobalNotifications from './components/GlobalNotifications';
+import SidebarNavigation from './components/SidebarNavigation';
 import { useAuthStore, setupOAuthListeners } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore'; // Import the new settings store
 import { useLanguageStore } from './store/languageStore'; // Import the language store
@@ -41,8 +43,44 @@ import FileDataViewerPage from './pages/FileDataViewerPage';
 
 import SettingsPage from './pages/SettingsPage'; // Import the real SettingsPage component
 
+// Calendar Module
+import CalendarApp from './calendar/CalendarApp';
+
 // ... other page imports remain the same
 
+
+// MenuButton component for opening navigation sidebar
+const MenuButton = ({ onClick }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip title={t('navigation.ariaLabels.openMenu', 'Abrir menu de navegação')}>
+      <IconButton
+        onClick={onClick}
+        sx={{
+          minHeight: { xs: 44, sm: 40 },
+          minWidth: { xs: 44, sm: 40 },
+          color: 'text.primary',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+          '&:focus': {
+            backgroundColor: 'action.focus',
+          },
+          '&:active': {
+            backgroundColor: 'action.selected',
+          },
+        }}
+        size={isMobile ? 'medium' : 'small'}
+        aria-label={t('navigation.ariaLabels.openMenu', 'Abrir menu de navegação')}
+      >
+        <MenuIcon fontSize={isMobile ? 'medium' : 'small'} />
+      </IconButton>
+    </Tooltip>
+  );
+};
 
 // BackButton component that uses router hooks
 const BackButton = () => {
@@ -106,6 +144,9 @@ const createAppTheme = (language) => {
 function App() {
   // Translation hook
   const { t } = useTranslation();
+
+  // Sidebar navigation state
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   // Navigation dropdown will handle its own state internally
 
@@ -217,6 +258,14 @@ function App() {
       <CssBaseline />
       <Router>
         <Box sx={{ display: 'flex' }}>
+          {/* Sidebar Navigation */}
+          <SidebarNavigation
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            isAuthenticated={isAuthenticated}
+            variant="temporary"
+          />
+
           {/* Main Content Area */}
           <Box
             component="main"
@@ -240,8 +289,11 @@ function App() {
                 px: 2,
               }}
             >
-              {/* Left side - Back Button */}
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* Left side - Menu and Back Button */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {isAuthenticated && (
+                  <MenuButton onClick={() => setSidebarOpen(true)} />
+                )}
                 <BackButton />
               </Box>
 
@@ -289,6 +341,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarApp />
                 </ProtectedRoute>
               }
             />

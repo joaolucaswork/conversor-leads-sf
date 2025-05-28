@@ -239,6 +239,15 @@ app.add_middleware(
     max_age=3600,  # Cache preflight requests for 1 hour
 )
 
+# Include calendar router
+try:
+    from calendar_module.api.routes import calendar_router
+    app.include_router(calendar_router)
+    print("[SUCCESS] Calendar API routes included")
+except ImportError as e:
+    print(f"[WARNING] Could not import calendar routes: {e}")
+    print("[INFO] Calendar functionality will not be available")
+
 # Mount static files for production (React build)
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():

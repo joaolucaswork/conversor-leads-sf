@@ -1,1 +1,0 @@
-# Calendar event service logic

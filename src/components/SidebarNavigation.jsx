@@ -19,6 +19,7 @@ import {
   Cloud as SalesforceIcon,
   Settings as SettingsIcon,
   Login as LoginIcon,
+  Event as CalendarIcon,
 } from '@mui/icons-material';
 
 /**
@@ -40,6 +41,7 @@ const SidebarNavigation = ({
   // Navigation items for authenticated users
   const authenticatedMenuItems = [
     { text: t('navigation.home'), icon: <HomeIcon />, path: '/', ariaLabel: t('navigation.ariaLabels.home') },
+    { text: t('navigation.calendar', 'Calendário'), icon: <CalendarIcon />, path: '/calendar', ariaLabel: t('navigation.ariaLabels.calendar', 'Navegar para o Calendário') },
     { text: t('navigation.salesforce'), icon: <SalesforceIcon />, path: '/salesforce', ariaLabel: t('navigation.ariaLabels.salesforce') },
     { text: t('navigation.settings'), icon: <SettingsIcon />, path: '/settings', ariaLabel: t('navigation.ariaLabels.settings') },
   ];

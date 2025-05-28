@@ -8,12 +8,14 @@
   },
   "navigation": {
     "home": "Home",
+    "calendar": "Calendar",
     "salesforce": "Salesforce",
     "history": "History",
     "settings": "Settings",
     "login": "Login",
     "ariaLabels": {
       "home": "Navigate to Home page",
+      "calendar": "Navigate to Calendar",
       "salesforce": "Navigate to Salesforce integration",
       "settings": "Navigate to Settings",
       "login": "Navigate to Login page",
