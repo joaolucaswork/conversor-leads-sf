@@ -37,6 +37,7 @@ import {
   downloadProcessedFile as downloadFileService,
 } from '../services/apiService';
 import { useGlobalProcessingEvents } from '../hooks/useProcessingEvents';
+import { useNotifications } from '../hooks/useNotifications';
 import { useSettingsStore } from '../store/settingsStore';
 import FileDataViewerModal from './FileDataViewerModal';
 import ProcessingStatisticsModal from './ProcessingStatisticsModal';
@@ -54,6 +55,7 @@ const ProcessingHistorySection = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { addListener } = useGlobalProcessingEvents();
+  const { showDownloadError } = useNotifications();
 
   // Settings store for developer mode
   const { developerMode } = useSettingsStore(state => ({
@@ -150,7 +152,8 @@ const ProcessingHistorySection = ({
       await downloadFileService(item.processingId);
     } catch (error) {
       console.error('Download failed:', error);
-      setError(`Download failed: ${error.message}`);
+      const filename = item.fileName || `planilha_processada_${item.processingId}.csv`;
+      showDownloadError(filename, error.message);
     }
   };
 

@@ -422,7 +422,18 @@
     "file": "Arquivo",
     "records": "Registros",
     "processed": "Processado",
-    "copyToClipboard": "Copiar para Área de Transferência"
+    "copyToClipboard": "Copiar para Área de Transferência",
+    "and": "e",
+    "more": "mais"
+  },
+  "notifications": {
+    "download": {
+      "success": "Arquivo baixado com sucesso: {{filename}}",
+      "error": "Falha no download de {{filename}}: {{error}}",
+      "starting": "Iniciando download de {{filename}}...",
+      "preparing": "Preparando arquivo para download...",
+      "completed": "Download concluído"
+    }
   },
   "salesforce": {
     "uploadToSalesforce": "Enviar para Salesforce",
@@ -502,5 +513,63 @@
     "cacheHitRate": "Taxa de Acerto do Cache",
     "cacheHits": "Acertos de Cache",
     "aiOperationsSkipped": "Operações IA Puladas"
+  },
+  "assign": {
+    "fallbackModal": {
+      "title": "Atribuição de Proprietário Necessária",
+      "warningMessage": "{{count}} lead no arquivo \"{{fileName}}\" não possui proprietário atribuído.",
+      "warningMessage_plural": "{{count}} leads no arquivo \"{{fileName}}\" não possuem proprietários atribuídos.",
+      "description": "Estes leads serão automaticamente atribuídos a você como proprietário de fallback para garantir o gerenciamento adequado e acompanhamento dos leads.",
+      "fallbackOwnerTitle": "Atribuição de Proprietário de Fallback",
+      "assignedTo": "Atribuído para:",
+      "salesforceUserId": "ID do Usuário Salesforce:",
+      "impactSummary": "Resumo do Impacto",
+      "unassignedLeads": "{{count}} Lead Não Atribuído",
+      "unassignedLeads_plural": "{{count}} Leads Não Atribuídos",
+      "autoAssignment": "Atribuição Automática",
+      "detailsTitle": "Detalhes dos Leads Afetados",
+      "showDetails": "Mostrar Detalhes",
+      "hideDetails": "Ocultar Detalhes",
+      "leadIndices": "Índices dos Leads:",
+      "buttons": {
+        "cancel": "Cancelar",
+        "processing": "Processando...",
+        "assign": "Atribuir {{count}} Lead para Mim",
+        "assign_plural": "Atribuir {{count}} Leads para Mim"
+      },
+      "nextSteps": {
+        "title": "O que acontece a seguir:",
+        "csvFile": "O arquivo CSV processado mostrará você como proprietário destes leads",
+        "salesforceUpload": "Quando enviado para o Salesforce, estes leads serão atribuídos à sua conta de usuário",
+        "reassignment": "Você pode reatribuí-los para outros membros da equipe posteriormente, se necessário"
+      }
+    },
+    "distributionSettings": {
+      "title": "Configuração de Distribuição de Leads",
+      "loading": "Carregando configurações de Distribuição de Leads...",
+      "enableDistribution": "Habilitar Distribuição de Leads",
+      "distributionDescription": "Quando habilitado, os leads serão distribuídos automaticamente de acordo com as regras configuradas.",
+      "defaultAssigneeId": "ID do Responsável Padrão (ID de Usuário ou Fila)",
+      "defaultAssigneeIdHelper": "ID de Usuário ou Fila do Salesforce para atribuição padrão.",
+      "defaultAssigneeType": "Tipo do Responsável Padrão",
+      "defaultAssigneeTypeHelper": "Tipo do responsável padrão.",
+      "userType": "Usuário",
+      "queueType": "Fila",
+      "enableRoundRobin": "Habilitar Atribuição Round Robin",
+      "userPoolLabel": "Pool de Usuários para Round Robin (somente leitura):",
+      "userPoolEmpty": "N/A",
+      "rulesTitle": "Regras de Distribuição",
+      "rulesDescription": "As regras são processadas em ordem; a primeira correspondência vence.",
+      "noRules": "Nenhuma regra configurada.",
+      "resetChanges": "Redefinir Alterações",
+      "saving": "Salvando...",
+      "saveSettings": "Salvar Configurações de Distribuição de Leads",
+      "saveSuccess": "Configurações de distribuição de leads salvas com sucesso!",
+      "errors": {
+        "loadFailed": "Falha ao carregar configurações de distribuição de leads.",
+        "saveFailed": "Falha ao salvar configurações de distribuição de leads.",
+        "defaultAssigneeRequired": "ID do responsável padrão é obrigatório quando a distribuição está habilitada."
+      }
+    }
   }
 }

@@ -14,10 +14,12 @@ import {
   downloadProcessedFile as downloadFileService,
   getJobLogs as getJobLogsService // Import the new service
 } from '../services/apiService';
+import { useNotifications } from '../hooks/useNotifications';
 import LogViewerModal from '../components/LogViewerModal'; // Import the modal
 
 const ProcessingHistoryPage = () => {
   const { t } = useTranslation();
+  const { showDownloadError } = useNotifications();
   const [historyItems, setHistoryItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true); // For history list
   const [error, setError] = useState(null); // For history list
@@ -69,31 +71,17 @@ const ProcessingHistoryPage = () => {
   };
 
   const handleDownload = async (resultUrl, processingId, defaultFileName) => {
-    // ... (download logic remains the same as before)
-    if (!resultUrl) return;
+    if (!processingId) return;
     setDownloading(prev => ({ ...prev, [processingId]: true }));
     setDownloadError(prev => ({ ...prev, [processingId]: null }));
     try {
-      const response = await downloadFileService(resultUrl);
-      let filename = defaultFileName || `processed_file_${processingId}.csv`;
-      const contentDisposition = response.headers['content-disposition'];
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/i);
-        if (filenameMatch && filenameMatch.length > 1) {
-          filename = filenameMatch[1];
-        }
-      }
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      await downloadFileService(processingId);
     } catch (err) {
       console.error('Download error:', err);
-      setDownloadError(prev => ({ ...prev, [processingId]: err.message || 'Download failed' }));
+      const filename = defaultFileName || `planilha_processada_${processingId}.csv`;
+      const errorMessage = err.message || 'Download failed';
+      showDownloadError(filename, errorMessage);
+      setDownloadError(prev => ({ ...prev, [processingId]: errorMessage }));
     } finally {
       setDownloading(prev => ({ ...prev, [processingId]: false }));
     }

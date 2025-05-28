@@ -194,19 +194,24 @@ apiClient.interceptors.response.use(
  * @param {function(number):void} onUploadProgress - Callback function to update upload progress (0-100).
  * @param {boolean} useAiEnhancement - Whether to use AI enhancement.
  * @param {string|null} aiModelPreference - Preferred AI model.
+ * @param {string|null} fallbackOwnerId - Salesforce User ID to use as fallback for unassigned leads.
  * @returns {Promise<object>} - The response data from the backend (e.g., { processingId, statusUrl }).
  */
 export const uploadFile = async (
   file,
   onUploadProgress,
   useAiEnhancement = true,
-  aiModelPreference = null
+  aiModelPreference = null,
+  fallbackOwnerId = null
 ) => {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("useAiEnhancement", String(useAiEnhancement));
   if (aiModelPreference) {
     formData.append("aiModelPreference", aiModelPreference);
+  }
+  if (fallbackOwnerId) {
+    formData.append("fallbackOwnerId", fallbackOwnerId);
   }
 
   console.log(`🤖 Uploading file with AI enhancement: ${useAiEnhancement}`);
@@ -414,29 +419,125 @@ export const getProcessedFileData = async (
 };
 
 /**
- * Downloads a processed file.
- * @param {string} downloadUrl - The specific URL to download the file from (e.g., /leads/download/some-id).
- * @returns {Promise<AxiosResponse<Blob>>} - The Axios response object containing the file blob and headers.
+ * Utility function to decode UTF-8 encoded filenames and apply proper naming convention
+ * @param {string} filename - The filename to decode
+ * @param {string} processingId - The processing ID for fallback naming
+ * @returns {string} - The decoded and properly formatted filename
  */
-export const downloadProcessedFile = async (downloadUrl) => {
-  if (!downloadUrl) {
-    throw new Error("Download URL is required.");
-  }
+const decodeFilename = (filename, processingId = null) => {
   try {
-    const response = await apiClient.get(downloadUrl, {
+    // Remove quotes if present
+    let cleanFilename = filename.replace(/['"]/g, "");
+
+    // Check if filename is URL encoded
+    if (cleanFilename.includes("%")) {
+      cleanFilename = decodeURIComponent(cleanFilename);
+    }
+
+    // Handle UTF-8 encoded filenames
+    if (cleanFilename.includes("utf-8")) {
+      // Extract the actual filename part after utf-8 prefix
+      const utf8Match = cleanFilename.match(/utf-8''(.+)$/);
+      if (utf8Match) {
+        cleanFilename = decodeURIComponent(utf8Match[1]);
+      }
+    }
+
+    // Remove any existing prefixes to avoid duplication
+    // Remove "processed_" prefix (old format)
+    cleanFilename = cleanFilename.replace(/^processed_/, "");
+
+    // Remove "utf-8processed_" prefix if present
+    cleanFilename = cleanFilename.replace(/^utf-8processed_/, "");
+
+    // Remove "planilha_processada_" prefix if already present to avoid duplication
+    cleanFilename = cleanFilename.replace(/^planilha_processada_/, "");
+
+    // Remove processing ID pattern if present (UUID format)
+    cleanFilename = cleanFilename.replace(/_[a-f0-9-]{36}/, "");
+
+    // Remove any leading underscores that might be left
+    cleanFilename = cleanFilename.replace(/^_+/, "");
+
+    // Apply new naming convention: planilha_processada_[original_filename].csv
+    cleanFilename = `planilha_processada_${cleanFilename}`;
+
+    // Ensure .csv extension
+    if (!cleanFilename.toLowerCase().endsWith(".csv")) {
+      cleanFilename = cleanFilename.replace(/\.[^.]*$/, "") + ".csv";
+    }
+
+    return cleanFilename;
+  } catch (error) {
+    console.warn("Error decoding filename:", error);
+    // Fallback to default naming
+    const fallbackName = processingId
+      ? `planilha_processada_${processingId}.csv`
+      : "planilha_processada_arquivo.csv";
+    return fallbackName;
+  }
+};
+
+/**
+ * Downloads a processed file.
+ * @param {string} processingId - The processing ID of the file to download.
+ * @returns {Promise<void>} - Triggers browser download of the file.
+ */
+export const downloadProcessedFile = async (processingId) => {
+  if (!processingId) {
+    throw new Error("Processing ID is required.");
+  }
+
+  // Import notification store dynamically to avoid circular dependencies
+  const { useNotificationStore } = await import("../store/notificationStore");
+  const { showDownloadSuccess, showDownloadError } =
+    useNotificationStore.getState();
+
+  try {
+    const response = await apiClient.get(`/leads/download/${processingId}`, {
       responseType: "blob", // Important for handling file data
     });
-    return response; // Contains data (blob), headers (content-disposition), etc.
+
+    // Extract filename from Content-Disposition header or use default
+    let filename = `planilha_processada_${processingId}.csv`;
+    const contentDisposition = response.headers["content-disposition"];
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(
+        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+      );
+      if (filenameMatch && filenameMatch[1]) {
+        filename = decodeFilename(filenameMatch[1], processingId);
+      }
+    }
+
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"] || "text/csv",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    console.log(`✅ File downloaded successfully: ${filename}`);
+
+    // Show success notification
+    showDownloadSuccess(filename);
   } catch (error) {
-    // The response interceptor already handles parsing blob errors for other requests.
-    // For download, the raw response is often more useful to the caller if it's not a JSON error.
-    // However, if it IS a JSON error, the interceptor would have processed it.
-    // If the interceptor modified the error significantly, this log might be less useful.
-    // For now, let's assume the interceptor's standardized error is what we want.
     console.error(
-      `Error downloading file from ${downloadUrl}:`,
+      `Error downloading file for processing ID ${processingId}:`,
       error.originalError || error
     );
+
+    // Show error notification
+    const errorMessage =
+      error.message || error.originalError?.message || "Unknown error";
+    showDownloadError(`planilha_processada_${processingId}.csv`, errorMessage);
+
     throw error; // Re-throw error processed by interceptor
   }
 };

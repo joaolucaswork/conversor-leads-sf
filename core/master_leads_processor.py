@@ -26,6 +26,35 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 
+# Configure UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    # Set environment variable for Python I/O encoding
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+    # Configure stdout and stderr to use UTF-8 encoding
+    import codecs
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
+# Safe print function for Unicode handling
+def safe_print(message, *args, **kwargs):
+    """
+    Safe print function that handles Unicode encoding issues on Windows.
+    Falls back to ASCII representation if Unicode encoding fails.
+    """
+    try:
+        print(message, *args, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            # Try to encode as ASCII with error handling
+            safe_message = str(message).encode('ascii', 'replace').decode('ascii')
+            print(f"[UNICODE_SAFE] {safe_message}", *args, **kwargs)
+        except Exception:
+            # Last resort: just print a generic message
+            print("[UNICODE_ERROR] Message contains characters that cannot be displayed", *args, **kwargs)
+
 class LeadsProcessor:
     """Main class for processing leads data."""
 
@@ -443,22 +472,22 @@ class LeadsProcessor:
 
         self.logger.info(f"Processing summary saved to: {summary_path}")
 
-        # Print summary to console
+        # Print summary to console with Unicode safety
         try:
-            print("\n" + "="*50)
-            print("PROCESSING SUMMARY")
-            print("="*50)
-            print(f"Input file: {input_file}")
-            print(f"Output file: {output_file}")
-            print(f"Backup file: {backup_path}")
-            print(f"Total records processed: {len(df)}")
-            print("\nLead Distribution:")
+            safe_print("\n" + "="*50)
+            safe_print("PROCESSING SUMMARY")
+            safe_print("="*50)
+            safe_print(f"Input file: {input_file}")
+            safe_print(f"Output file: {output_file}")
+            safe_print(f"Backup file: {backup_path}")
+            safe_print(f"Total records processed: {len(df)}")
+            safe_print("\nLead Distribution:")
             for alias, count in summary["lead_distribution"].items():
                 if alias:
-                    print(f"  {alias}: {count} leads")
-            print("="*50)
-        except UnicodeEncodeError:
-            # Fallback for systems with encoding issues
+                    safe_print(f"  {alias}: {count} leads")
+            safe_print("="*50)
+        except Exception as e:
+            # Fallback for any encoding issues
             self.logger.info("Processing summary completed - check log files for details")
 
 def main():
@@ -480,18 +509,11 @@ def main():
         # Process the file
         output_file = processor.process_file(args.input_file, args.output)
 
-        try:
-            print(f"\nProcessing completed successfully!")
-            print(f"Output file: {output_file}")
-        except UnicodeEncodeError:
-            print(f"\nProcessing completed successfully!")
-            print(f"Output file: {output_file}")
+        safe_print(f"\nProcessing completed successfully!")
+        safe_print(f"Output file: {output_file}")
 
     except Exception as e:
-        try:
-            print(f"\nError during processing: {e}")
-        except UnicodeEncodeError:
-            print(f"\nError during processing: {e}")
+        safe_print(f"\nError during processing: {e}")
         sys.exit(1)
 
 # Wrapper function for backend API integration

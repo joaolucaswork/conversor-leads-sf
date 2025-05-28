@@ -9,6 +9,18 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Configure UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    # Set environment variable for Python I/O encoding
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+    # Configure stdout and stderr to use UTF-8 encoding
+    import codecs
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 # Add the project root and core directory to Python path for imports
 project_root = Path(__file__).parent.parent
 core_dir = project_root / "core"

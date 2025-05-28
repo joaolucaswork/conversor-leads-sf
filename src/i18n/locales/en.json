@@ -433,7 +433,18 @@
     "file": "File",
     "records": "Records",
     "processed": "Processed",
-    "copyToClipboard": "Copy to Clipboard"
+    "copyToClipboard": "Copy to Clipboard",
+    "and": "and",
+    "more": "more"
+  },
+  "notifications": {
+    "download": {
+      "success": "File downloaded successfully: {{filename}}",
+      "error": "Download failed for {{filename}}: {{error}}",
+      "starting": "Starting download of {{filename}}...",
+      "preparing": "Preparing file for download...",
+      "completed": "Download completed"
+    }
   },
   "salesforce": {
     "uploadToSalesforce": "Send to Salesforce",
@@ -513,5 +524,63 @@
     "cacheHitRate": "Cache Hit Rate",
     "cacheHits": "Cache Hits",
     "aiOperationsSkipped": "AI Operations Skipped"
+  },
+  "assign": {
+    "fallbackModal": {
+      "title": "Owner Assignment Required",
+      "warningMessage": "{{count}} lead in the file \"{{fileName}}\" does not have an assigned owner.",
+      "warningMessage_plural": "{{count}} leads in the file \"{{fileName}}\" do not have assigned owners.",
+      "description": "These leads will be automatically assigned to you as the fallback owner to ensure proper lead management and follow-up.",
+      "fallbackOwnerTitle": "Fallback Owner Assignment",
+      "assignedTo": "Assigned to:",
+      "salesforceUserId": "Salesforce User ID:",
+      "impactSummary": "Impact Summary",
+      "unassignedLeads": "{{count}} Unassigned Lead",
+      "unassignedLeads_plural": "{{count}} Unassigned Leads",
+      "autoAssignment": "Auto-Assignment",
+      "detailsTitle": "Affected Leads Details",
+      "showDetails": "Show Details",
+      "hideDetails": "Hide Details",
+      "leadIndices": "Lead Indices:",
+      "buttons": {
+        "cancel": "Cancel",
+        "processing": "Processing...",
+        "assign": "Assign {{count}} Lead to Me",
+        "assign_plural": "Assign {{count}} Leads to Me"
+      },
+      "nextSteps": {
+        "title": "What happens next:",
+        "csvFile": "The processed CSV file will show you as the owner for these leads",
+        "salesforceUpload": "When uploaded to Salesforce, these leads will be assigned to your user account",
+        "reassignment": "You can reassign them to other team members later if needed"
+      }
+    },
+    "distributionSettings": {
+      "title": "Lead Distribution Configuration",
+      "loading": "Loading Lead Distribution settings...",
+      "enableDistribution": "Enable Lead Distribution",
+      "distributionDescription": "When enabled, leads will be automatically distributed according to configured rules.",
+      "defaultAssigneeId": "Default Assignee ID (User or Queue ID)",
+      "defaultAssigneeIdHelper": "Salesforce User ID or Queue ID for default assignment.",
+      "defaultAssigneeType": "Default Assignee Type",
+      "defaultAssigneeTypeHelper": "Type of the default assignee.",
+      "userType": "User",
+      "queueType": "Queue",
+      "enableRoundRobin": "Enable Round Robin Assignment",
+      "userPoolLabel": "User Pool for Round Robin (read-only):",
+      "userPoolEmpty": "N/A",
+      "rulesTitle": "Distribution Rules",
+      "rulesDescription": "Rules are processed in order; first match wins.",
+      "noRules": "No rules configured.",
+      "resetChanges": "Reset Changes",
+      "saving": "Saving...",
+      "saveSettings": "Save Lead Distribution Settings",
+      "saveSuccess": "Lead distribution settings saved successfully!",
+      "errors": {
+        "loadFailed": "Failed to load lead distribution settings.",
+        "saveFailed": "Failed to save lead distribution settings.",
+        "defaultAssigneeRequired": "Default assignee ID is required when distribution is enabled."
+      }
+    }
   }
 }

@@ -53,6 +53,7 @@ import {
   formatSalesforceResult
 } from '../services/salesforceService';
 import { useGlobalProcessingEvents } from '../hooks/useProcessingEvents';
+import { useNotifications } from '../hooks/useNotifications';
 import ProcessingHistorySection from './ProcessingHistorySection';
 import StatusDot from './StatusDot';
 import StatusLegend from './StatusLegend';
@@ -96,6 +97,7 @@ const UnifiedFilesHistorySection = () => {
     fixAuthenticationState: state.fixAuthenticationState,
   }));
   const { addListener } = useGlobalProcessingEvents();
+  const { showDownloadError } = useNotifications();
   const [currentTab, setCurrentTab] = useState(0);
   const [processedFiles, setProcessedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -276,7 +278,8 @@ const UnifiedFilesHistorySection = () => {
       await downloadProcessedFile(file.processingId);
     } catch (error) {
       console.error('Download failed:', error);
-      setError(`Download failed: ${error.message}`);
+      // Show error notification instead of setting local error state
+      showDownloadError(file.fileName || `planilha_processada_${file.processingId}.csv`, error.message);
     }
   };
 

@@ -385,48 +385,6 @@ export const getSalesforceFieldMapping = async (objectName, csvHeaders) => {
 };
 
 /**
- * Downloads a processed file for Salesforce upload
- * @param {string} processingId - Processing ID of the file
- * @returns {Promise<Blob>} - File blob for download
- */
-export const downloadProcessedFile = async (processingId) => {
-  try {
-    if (!processingId) {
-      throw new Error("Processing ID is required to download file.");
-    }
-
-    // Use the backend API to download the processed file
-    const baseUrl =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-    const response = await fetch(
-      `${baseUrl}/api/v1/leads/download/${processingId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem("authToken") || "dummy-token"
-          }`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(
-          "Processed file not found. The file may have been deleted or the processing ID is invalid."
-        );
-      }
-      throw new Error(`Failed to download file: ${response.statusText}`);
-    }
-
-    return await response.blob();
-  } catch (error) {
-    console.error("Error downloading processed file:", error);
-    throw error;
-  }
-};
-
-/**
  * Utility function to format Salesforce upload results for display
  * @param {object} result - Upload result from Salesforce
  * @returns {object} - Formatted result for UI display
@@ -453,6 +411,5 @@ export default {
   validateSalesforceConnection,
   getSalesforceObjects,
   getSalesforceFieldMapping,
-  downloadProcessedFile,
   formatSalesforceResult,
 };

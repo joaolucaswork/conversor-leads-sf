@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   TextField, Button, Typography, Box, CircularProgress, Alert,
   Paper, Switch, FormControlLabel, FormLabel, Grid
 } from '@mui/material';
-import { 
-  getLeadDistributionSettings as getSettingsService, 
-  updateLeadDistributionSettings as updateSettingsService 
+import {
+  getLeadDistributionSettings as getSettingsService,
+  updateLeadDistributionSettings as updateSettingsService
 } from '../services/apiService';
 
 const LeadDistributionSettingsForm = () => {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState({
     distributionEnabled: true, // Added based on API contract
     defaultAssignee: { type: 'Queue', id: '' }, // Updated to match API contract
     roundRobin: { enabled: true, userPool: [] }, // Updated to match API contract
-    rules: [], 
+    rules: [],
   });
   const [initialSettings, setInitialSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +28,7 @@ const LeadDistributionSettingsForm = () => {
     let newFieldErrors = { ...fieldErrors };
     if (name === 'defaultAssignee.id') {
       if (currentSettings.distributionEnabled && !value.trim()) {
-        newFieldErrors.defaultAssigneeId = 'Default Assignee ID cannot be empty when distribution is enabled.';
+        newFieldErrors.defaultAssigneeId = t('assign.distributionSettings.errors.defaultAssigneeRequired');
       } else {
         delete newFieldErrors.defaultAssigneeId;
       }
@@ -34,11 +36,11 @@ const LeadDistributionSettingsForm = () => {
     setFieldErrors(newFieldErrors);
     return Object.keys(newFieldErrors).length === 0; // Return true if no errors
   };
-  
+
   const validateAllFields = (currentSettings) => {
     let newFieldErrors = {};
     if (currentSettings.distributionEnabled && !currentSettings.defaultAssignee.id.trim()) {
-      newFieldErrors.defaultAssigneeId = 'Default Assignee ID cannot be empty when distribution is enabled.';
+      newFieldErrors.defaultAssigneeId = t('assign.distributionSettings.errors.defaultAssigneeRequired');
     }
     setFieldErrors(newFieldErrors);
     return Object.keys(newFieldErrors).length === 0;
@@ -63,7 +65,7 @@ const LeadDistributionSettingsForm = () => {
       setInitialSettings(JSON.parse(JSON.stringify(fullData)));
     } catch (err) {
       console.error('Error fetching Lead Distribution settings:', err);
-      setGeneralError(err.message || 'Failed to fetch Lead Distribution settings.');
+      setGeneralError(err.message || t('assign.distributionSettings.errors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -91,12 +93,12 @@ const LeadDistributionSettingsForm = () => {
     } else {
       newSettings[name] = type === 'checkbox' ? checked : value;
     }
-    
+
     setSettings(newSettings);
     setSuccess('');
     setGeneralError(null); // Clear general error on field change
   };
-  
+
   const handleReset = () => {
     if (initialSettings) {
       setSettings(JSON.parse(JSON.stringify(initialSettings)));
@@ -135,15 +137,15 @@ const LeadDistributionSettingsForm = () => {
       setSettings(fullUpdatedData);
       setInitialSettings(JSON.parse(JSON.stringify(fullUpdatedData)));
       setFieldErrors({}); // Clear field errors on successful save
-      setSuccess('Lead Distribution settings updated successfully!');
+      setSuccess(t('assign.distributionSettings.saveSuccess'));
     } catch (err) {
       console.error('Error updating Lead Distribution settings:', err);
-      setGeneralError(err.message || 'Failed to update Lead Distribution settings.');
+      setGeneralError(err.message || t('assign.distributionSettings.errors.saveFailed'));
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   const isChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings);
   const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
@@ -151,7 +153,7 @@ const LeadDistributionSettingsForm = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading Lead Distribution settings...</Typography>
+        <Typography sx={{ ml: 2 }}>{t('assign.distributionSettings.loading')}</Typography>
       </Box>
     );
   }
@@ -159,7 +161,7 @@ const LeadDistributionSettingsForm = () => {
   return (
     <Paper elevation={2} sx={{ p: 3, mt: 2 }}>
       <Typography variant="h6" gutterBottom component="div">
-        Lead Distribution Configuration
+        {t('assign.distributionSettings.title')}
       </Typography>
       <form onSubmit={handleSubmit}>
         {generalError && <Alert severity="error" sx={{ mb: 2 }}>{generalError}</Alert>}
@@ -169,25 +171,28 @@ const LeadDistributionSettingsForm = () => {
           <Grid item xs={12}>
             <FormControlLabel
               control={
-                <Switch 
-                  checked={settings.distributionEnabled} 
-                  onChange={handleChange} 
-                  name="distributionEnabled" 
+                <Switch
+                  checked={settings.distributionEnabled}
+                  onChange={handleChange}
+                  name="distributionEnabled"
                 />
               }
-              label="Enable Lead Distribution"
+              label={t('assign.distributionSettings.enableDistribution')}
             />
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 4, mt: 0.5 }}>
+              {t('assign.distributionSettings.distributionDescription')}
+            </Typography>
           </Grid>
 
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Default Assignee ID (User or Queue ID)"
+              label={t('assign.distributionSettings.defaultAssigneeId')}
               name="defaultAssignee.id"
               value={settings.defaultAssignee.id}
               onChange={handleChange}
               error={!!fieldErrors.defaultAssigneeId}
-              helperText={fieldErrors.defaultAssigneeId || "Salesforce User ID or Queue ID for default assignment."}
+              helperText={fieldErrors.defaultAssigneeId || t('assign.distributionSettings.defaultAssigneeIdHelper')}
               margin="normal"
               disabled={!settings.distributionEnabled}
               required={settings.distributionEnabled} // Visually indicate if enabled
@@ -196,63 +201,66 @@ const LeadDistributionSettingsForm = () => {
           <Grid item xs={12} md={6}>
              <TextField
               fullWidth
-              label="Default Assignee Type"
+              label={t('assign.distributionSettings.defaultAssigneeType')}
               name="defaultAssignee.type"
               value={settings.defaultAssignee.type}
               onChange={handleChange}
               select
               SelectProps={{ native: true }}
-              helperText="Type of the default assignee."
+              helperText={t('assign.distributionSettings.defaultAssigneeTypeHelper')}
               margin="normal"
               disabled={!settings.distributionEnabled}
             >
-              <option value="User">User</option>
-              <option value="Queue">Queue</option>
+              <option value="User">{t('assign.distributionSettings.userType')}</option>
+              <option value="Queue">{t('assign.distributionSettings.queueType')}</option>
             </TextField>
           </Grid>
 
           <Grid item xs={12}>
             <FormControlLabel
               control={
-                <Switch 
-                  checked={settings.roundRobin.enabled} 
-                  onChange={handleChange} 
-                  name="roundRobin.enabled" 
+                <Switch
+                  checked={settings.roundRobin.enabled}
+                  onChange={handleChange}
+                  name="roundRobin.enabled"
                 />
               }
-              label="Enable Round Robin Assignment"
+              label={t('assign.distributionSettings.enableRoundRobin')}
               disabled={!settings.distributionEnabled}
             />
              <Typography variant="body2" color="text.secondary" sx={{ml: 4, mt: -1}}>
-                User Pool for Round Robin (read-only): {settings.roundRobin.userPool.join(', ') || 'N/A'}
+                {t('assign.distributionSettings.userPoolLabel')} {settings.roundRobin.userPool.join(', ') || t('assign.distributionSettings.userPoolEmpty')}
             </Typography>
           </Grid>
 
           <Grid item xs={12}>
-            <FormLabel component="legend" sx={{ mt: 2 }}>Assignment Rules (Read-only)</FormLabel>
+            <FormLabel component="legend" sx={{ mt: 2 }}>{t('assign.distributionSettings.rulesTitle')}</FormLabel>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {t('assign.distributionSettings.rulesDescription')}
+            </Typography>
             <Paper variant="outlined" sx={{ p: 1.5, mt: 1, maxHeight: 200, overflow: 'auto', backgroundColor: 'action.disabledBackground' }}>
               <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.875rem' }}>
-                {settings.rules.length > 0 ? JSON.stringify(settings.rules, null, 2) : 'No assignment rules defined.'}
+                {settings.rules.length > 0 ? JSON.stringify(settings.rules, null, 2) : t('assign.distributionSettings.noRules')}
               </pre>
             </Paper>
           </Grid>
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-           <Button 
-            type="button" 
+           <Button
+            type="button"
             onClick={handleReset}
             disabled={isSaving || !isChanged || hasFieldErrors}
           >
-            Reset Changes
+            {t('assign.distributionSettings.resetChanges')}
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={isSaving || !isChanged || !settings.distributionEnabled || hasFieldErrors}
             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {isSaving ? 'Saving...' : 'Save Lead Distribution Settings'}
+            {isSaving ? t('assign.distributionSettings.saving') : t('assign.distributionSettings.saveSettings')}
           </Button>
         </Box>
       </form>

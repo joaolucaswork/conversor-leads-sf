@@ -23,6 +23,7 @@ import ProcessingIndicators from './ProcessingIndicators';
 import ProcessingSummary from './ProcessingSummary';
 import { useSettingsStore } from '../store/settingsStore';
 import { useTranslation } from 'react-i18next';
+import { useNotifications } from '../hooks/useNotifications';
 
 // This should ideally come from an environment variable or be consistent with apiService.
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
@@ -30,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 const ProcessingStatus = ({ statusData, processingId, error }) => {
   const { t } = useTranslation();
+  const { showDownloadError } = useNotifications();
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadError, setDownloadError] = React.useState(null);
   const [showDetailedStats, setShowDetailedStats] = useState(false);
@@ -121,36 +123,19 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
   };
 
   const handleDownload = async () => {
-    if (!resultUrl) {
-      setDownloadError(t('processing.messages.noDownloadUrl', { defaultValue: 'No download URL available.' }));
+    if (!processingId) {
+      showDownloadError('file', t('processing.messages.noDownloadUrl', { defaultValue: 'No download URL available.' }));
       return;
     }
     setIsDownloading(true);
     setDownloadError(null);
     try {
-      const response = await downloadFileService(resultUrl); // resultUrl is e.g., /leads/download/{id}
-
-      let filename = `processed_leads_${processingId}.csv`; // Default filename
-      const contentDisposition = response.headers['content-disposition'];
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?$/i);
-        if (filenameMatch && filenameMatch.length > 1) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv;charset=utf-8' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
+      await downloadFileService(processingId);
     } catch (err) {
       console.error('Download error:', err);
-      setDownloadError(err.message || t('processing.messages.downloadFailed', { defaultValue: 'Failed to download file.' }));
+      const filename = statusData?.fileName || `planilha_processada_${processingId}.csv`;
+      const errorMessage = err.message || t('processing.messages.downloadFailed', { defaultValue: 'Failed to download file.' });
+      showDownloadError(filename, errorMessage);
     } finally {
       setIsDownloading(false);
     }
@@ -263,7 +248,7 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
         />
       )}
 
-      {isCompleted && resultUrl && (
+      {isCompleted && processingId && (
         <Button
           variant="contained"
           color="success"
@@ -274,6 +259,12 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
         >
           {isDownloading ? t('common.loading') : t('processing.download')}
         </Button>
+      )}
+
+      {downloadError && (
+        <Typography color="error.main" sx={{ mt: 1 }}>
+          {downloadError}
+        </Typography>
       )}
 
       {developerMode && canPreview && (

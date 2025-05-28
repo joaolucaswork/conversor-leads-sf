@@ -24,8 +24,37 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 
+# Configure UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    # Set environment variable for Python I/O encoding
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+    # Configure stdout and stderr to use UTF-8 encoding
+    import codecs
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 # Import the AI field mapper
 from ai_field_mapper import AIFieldMapper, FieldMapping, DataValidation
+
+# Safe print function for Unicode handling
+def safe_print(message, *args, **kwargs):
+    """
+    Safe print function that handles Unicode encoding issues on Windows.
+    Falls back to ASCII representation if Unicode encoding fails.
+    """
+    try:
+        print(message, *args, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            # Try to encode as ASCII with error handling
+            safe_message = str(message).encode('ascii', 'replace').decode('ascii')
+            print(f"[UNICODE_SAFE] {safe_message}", *args, **kwargs)
+        except Exception:
+            # Last resort: just print a generic message
+            print("[UNICODE_ERROR] Message contains characters that cannot be displayed", *args, **kwargs)
 
 class AIEnhancedLeadsProcessor:
     """AI-Enhanced leads processor with intelligent field mapping and validation."""
@@ -54,33 +83,65 @@ class AIEnhancedLeadsProcessor:
             'fallbacks_to_rules': 0
         }
 
+        # Track fallback owner assignment information
+        self.fallback_assignment_info = {
+            'applied': False,
+            'count': 0,
+            'fallback_owner_id': None,
+            'affected_indices': []
+        }
+
     def setup_logging(self):
-        """Setup enhanced logging configuration."""
+        """Setup enhanced logging configuration with UTF-8 encoding."""
         log_dir = Path('logs')
         log_dir.mkdir(exist_ok=True)
 
         log_filename = f"ai_leads_processing_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         log_path = log_dir / log_filename
 
+        # Create a custom formatter that handles Unicode safely
+        class SafeFormatter(logging.Formatter):
+            def format(self, record):
+                try:
+                    return super().format(record)
+                except UnicodeEncodeError:
+                    # Replace problematic characters with safe alternatives
+                    record.msg = str(record.msg).encode('ascii', 'replace').decode('ascii')
+                    if record.args:
+                        safe_args = []
+                        for arg in record.args:
+                            try:
+                                safe_args.append(str(arg).encode('ascii', 'replace').decode('ascii'))
+                            except:
+                                safe_args.append('[UNICODE_ERROR]')
+                        record.args = tuple(safe_args)
+                    return super().format(record)
+
+        formatter = SafeFormatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+
+        # Configure file handler with UTF-8 encoding
+        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+
+        # Configure stream handler with safe encoding
+        stream_handler = logging.StreamHandler(sys.stdout)
+        stream_handler.setFormatter(formatter)
+
+        # Set up logging
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_path, encoding='utf-8'),
-                logging.StreamHandler(sys.stdout)
-            ]
+            handlers=[file_handler, stream_handler],
+            force=True  # Override any existing configuration
         )
+
         self.logger = logging.getLogger(__name__)
-        self.logger.info("AI-Enhanced Leads Processor initialized")
+        self.logger.info("AI-Enhanced Leads Processor initialized with Unicode-safe logging")
 
     def load_config(self, config_file: str = None) -> Dict[str, Any]:
         """Load configuration from file or use defaults."""
         default_config = {
             "lead_distribution": {
-                "guic": 100,
-                "cmilfont": 100,
-                "ctint": 70,
-                "pnilo": 30
+                # Empty by default - will only be used if no existing assignments found
             },
             "default_values": {
                 "patrimonio_financeiro": 1300000,
@@ -140,12 +201,26 @@ class AIEnhancedLeadsProcessor:
         return self._detect_csv_format(file_path)
 
     def _detect_excel_format(self, file_path: str) -> Tuple[str, str, Dict[str, List[str]]]:
-        """Detect format for Excel files."""
+        """Detect format for Excel files with enhanced duplicate column handling."""
         self.logger.info(f"Processing Excel file: {file_path}")
 
         try:
-            # Read Excel file (first sheet by default)
-            df_sample = pd.read_excel(file_path, nrows=10)
+            # Read Excel file (first sheet by default) with enhanced error handling
+            df_sample = None
+            for engine in ['openpyxl', 'xlrd']:
+                try:
+                    df_sample = pd.read_excel(file_path, nrows=10, engine=engine)
+                    self.logger.info(f"Successfully read Excel with {engine} engine")
+                    break
+                except Exception as e:
+                    self.logger.warning(f"Failed to read with {engine}: {e}")
+                    continue
+
+            if df_sample is None:
+                raise Exception("Could not read Excel file with any engine")
+
+            # Handle duplicate columns by renaming them properly
+            df_sample = self._handle_duplicate_columns(df_sample)
 
             # Extract sample data for each column
             sample_data = {}
@@ -173,6 +248,34 @@ class AIEnhancedLeadsProcessor:
         except Exception as e:
             self.logger.error(f"Error reading Excel file: {e}")
             return 'unknown', ',', {}
+
+    def _handle_duplicate_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Handle duplicate columns by renaming them with meaningful suffixes.
+        This prevents pandas from creating confusing column names like 'Estado.1'.
+        """
+        columns = df.columns.tolist()
+        seen = {}
+        new_columns = []
+
+        for col in columns:
+            if col in seen:
+                seen[col] += 1
+                # Create meaningful names for duplicates
+                if 'estado' in col.lower() or 'state' in col.lower():
+                    new_col = f"{col}_backup_{seen[col]}"
+                elif 'owner' in col.lower() or 'responsavel' in col.lower() or 'alias' in col.lower():
+                    new_col = f"{col}_alt_{seen[col]}"
+                else:
+                    new_col = f"{col}_dup_{seen[col]}"
+                new_columns.append(new_col)
+                self.logger.info(f"Renamed duplicate column '{col}' to '{new_col}'")
+            else:
+                seen[col] = 0
+                new_columns.append(col)
+
+        df.columns = new_columns
+        return df
 
     def _detect_csv_format(self, file_path: str) -> Tuple[str, str, Dict[str, List[str]]]:
         """Detect format for CSV files."""
@@ -626,12 +729,71 @@ class AIEnhancedLeadsProcessor:
         self.logger.info("AI-enhanced data cleaning completed")
         return df_clean
 
-    def distribute_leads(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _detect_and_map_existing_owners(self, df: pd.DataFrame) -> None:
+        """
+        Detect existing owner assignments from various columns and map them to OwnerId.
+        This prevents overwriting existing assignments with default values.
+        """
+        # Common owner column patterns to check
+        owner_patterns = [
+            'alias', 'owner', 'responsavel', 'responsável', 'vendedor', 'consultor',
+            'estado_backup_1', 'estado_alt_1', 'state_backup_1', 'state_alt_1'
+        ]
+
+        # Look for columns that might contain owner information
+        potential_owner_columns = []
+        for col in df.columns:
+            col_lower = col.lower()
+            for pattern in owner_patterns:
+                if pattern in col_lower:
+                    potential_owner_columns.append(col)
+                    break
+
+        if potential_owner_columns:
+            self.logger.info(f"Found potential owner columns: {potential_owner_columns}")
+
+            # Check each potential column for valid owner data
+            for col in potential_owner_columns:
+                non_empty_values = df[col].dropna()
+                non_empty_values = non_empty_values[non_empty_values.astype(str).str.strip() != '']
+
+                if len(non_empty_values) > 0:
+                    # Get unique values to see if they look like owner names
+                    unique_values = non_empty_values.unique()
+                    self.logger.info(f"Column '{col}' contains potential owners: {list(unique_values)[:10]}")
+
+                    # If OwnerId is empty or doesn't exist, use this column
+                    if 'OwnerId' not in df.columns or df['OwnerId'].isna().all():
+                        df['OwnerId'] = df[col]
+                        self.logger.info(f"Mapped '{col}' to OwnerId column")
+                        break
+                    else:
+                        # Check if OwnerId has fewer assignments than this column
+                        existing_owner_count = df['OwnerId'].dropna().sum() if df['OwnerId'].dtype == 'bool' else len(df['OwnerId'].dropna())
+                        potential_owner_count = len(non_empty_values)
+
+                        if potential_owner_count > existing_owner_count:
+                            # Fill empty OwnerId values with values from this column
+                            mask = df['OwnerId'].isna() | (df['OwnerId'].astype(str).str.strip() == '')
+                            df.loc[mask, 'OwnerId'] = df.loc[mask, col]
+                            self.logger.info(f"Filled empty OwnerId values from '{col}'")
+
+    def distribute_leads(self, df: pd.DataFrame, fallback_owner_id: str = None) -> pd.DataFrame:
         """
         Smart lead distribution that preserves original assignments when available.
         Only applies automatic distribution to empty/missing OwnerId values.
+
+        Args:
+            df: DataFrame with lead data
+            fallback_owner_id: Salesforce User ID to use as fallback for unassigned leads
+
+        Returns:
+            Tuple of (processed_dataframe, fallback_assignment_info)
         """
         df_distributed = df.copy()
+
+        # First, try to detect existing owner assignments from various columns
+        self._detect_and_map_existing_owners(df_distributed)
 
         # Check if OwnerId column has existing assignments
         if 'OwnerId' in df_distributed.columns:
@@ -647,38 +809,116 @@ class AIEnhancedLeadsProcessor:
                 df_distributed.loc[df_distributed['OwnerId'] == 'nan', 'OwnerId'] = ''
                 df_distributed.loc[df_distributed['OwnerId'] == 'None', 'OwnerId'] = ''
 
-                # Log the preserved distribution
-                preserved_distribution = df_distributed['OwnerId'].value_counts().to_dict()
-                self.logger.info("Preserved lead distribution from original file:")
-                for alias, count in preserved_distribution.items():
+                # Check for leads without owners and apply fallback if provided
+                unassigned_mask = (df_distributed['OwnerId'] == '') | (df_distributed['OwnerId'].isna())
+                unassigned_count = unassigned_mask.sum()
+
+                if unassigned_count > 0 and fallback_owner_id:
+                    self.logger.info(f"Applying fallback owner assignment to {unassigned_count} unassigned leads")
+                    df_distributed.loc[unassigned_mask, 'OwnerId'] = fallback_owner_id
+
+                    # Store fallback assignment info for notification
+                    self.fallback_assignment_info = {
+                        'applied': True,
+                        'count': unassigned_count,
+                        'fallback_owner_id': fallback_owner_id,
+                        'affected_indices': df_distributed[unassigned_mask].index.tolist()
+                    }
+                elif unassigned_count > 0:
+                    # Store info about unassigned leads for potential notification
+                    self.fallback_assignment_info = {
+                        'applied': False,
+                        'count': unassigned_count,
+                        'fallback_owner_id': None,
+                        'affected_indices': df_distributed[unassigned_mask].index.tolist()
+                    }
+                else:
+                    self.fallback_assignment_info = {
+                        'applied': False,
+                        'count': 0,
+                        'fallback_owner_id': None,
+                        'affected_indices': []
+                    }
+
+                # Log the final distribution
+                final_distribution = df_distributed['OwnerId'].value_counts().to_dict()
+                self.logger.info("Final lead distribution:")
+                for alias, count in final_distribution.items():
                     if alias and alias != '':
                         self.logger.info(f"  {alias}: {count} leads")
 
                 return df_distributed
 
-        # If no existing assignments found, apply automatic distribution
-        self.logger.info("No existing lead assignments found - applying automatic distribution")
+        # If no existing assignments found, apply fallback or automatic distribution
+        self.logger.info("No existing lead assignments found")
 
         distribution = self.config["lead_distribution"]
+        total_leads = len(df_distributed)
 
         # Reset index to ensure sequential assignment
         df_distributed = df_distributed.reset_index(drop=True)
 
-        # Create lead assignment list
-        owner_assignments = []
-        for alias, count in distribution.items():
-            owner_assignments.extend([alias] * count)
+        # If fallback owner is provided and no distribution config, use fallback for all
+        if fallback_owner_id and not distribution:
+            self.logger.info(f"Applying fallback owner assignment to all {total_leads} leads")
+            df_distributed['OwnerId'] = fallback_owner_id
 
-        # Assign OwnerId based on distribution
-        for i, row_idx in enumerate(df_distributed.index):
-            if i < len(owner_assignments):
-                df_distributed.at[row_idx, 'OwnerId'] = owner_assignments[i]
+            self.fallback_assignment_info = {
+                'applied': True,
+                'count': total_leads,
+                'fallback_owner_id': fallback_owner_id,
+                'affected_indices': df_distributed.index.tolist()
+            }
+        elif distribution:
+            # Apply automatic distribution based on config
+            self.logger.info("Applying automatic distribution based on configuration")
+
+            # Create lead assignment list
+            owner_assignments = []
+            for alias, count in distribution.items():
+                owner_assignments.extend([alias] * count)
+
+            # Assign OwnerId based on distribution
+            unassigned_indices = []
+            for i, row_idx in enumerate(df_distributed.index):
+                if i < len(owner_assignments):
+                    df_distributed.at[row_idx, 'OwnerId'] = owner_assignments[i]
+                else:
+                    df_distributed.at[row_idx, 'OwnerId'] = ''
+                    unassigned_indices.append(row_idx)
+
+            # Apply fallback to any remaining unassigned leads
+            if unassigned_indices and fallback_owner_id:
+                self.logger.info(f"Applying fallback owner to {len(unassigned_indices)} remaining unassigned leads")
+                for idx in unassigned_indices:
+                    df_distributed.at[idx, 'OwnerId'] = fallback_owner_id
+
+                self.fallback_assignment_info = {
+                    'applied': True,
+                    'count': len(unassigned_indices),
+                    'fallback_owner_id': fallback_owner_id,
+                    'affected_indices': unassigned_indices
+                }
             else:
-                df_distributed.at[row_idx, 'OwnerId'] = ''
+                self.fallback_assignment_info = {
+                    'applied': False,
+                    'count': len(unassigned_indices),
+                    'fallback_owner_id': None,
+                    'affected_indices': unassigned_indices
+                }
+        else:
+            # No distribution config and no fallback - leave empty
+            df_distributed['OwnerId'] = ''
+            self.fallback_assignment_info = {
+                'applied': False,
+                'count': total_leads,
+                'fallback_owner_id': None,
+                'affected_indices': df_distributed.index.tolist()
+            }
 
         # Log distribution summary
         distribution_summary = df_distributed['OwnerId'].value_counts().to_dict()
-        self.logger.info("Applied automatic lead distribution:")
+        self.logger.info("Final lead distribution:")
         for alias, count in distribution_summary.items():
             if alias:
                 self.logger.info(f"  {alias}: {count} leads")
@@ -707,13 +947,14 @@ class AIEnhancedLeadsProcessor:
             self.logger.error(f"Failed to create backup: {e}")
             return ""
 
-    def process_file_ai(self, input_file: str, output_file: str = None) -> str:
+    def process_file_ai(self, input_file: str, output_file: str = None, fallback_owner_id: str = None) -> str:
         """
         Main AI-enhanced method to process a leads file.
 
         Args:
             input_file: Path to input file
             output_file: Optional output file path
+            fallback_owner_id: Optional Salesforce User ID to use as fallback for unassigned leads
 
         Returns:
             Path to processed output file
@@ -764,8 +1005,8 @@ class AIEnhancedLeadsProcessor:
         # AI-enhanced data cleaning and formatting
         df_clean = self.clean_and_format_data_ai(df_mapped, validations)
 
-        # Distribute leads (same as original)
-        df_final = self.distribute_leads(df_clean)
+        # Distribute leads with fallback owner support
+        df_final = self.distribute_leads(df_clean, fallback_owner_id)
 
         # Generate output file name if not provided
         if output_file is None:
@@ -774,16 +1015,23 @@ class AIEnhancedLeadsProcessor:
             output_file = f"data/output/{input_path.stem}_ai_processed_{timestamp}.csv"
 
         # Ensure output directory exists
-        Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Save processed file
-        df_final.to_csv(output_file, index=False, encoding=self.config["output_encoding"])
-        self.logger.info(f"AI-processed file saved to: {output_file}")
+        df_final.to_csv(output_path, index=False, encoding=self.config["output_encoding"])
+
+        # Use safe logging for file paths with Unicode characters
+        try:
+            self.logger.info(f"AI-processed file saved to: {output_path}")
+        except UnicodeEncodeError:
+            self.logger.info(f"AI-processed file saved to: {str(output_path).encode('ascii', 'replace').decode('ascii')}")
 
         # Generate comprehensive summary
-        self.generate_ai_summary(df_final, input_file, output_file, backup_path, field_mappings, validations)
+        self.generate_ai_summary(df_final, input_file, str(output_path), backup_path, field_mappings, validations)
 
-        return output_file
+        # Return the absolute path to ensure consistency
+        return str(output_path.resolve())
 
     def generate_ai_summary(self, df: pd.DataFrame, input_file: str, output_file: str,
                            backup_path: str, field_mappings: List[FieldMapping],
@@ -843,71 +1091,78 @@ class AIEnhancedLeadsProcessor:
         with open(summary_path, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2, ensure_ascii=False)
 
-        self.logger.info(f"AI processing summary saved to: {summary_path}")
+        # Use safe logging for file paths with Unicode characters
+        try:
+            self.logger.info(f"AI processing summary saved to: {summary_path}")
+        except UnicodeEncodeError:
+            self.logger.info(f"AI processing summary saved to: {str(summary_path).encode('ascii', 'replace').decode('ascii')}")
 
         # Print summary to console
         self._print_ai_summary(summary)
 
     def _print_ai_summary(self, summary: Dict[str, Any]):
-        """Print AI processing summary to console."""
+        """Print AI processing summary to console with Unicode safety."""
+        ai_info = None
         try:
-            print("\n" + "="*70)
-            print("AI-ENHANCED PROCESSING SUMMARY")
-            print("="*70)
-            print(f"Input file: {summary['input_file']}")
-            print(f"Output file: {summary['output_file']}")
-            print(f"Backup file: {summary['backup_file']}")
-            print(f"Total records processed: {summary['total_records']}")
+            safe_print("\n" + "="*70)
+            safe_print("AI-ENHANCED PROCESSING SUMMARY")
+            safe_print("="*70)
+            safe_print(f"Input file: {summary['input_file']}")
+            safe_print(f"Output file: {summary['output_file']}")
+            safe_print(f"Backup file: {summary['backup_file']}")
+            safe_print(f"Total records processed: {summary['total_records']}")
 
-            ai_info = summary['ai_processing']
-            print(f"\nAI PROCESSING:")
-            print(f"  • AI enabled: {'YES' if ai_info['ai_enabled'] else 'NO'}")
-        except UnicodeEncodeError:
-            # Fallback for systems with encoding issues
+            ai_info = summary.get('ai_processing', {})
+            safe_print(f"\nAI PROCESSING:")
+            safe_print(f"  • AI enabled: {'YES' if ai_info.get('ai_enabled', False) else 'NO'}")
+        except Exception as e:
+            # Fallback for any encoding issues
             self.logger.info("Processing summary completed - check log files for details")
+            ai_info = summary.get('ai_processing', {})
 
-        if ai_info.get('mapping_summary'):
+        if ai_info and ai_info.get('mapping_summary'):
             mapping = ai_info['mapping_summary']
-            print(f"  • Field mappings: {mapping.get('total_fields', 0)} total")
-            print(f"    - High confidence: {mapping.get('high_confidence_mappings', 0)}")
-            print(f"    - Low confidence: {mapping.get('low_confidence_mappings', 0)}")
-            print(f"    - Unmapped: {mapping.get('unmapped_fields', 0)}")
-            print(f"    - Average confidence: {mapping.get('average_confidence', 0):.1f}%")
+            safe_print(f"  • Field mappings: {mapping.get('total_fields', 0)} total")
+            safe_print(f"    - High confidence: {mapping.get('high_confidence_mappings', 0)}")
+            safe_print(f"    - Low confidence: {mapping.get('low_confidence_mappings', 0)}")
+            safe_print(f"    - Unmapped: {mapping.get('unmapped_fields', 0)}")
+            safe_print(f"    - Average confidence: {mapping.get('average_confidence', 0):.1f}%")
 
-        validation = ai_info.get('validation_summary', {})
-        print(f"  • Data validation:")
-        print(f"    - Fields validated: {validation.get('fields_validated', 0)}")
-        print(f"    - Issues found: {validation.get('total_issues_found', 0)}")
-        print(f"    - Suggestions made: {validation.get('total_suggestions', 0)}")
+        if ai_info:
+            validation = ai_info.get('validation_summary', {})
+            safe_print(f"  • Data validation:")
+            safe_print(f"    - Fields validated: {validation.get('fields_validated', 0)}")
+            safe_print(f"    - Issues found: {validation.get('total_issues_found', 0)}")
+            safe_print(f"    - Suggestions made: {validation.get('total_suggestions', 0)}")
 
-        stats = ai_info.get('ai_stats', {})
-        print(f"  • AI statistics:")
-        print(f"    - Mapping attempts: {stats.get('mappings_attempted', 0)}")
-        print(f"    - Mapping successes: {stats.get('mappings_successful', 0)}")
-        print(f"    - Validation attempts: {stats.get('validations_attempted', 0)}")
-        print(f"    - Fallbacks to rules: {stats.get('fallbacks_to_rules', 0)}")
+            stats = ai_info.get('ai_stats', {})
+            safe_print(f"  • AI statistics:")
+            safe_print(f"    - Mapping attempts: {stats.get('mappings_attempted', 0)}")
+            safe_print(f"    - Mapping successes: {stats.get('mappings_successful', 0)}")
+            safe_print(f"    - Validation attempts: {stats.get('validations_attempted', 0)}")
+            safe_print(f"    - Fallbacks to rules: {stats.get('fallbacks_to_rules', 0)}")
 
-        # Display API usage statistics
-        api_usage = ai_info.get('api_usage', {})
-        if api_usage:
-            print(f"  • API usage optimization:")
-            print(f"    - Total API calls: {api_usage.get('total_calls', 0)}")
-            print(f"    - Tokens used: {api_usage.get('total_tokens_used', 0)}")
-            print(f"    - Estimated cost: ${api_usage.get('estimated_cost', 0):.4f}")
-            print(f"    - Cache hit ratio: {api_usage.get('cache_hit_ratio', 0):.1%}")
-            print(f"    - AI skip ratio: {api_usage.get('ai_skip_ratio', 0):.1%}")
-            print(f"    - Cache hits: {api_usage.get('cache_hits', 0)}")
-            print(f"    - AI calls skipped: {api_usage.get('ai_skipped', 0)}")
+            # Display API usage statistics
+            api_usage = ai_info.get('api_usage', {})
+            if api_usage:
+                safe_print(f"  • API usage optimization:")
+                safe_print(f"    - Total API calls: {api_usage.get('total_calls', 0)}")
+                safe_print(f"    - Tokens used: {api_usage.get('total_tokens_used', 0)}")
+                safe_print(f"    - Estimated cost: ${api_usage.get('estimated_cost', 0):.4f}")
+                safe_print(f"    - Cache hit ratio: {api_usage.get('cache_hit_ratio', 0):.1%}")
+                safe_print(f"    - AI skip ratio: {api_usage.get('ai_skip_ratio', 0):.1%}")
+                safe_print(f"    - Cache hits: {api_usage.get('cache_hits', 0)}")
+                safe_print(f"    - AI calls skipped: {api_usage.get('ai_skipped', 0)}")
 
         try:
-            print(f"\nLEAD DISTRIBUTION:")
+            safe_print(f"\nLEAD DISTRIBUTION:")
             for alias, count in summary['lead_distribution'].items():
                 if alias:
-                    print(f"  • {alias}: {count} leads")
+                    safe_print(f"  • {alias}: {count} leads")
 
-            print("="*70)
-        except UnicodeEncodeError:
-            # Fallback for systems with encoding issues
+            safe_print("="*70)
+        except Exception as e:
+            # Fallback for any encoding issues
             self.logger.info("Lead distribution summary completed - check log files for details")
 
 def main():
@@ -939,22 +1194,15 @@ def main():
         # Process the file
         output_file = processor.process_file_ai(args.input_file, args.output)
 
-        try:
-            print(f"\nAI-enhanced processing completed successfully!")
-            print(f"Output file: {output_file}")
-        except UnicodeEncodeError:
-            print(f"\nProcessing completed successfully!")
-            print(f"Output file: {output_file}")
+        safe_print(f"\nAI-enhanced processing completed successfully!")
+        safe_print(f"Output file: {output_file}")
 
     except Exception as e:
-        try:
-            print(f"\nError during AI-enhanced processing: {e}")
-        except UnicodeEncodeError:
-            print(f"\nError during processing: {e}")
+        safe_print(f"\nError during AI-enhanced processing: {e}")
         sys.exit(1)
 
 # Wrapper function for backend API integration
-def process_leads_with_ai(input_file: str, output_file: str = None, config_file: str = None) -> str:
+def process_leads_with_ai(input_file: str, output_file: str = None, config_file: str = None, fallback_owner_id: str = None) -> str:
     """
     Wrapper function for AI-enhanced leads processing.
 
@@ -962,12 +1210,13 @@ def process_leads_with_ai(input_file: str, output_file: str = None, config_file:
         input_file: Path to input file
         output_file: Optional output file path
         config_file: Optional configuration file path
+        fallback_owner_id: Optional Salesforce User ID to use as fallback for unassigned leads
 
     Returns:
         Path to processed output file
     """
     processor = AIEnhancedLeadsProcessor(config_file=config_file)
-    return processor.process_file_ai(input_file, output_file)
+    return processor.process_file_ai(input_file, output_file, fallback_owner_id)
 
 if __name__ == "__main__":
     main()

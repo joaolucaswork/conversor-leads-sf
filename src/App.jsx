@@ -25,9 +25,9 @@ import { useTranslation } from 'react-i18next';
 import LoginPage from './pages/LoginPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import CertificateProtectedRoute from './components/CertificateProtectedRoute';
 import UserProfileHeader from './components/UserProfileHeader';
 import SalesforceStatusBar from './components/SalesforceStatusBar';
+import GlobalNotifications from './components/GlobalNotifications';
 import { useAuthStore, setupOAuthListeners } from './store/authStore';
 import { useSettingsStore } from './store/settingsStore'; // Import the new settings store
 import { useLanguageStore } from './store/languageStore'; // Import the language store
@@ -287,9 +287,9 @@ function App() {
             <Route
               path="/admin"
               element={
-                <CertificateProtectedRoute>
+                <ProtectedRoute>
                   <AdminDashboardPage />
-                </CertificateProtectedRoute>
+                </ProtectedRoute>
               }
             />
                 {/* Add other routes here */}
@@ -334,6 +334,9 @@ function App() {
 
         {/* Global Salesforce Status Bar */}
         <SalesforceStatusBar />
+
+        {/* Global Notifications */}
+        <GlobalNotifications />
       </Router>
     </ThemeProvider>
   );

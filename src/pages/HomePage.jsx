@@ -6,14 +6,17 @@ import Paper from '@mui/material/Paper';
 import FileUpload from '../components/FileUpload';
 import ProcessingStatus from '../components/ProcessingStatus'; // Import the new component
 import UnifiedFilesHistorySection from '../components/UnifiedFilesHistorySection'; // Import the new unified component
+import FallbackOwnerModal from '../components/FallbackOwnerModal';
 import { uploadFile as uploadFileService, getProcessingStatus } from '../services/apiService'; // Import getProcessingStatus
 import { useGlobalProcessingEvents } from '../hooks/useProcessingEvents';
+import { useAuthStore } from '../store/authStore';
 
 const POLLING_INTERVAL = 3000; // 3 seconds
 
 const HomePage = () => {
   const { t } = useTranslation();
   const { notifyCompletion } = useGlobalProcessingEvents();
+  const { userProfile } = useAuthStore();
 
   // File Upload State
   const [isUploading, setIsUploading] = useState(false);
@@ -26,6 +29,11 @@ const HomePage = () => {
   const [currentProcessingStatus, setCurrentProcessingStatus] = useState(null);
   const [pollingError, setPollingError] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
+
+  // Fallback Owner Modal State
+  const [showFallbackModal, setShowFallbackModal] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(null);
+  const [fallbackAssignmentInfo, setFallbackAssignmentInfo] = useState(null);
 
 
   const resetUploadState = () => {
@@ -62,11 +70,15 @@ const HomePage = () => {
 
     setIsUploading(true);
     try {
+      // Get fallback owner ID from user profile
+      const fallbackOwnerId = userProfile?.user_id || userProfile?.id || null;
+
       const response = await uploadFileService(
         file,
         (progress) => setUploadProgress(progress),
         options.useAiEnhancement !== undefined ? options.useAiEnhancement : true,
-        null
+        null, // aiModelPreference
+        fallbackOwnerId
       );
 
       setProcessingInfo({ // Keep original processingInfo
@@ -103,6 +115,12 @@ const HomePage = () => {
       const previousStatus = currentProcessingStatus?.status;
       setCurrentProcessingStatus({...statusResult, fileName: statusResult.fileName || fName }); // Ensure fileName is part of statusData
 
+      // Check for fallback assignment info and show modal if needed
+      if (statusResult.fallbackAssignmentInfo && statusResult.fallbackAssignmentInfo.applied && !fallbackAssignmentInfo) {
+        setFallbackAssignmentInfo(statusResult.fallbackAssignmentInfo);
+        setShowFallbackModal(true);
+      }
+
       if (statusResult.status === 'completed' || statusResult.status === 'failed') {
         setIsPolling(false); // Stop polling for terminal states
 
@@ -135,7 +153,18 @@ const HomePage = () => {
       // For now, it will retry on next interval unless explicitly stopped
       // setIsPolling(false); // Optional: stop polling on any error
     }
-  }, [currentProcessingStatus?.status, notifyCompletion]);
+  }, [currentProcessingStatus?.status, notifyCompletion, fallbackAssignmentInfo]);
+
+  // Fallback owner modal handlers
+  const handleFallbackModalConfirm = () => {
+    setShowFallbackModal(false);
+    // Processing continues normally - the fallback assignment has already been applied
+  };
+
+  const handleFallbackModalClose = () => {
+    setShowFallbackModal(false);
+    // User acknowledged the fallback assignment
+  };
 
   // Polling useEffect
   useEffect(() => {
@@ -179,6 +208,17 @@ const HomePage = () => {
 
       {/* Unified Files and History Section */}
       <UnifiedFilesHistorySection />
+
+      {/* Fallback Owner Assignment Modal */}
+      <FallbackOwnerModal
+        open={showFallbackModal}
+        onClose={handleFallbackModalClose}
+        onConfirm={handleFallbackModalConfirm}
+        fallbackInfo={fallbackAssignmentInfo}
+        userProfile={userProfile}
+        fileName={processingInfo?.fileName}
+        isProcessing={false}
+      />
 
       {/* Example of how to reset everything for a new upload if needed,
           could be tied to the "Upload Another File" button in FileUpload

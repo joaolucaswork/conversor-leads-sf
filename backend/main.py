@@ -6,6 +6,18 @@ Provides REST API endpoints for the React/Electron frontend
 
 import os
 import sys
+
+# Configure UTF-8 encoding for Windows compatibility
+if sys.platform.startswith('win'):
+    # Set environment variable for Python I/O encoding
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+
+    # Configure stdout and stderr to use UTF-8 encoding
+    import codecs
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 import uuid
 import json
 import asyncio
@@ -61,6 +73,23 @@ core_dir = project_root / "core"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(core_dir))
 
+# Safe print function for Unicode handling
+def safe_print(message, *args, **kwargs):
+    """
+    Safe print function that handles Unicode encoding issues on Windows.
+    Falls back to ASCII representation if Unicode encoding fails.
+    """
+    try:
+        print(message, *args, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            # Try to encode as ASCII with error handling
+            safe_message = str(message).encode('ascii', 'replace').decode('ascii')
+            print(f"[UNICODE_SAFE] {safe_message}", *args, **kwargs)
+        except Exception:
+            # Last resort: just print a generic message
+            print("[UNICODE_ERROR] Message contains characters that cannot be displayed", *args, **kwargs)
+
 # Import pandas and numpy for file viewing functionality
 try:
     import pandas as pd
@@ -78,8 +107,7 @@ from models.training_data import ProcessingJob
 from services.training_data_service import TrainingDataService
 from services.fine_tuning_service import FineTuningService
 
-# Certificate authentication imports
-from middleware.certificate_auth import verify_admin_certificate
+# Certificate authentication removed - using token-only authentication
 
 # Import our existing processing modules
 try:
@@ -246,6 +274,7 @@ class ProcessingStatus(BaseModel):
     previewUrl: Optional[str] = None
     aiStats: Optional[Dict[str, Any]] = None
     apiUsage: Optional[Dict[str, Any]] = None
+    fallbackAssignmentInfo: Optional[Dict[str, Any]] = None
 
 class HistoryItem(BaseModel):
     processingId: str
@@ -297,6 +326,7 @@ class SalesforceUploadRequest(BaseModel):
     access_token: str
     instance_url: str
     file_name: Optional[str] = None
+    fallback_owner_id: Optional[str] = None
 
 class SalesforceValidationRequest(BaseModel):
     access_token: str
@@ -610,6 +640,46 @@ async def get_salesforce_user_profile(access_token: str, instance_url: str) -> D
             )
 
 # Salesforce utility functions
+async def apply_fallback_owner_for_salesforce(
+    file_path: str,
+    fallback_owner_id: str,
+    fallback_info: Dict[str, Any] = None
+) -> str:
+    """
+    Apply fallback owner assignment to a processed file for Salesforce upload.
+    This ensures consistency between the downloaded CSV and Salesforce data.
+    """
+    try:
+        import pandas as pd
+        from pathlib import Path
+
+        # Read the processed file
+        df = pd.read_csv(file_path)
+
+        # Apply fallback owner assignment to empty/missing OwnerId values
+        if 'OwnerId' in df.columns:
+            # Find records without owners
+            unassigned_mask = (df['OwnerId'].isna()) | (df['OwnerId'].astype(str).str.strip() == '')
+            unassigned_count = unassigned_mask.sum()
+
+            if unassigned_count > 0:
+                print(f"[INFO] Applying fallback owner {fallback_owner_id} to {unassigned_count} unassigned leads for Salesforce upload")
+                df.loc[unassigned_mask, 'OwnerId'] = fallback_owner_id
+
+                # Create a new file for Salesforce upload
+                salesforce_file_path = file_path.replace('.csv', '_salesforce.csv')
+                df.to_csv(salesforce_file_path, index=False)
+
+                print(f"[INFO] Created Salesforce-ready file: {salesforce_file_path}")
+                return salesforce_file_path
+
+        # Return original file if no changes needed
+        return file_path
+
+    except Exception as e:
+        print(f"[ERROR] Failed to apply fallback owner for Salesforce: {e}")
+        return file_path  # Return original file on error
+
 async def call_salesforce_integration(action: str, **kwargs) -> Dict[str, Any]:
     """Call the Python Salesforce integration script"""
     import subprocess
@@ -820,10 +890,19 @@ async def salesforce_upload(
         if not output_path.exists():
             raise HTTPException(status_code=404, detail="Processed file not found")
 
+        # Apply fallback owner assignment if needed before Salesforce upload
+        final_file_path = str(output_path)
+        if request.fallback_owner_id:
+            final_file_path = await apply_fallback_owner_for_salesforce(
+                str(output_path),
+                request.fallback_owner_id,
+                job.get("fallbackAssignmentInfo")
+            )
+
         # Call Salesforce integration
         result = await call_salesforce_integration(
             action="upload",
-            file_path=str(output_path),
+            file_path=final_file_path,
             object_type=request.salesforce_object,
             access_token=request.access_token,
             instance_url=request.instance_url
@@ -1120,6 +1199,7 @@ async def upload_file(
     file: UploadFile = File(...),
     useAiEnhancement: bool = Form(True),
     aiModelPreference: Optional[str] = Form(None),
+    fallbackOwnerId: Optional[str] = Form(None),
     token: str = Depends(verify_token)
 ):
     """Upload and process a leads file"""
@@ -1157,6 +1237,7 @@ async def upload_file(
         "uploadedAt": datetime.now().isoformat(),
         "useAiEnhancement": useAiEnhancement,
         "aiModelPreference": aiModelPreference,
+        "fallbackOwnerId": fallbackOwnerId,
         "inputPath": str(input_path),
         "outputPath": str(get_output_path(processing_id, file.filename)),
         "startTime": time.time()  # Track start time for processing duration
@@ -1256,7 +1337,18 @@ async def process_file_background(processing_id: str):
                 # Import the processor to get AI statistics
                 from core.master_leads_processor_ai import AIEnhancedLeadsProcessor
                 processor = AIEnhancedLeadsProcessor()
-                processed_file_path = processor.process_file_ai(input_path, output_path)
+                processed_file_path = processor.process_file_ai(
+                    input_path,
+                    output_path,
+                    fallback_owner_id=job.get("fallbackOwnerId")
+                )
+
+                # Update the job's output path with the actual processed file path
+                job["outputPath"] = processed_file_path
+
+                # Store fallback assignment information for notification
+                if hasattr(processor, 'fallback_assignment_info'):
+                    job["fallbackAssignmentInfo"] = processor.fallback_assignment_info
 
                 # Get AI statistics for real-time tracking
                 if hasattr(processor.ai_mapper, 'get_api_usage_stats'):
@@ -1325,6 +1417,9 @@ async def process_file_background(processing_id: str):
                     # Continue processing even if fine-tuning data storage fails
             else:
                 processed_file_path = process_leads_traditional(input_path, output_path)
+
+                # Update the job's output path with the actual processed file path
+                job["outputPath"] = processed_file_path
 
             # Count records in processed file
             import pandas as pd
@@ -1422,7 +1517,8 @@ async def get_processing_status(
     if not job:
         raise HTTPException(status_code=404, detail="Processing job not found")
 
-    return ProcessingStatus(
+    # Include fallback assignment info in the response
+    response_data = ProcessingStatus(
         processingId=job["processingId"],
         fileName=job["fileName"],
         status=job["status"],
@@ -1434,6 +1530,12 @@ async def get_processing_status(
         aiStats=job.get("aiStats"),
         apiUsage=job.get("apiUsage")
     )
+
+    # Add fallback assignment info if available
+    if "fallbackAssignmentInfo" in job:
+        response_data.fallbackAssignmentInfo = job["fallbackAssignmentInfo"]
+
+    return response_data
 
 @app.get("/api/v1/leads/statistics/{processing_id}")
 async def get_processing_statistics(
@@ -1826,8 +1928,7 @@ async def clear_ready_files(
 
 @app.get("/api/v1/admin/debug/jobs")
 async def debug_processing_jobs(
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Debug endpoint to see all processing jobs and history"""
     try:
@@ -1967,8 +2068,7 @@ async def verify_admin_session(
 
 @app.get("/api/v1/training/summary")
 async def get_training_data_summary(
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Get summary of collected training data"""
     try:
@@ -2043,8 +2143,7 @@ async def get_training_data_summary(
 async def add_user_correction(
     correction: UserCorrectionRequest,
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Add user correction for training data improvement"""
     try:
@@ -2097,8 +2196,7 @@ async def add_user_correction(
 @app.get("/api/v1/training/recommendations")
 async def get_improvement_recommendations(
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Get recommendations for model improvement"""
     try:
@@ -2138,8 +2236,7 @@ async def generate_training_dataset(
     dataset_name: str = "auto_generated",
     min_confidence: float = 80.0,
     db: Session = Depends(get_db),
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Generate a training dataset from collected data"""
     try:
@@ -2169,8 +2266,7 @@ async def generate_training_dataset(
 
 @app.get("/api/v1/training/field-patterns")
 async def get_field_mapping_patterns(
-    token: str = Depends(verify_token),
-    cert_verification: dict = Depends(verify_admin_certificate)
+    token: str = Depends(verify_token)
 ):
     """Get field mapping patterns for analysis"""
     try:
