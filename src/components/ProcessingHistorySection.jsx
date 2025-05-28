@@ -28,7 +28,7 @@ import {
   Visibility as ViewIcon,
   Article as LogsIcon,
   Clear as ClearIcon,
-  TableChart as DataViewIcon,
+  RemoveRedEye as DataViewIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -459,7 +459,7 @@ const ProcessingHistorySection = ({
                         }
                       }}
                     >
-                      Download
+                      {t('common.download')}
                     </Button>
                   </Box>
                 )}

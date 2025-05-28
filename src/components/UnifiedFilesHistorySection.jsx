@@ -38,7 +38,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Upload as UploadIcon,
-  TableChart as DataViewIcon
+  RemoveRedEye as DataViewIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
@@ -792,7 +792,7 @@ const UnifiedFilesHistorySection = () => {
                       }
                     }}
                   >
-                    {t('salesforce.upload', { defaultValue: 'Upload to Salesforce' })}
+                    {t('salesforce.upload')}
                   </Button>
                 </CardActions>
               </Card>
@@ -950,7 +950,7 @@ const UnifiedFilesHistorySection = () => {
         aria-labelledby="upload-dialog-title"
       >
         <DialogTitle id="upload-dialog-title">
-          {t('salesforce.uploadToSalesforce', { defaultValue: 'Upload to Salesforce' })}
+          {t('salesforce.uploadToSalesforce')}
         </DialogTitle>
         <DialogContent>
           {selectedFile && (
@@ -986,7 +986,7 @@ const UnifiedFilesHistorySection = () => {
               {uploading && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" gutterBottom>
-                    {t('salesforce.uploading', { defaultValue: 'Uploading...' })} {uploadProgress}%
+                    {t('salesforce.uploading')} {uploadProgress}%
                   </Typography>
                   <LinearProgress variant="determinate" value={uploadProgress} />
                 </Box>
@@ -1004,7 +1004,7 @@ const UnifiedFilesHistorySection = () => {
                         onClick={() => setDebugDialogOpen(true)}
                         sx={{ ml: 1 }}
                       >
-                        View Debug Info
+                        {t('salesforce.viewDebugInfo', { defaultValue: 'Ver Informações de Debug' })}
                       </Button>
                     )
                   }
@@ -1037,8 +1037,8 @@ const UnifiedFilesHistorySection = () => {
             startIcon={uploading ? <CircularProgress size={20} /> : <UploadIcon />}
           >
             {uploading
-              ? t('salesforce.uploading', { defaultValue: 'Uploading...' })
-              : t('salesforce.upload', { defaultValue: 'Upload' })
+              ? t('salesforce.uploading')
+              : t('salesforce.upload')
             }
           </Button>
         </DialogActions>
@@ -1070,7 +1070,7 @@ const UnifiedFilesHistorySection = () => {
       >
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Upload Debug Information</Typography>
+            <Typography variant="h6">{t('salesforce.debugInfo', { defaultValue: 'Informações de Debug do Envio' })}</Typography>
             <Button
               onClick={() => {
                 const debugData = {
@@ -1086,7 +1086,7 @@ const UnifiedFilesHistorySection = () => {
               size="small"
               variant="outlined"
             >
-              Copy to Clipboard
+              {t('common.copyToClipboard', { defaultValue: 'Copiar para Área de Transferência' })}
             </Button>
           </Box>
         </DialogTitle>
@@ -1094,7 +1094,7 @@ const UnifiedFilesHistorySection = () => {
           {detailedError && (
             <Box>
               <Typography variant="h6" gutterBottom color="error">
-                Upload Summary
+                {t('salesforce.uploadSummary', { defaultValue: 'Resumo do Envio' })}
               </Typography>
               <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
                 <Typography><strong>Records Processed:</strong> {detailedError.recordsProcessed}</Typography>
@@ -1205,7 +1205,7 @@ const UnifiedFilesHistorySection = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDebugDialogOpen(false)}>
-            Close
+            {t('common.close')}
           </Button>
         </DialogActions>
       </Dialog>
