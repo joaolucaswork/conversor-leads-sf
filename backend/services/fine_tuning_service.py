@@ -32,20 +32,35 @@ class FineTuningService:
         """
         Generate a training dataset from collected data
         """
-        # Get high-confidence mappings
-        high_confidence_mappings = self.db.query(FieldMapping).filter(
-            FieldMapping.confidence_score >= min_confidence,
-            FieldMapping.validation_status != 'incorrect'
-        ).all()
+        print(f"[INFO] FineTuningService: Starting dataset generation with min_confidence={min_confidence}")
+
+        try:
+            # Get high-confidence mappings
+            print(f"[INFO] FineTuningService: Querying high-confidence mappings...")
+            high_confidence_mappings = self.db.query(FieldMapping).filter(
+                FieldMapping.confidence_score >= min_confidence,
+                FieldMapping.validation_status != 'incorrect'
+            ).all()
+            print(f"[INFO] FineTuningService: Found {len(high_confidence_mappings)} high-confidence mappings")
+        except Exception as e:
+            print(f"[ERROR] FineTuningService: Failed to query high-confidence mappings: {e}")
+            raise Exception(f"Database error while querying field mappings: {str(e)}")
 
         # Get user-corrected mappings
         corrected_mappings = []
         if include_corrections:
-            corrected_mappings = self.db.query(FieldMapping).join(
-                UserCorrection
-            ).filter(
-                UserCorrection.correction_type == 'field_mapping'
-            ).all()
+            try:
+                print(f"[INFO] FineTuningService: Querying user-corrected mappings...")
+                corrected_mappings = self.db.query(FieldMapping).join(
+                    UserCorrection
+                ).filter(
+                    UserCorrection.correction_type == 'field_mapping'
+                ).all()
+                print(f"[INFO] FineTuningService: Found {len(corrected_mappings)} corrected mappings")
+            except Exception as e:
+                print(f"[WARNING] FineTuningService: Failed to query corrected mappings: {e}")
+                # Continue without corrections rather than failing completely
+                corrected_mappings = []
 
         # Compile training examples
         training_examples = []
@@ -67,29 +82,44 @@ class FineTuningService:
             if example:
                 training_examples.append(example)
 
-        # Calculate quality metrics
-        quality_score = self._calculate_dataset_quality(
-            training_examples + validation_examples
-        )
+        # Check if we have enough data to create a meaningful dataset
+        total_samples = len(training_examples) + len(validation_examples)
+        if total_samples == 0:
+            raise Exception("No training data available. Please process some files first to generate field mappings.")
 
-        # Create dataset record
-        dataset = TrainingDataset(
-            dataset_name=dataset_name,
-            version=f"v{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            description=f"Generated from {len(high_confidence_mappings)} high-confidence mappings and {len(corrected_mappings)} corrections",
-            total_samples=len(training_examples) + len(validation_examples),
-            quality_score=quality_score,
-            training_data=training_examples,
-            validation_data=validation_examples,
-            field_coverage=self._analyze_field_coverage(training_examples + validation_examples),
-            confidence_distribution=self._analyze_confidence_distribution(high_confidence_mappings)
-        )
+        print(f"[INFO] FineTuningService: Creating dataset with {total_samples} total samples")
 
-        self.db.add(dataset)
-        self.db.commit()
-        self.db.refresh(dataset)
+        try:
+            # Calculate quality metrics
+            quality_score = self._calculate_dataset_quality(
+                training_examples + validation_examples
+            )
+            print(f"[INFO] FineTuningService: Dataset quality score: {quality_score}")
 
-        return dataset
+            # Create dataset record
+            dataset = TrainingDataset(
+                dataset_name=dataset_name,
+                version=f"v{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                description=f"Generated from {len(high_confidence_mappings)} high-confidence mappings and {len(corrected_mappings)} corrections",
+                total_samples=total_samples,
+                quality_score=quality_score,
+                training_data=training_examples,
+                validation_data=validation_examples,
+                field_coverage=self._analyze_field_coverage(training_examples + validation_examples),
+                confidence_distribution=self._analyze_confidence_distribution(high_confidence_mappings)
+            )
+
+            self.db.add(dataset)
+            self.db.commit()
+            self.db.refresh(dataset)
+
+            print(f"[SUCCESS] FineTuningService: Dataset created with ID {dataset.id}")
+            return dataset
+
+        except Exception as e:
+            print(f"[ERROR] FineTuningService: Failed to create dataset: {e}")
+            self.db.rollback()
+            raise Exception(f"Failed to create training dataset: {str(e)}")
 
     def improve_prompts(self, dataset_id: int) -> Dict[str, Any]:
         """

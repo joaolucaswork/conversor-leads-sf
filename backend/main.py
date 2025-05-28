@@ -2240,11 +2240,31 @@ async def generate_training_dataset(
 ):
     """Generate a training dataset from collected data"""
     try:
+        print(f"[INFO] Starting dataset generation: name='{dataset_name}', min_confidence={min_confidence}")
+
+        # Check database connection
+        try:
+            db.execute("SELECT 1")
+            print("[INFO] Database connection verified")
+        except Exception as db_error:
+            print(f"[ERROR] Database connection failed: {db_error}")
+            return {
+                "success": False,
+                "error": "Database connection failed",
+                "message": "Unable to connect to database. Please check database configuration."
+            }
+
+        # Initialize fine-tuning service
         fine_tuning_service = FineTuningService(db)
+        print("[INFO] FineTuningService initialized")
+
+        # Generate dataset
         dataset = fine_tuning_service.generate_training_dataset(
             dataset_name=dataset_name,
             min_confidence=min_confidence
         )
+
+        print(f"[SUCCESS] Dataset generated: id={dataset.id}, samples={dataset.total_samples}")
 
         return {
             "success": True,
@@ -2256,12 +2276,25 @@ async def generate_training_dataset(
             "message": f"Training dataset '{dataset.dataset_name}' generated successfully"
         }
 
-    except Exception as e:
-        print(f"[ERROR] Failed to generate training dataset: {e}")
+    except ImportError as import_error:
+        error_msg = f"Missing required modules: {import_error}"
+        print(f"[ERROR] Import error in dataset generation: {error_msg}")
         return {
             "success": False,
-            "error": str(e),
-            "message": "Failed to generate training dataset"
+            "error": error_msg,
+            "message": "System configuration error. Please check server setup."
+        }
+    except Exception as e:
+        error_msg = str(e)
+        print(f"[ERROR] Failed to generate training dataset: {error_msg}")
+        print(f"[ERROR] Exception type: {type(e).__name__}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
+
+        return {
+            "success": False,
+            "error": error_msg,
+            "message": f"Failed to generate training dataset: {error_msg}"
         }
 
 @app.get("/api/v1/training/field-patterns")

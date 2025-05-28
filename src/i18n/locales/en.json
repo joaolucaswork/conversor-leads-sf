@@ -429,13 +429,15 @@
     "apply": "Apply",
     "confirm": "Confirm",
     "submit": "Submit",
+    "generate": "Generate",
     "of": "of",
     "file": "File",
     "records": "Records",
     "processed": "Processed",
     "copyToClipboard": "Copy to Clipboard",
     "and": "and",
-    "more": "more"
+    "more": "more",
+    "never": "Never"
   },
   "notifications": {
     "download": {
@@ -581,6 +583,43 @@
         "saveFailed": "Failed to save lead distribution settings.",
         "defaultAssigneeRequired": "Default assignee ID is required when distribution is enabled."
       }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Fine-Tuning Admin Dashboard",
+      "actions": "Training Actions",
+      "generateDataset": "Generate Training Dataset",
+      "generateDatasetTitle": "Generate Training Dataset",
+      "datasetName": "Dataset Name",
+      "minConfidence": "Minimum Confidence (%)",
+      "refresh": "Refresh Data",
+      "totalJobs": "Total Jobs",
+      "totalMappings": "Total Mappings",
+      "fieldMappings": "Field Mappings",
+      "accuracy": "Accuracy",
+      "corrections": "User Corrections",
+      "recentActivity": "Recent Activity",
+      "recentJobs": "Jobs in last 7 days",
+      "lastUpdated": "Last updated",
+      "recommendations": "Improvement Recommendations",
+      "fieldPatterns": "Field Mapping Patterns",
+      "commonMappings": "Common Mappings",
+      "problematicMappings": "Problematic Mappings",
+      "confidence": "Confidence",
+      "occurrences": "Occurrences",
+      "fieldType": "Field Type",
+      "field": "Field",
+      "avgConfidence": "Avg Confidence",
+      "successRate": "Success Rate",
+      "issues": "Issues",
+      "generating": "Generating...",
+      "datasetGenerated": "Dataset '{{name}}' generated successfully with {{samples}} samples!",
+      "datasetGenerationFailed": "Failed to generate dataset: {{error}}",
+      "loadingError": "Error loading dashboard data",
+      "noRecommendations": "No recommendations available",
+      "noCommonMappings": "No common mappings found",
+      "noProblematicMappings": "No problematic mappings found"
     }
   }
 }

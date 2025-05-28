@@ -37,10 +37,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { apiService } from '../services/apiService';
 import { useAuthStore } from '../store/authStore';
+import { useNotifications } from '../hooks/useNotifications';
 
 const AdminDashboardPage = () => {
   const { t } = useTranslation();
   const authStore = useAuthStore();
+  const { showSuccess, showError } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [trainingSummary, setTrainingSummary] = useState(null);
@@ -97,7 +99,9 @@ const AdminDashboardPage = () => {
         status: err.status,
         response: err.response?.data
       });
-      setError(`Failed to load dashboard data: ${err.message}. Please try again.`);
+      const errorMessage = err.message || 'Unknown error occurred';
+      setError(t('admin.dashboard.loadingError', 'Error loading dashboard data'));
+      showError(t('admin.dashboard.loadingError', 'Error loading dashboard data') + ': ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -112,7 +116,10 @@ const AdminDashboardPage = () => {
       });
 
       if (response.success) {
-        alert(`Dataset "${response.dataset_name}" generated successfully with ${response.total_samples} samples!`);
+        showSuccess(t('admin.dashboard.datasetGenerated', 'Dataset \'{{name}}\' generated successfully with {{samples}} samples!', {
+          name: response.dataset_name,
+          samples: response.total_samples
+        }));
         setGenerateDatasetDialog(false);
         setDatasetName('');
         loadDashboardData(); // Refresh data
@@ -121,7 +128,10 @@ const AdminDashboardPage = () => {
       }
     } catch (err) {
       console.error('Failed to generate dataset:', err);
-      alert('Failed to generate dataset: ' + err.message);
+      const errorMessage = err.message || 'Unknown error occurred';
+      showError(t('admin.dashboard.datasetGenerationFailed', 'Failed to generate dataset: {{error}}', {
+        error: errorMessage
+      }));
     } finally {
       setGenerating(false);
     }
@@ -269,7 +279,7 @@ const AdminDashboardPage = () => {
                 {t('admin.dashboard.lastUpdated', 'Last updated')}: {
                   trainingSummary?.last_updated
                     ? new Date(trainingSummary.last_updated).toLocaleString()
-                    : 'Never'
+                    : t('common.never', 'Never')
                 }
               </Typography>
             </CardContent>
@@ -303,7 +313,7 @@ const AdminDashboardPage = () => {
                       </Typography>
                       {rec.field_name && (
                         <Chip
-                          label={`Field: ${rec.field_name}`}
+                          label={`${t('admin.dashboard.field', 'Field')}: ${rec.field_name}`}
                           size="small"
                           variant="outlined"
                           sx={{ mt: 1 }}
