@@ -35,6 +35,7 @@ A comprehensive **full-stack lead processing system** that intelligently transfo
 ## 🚀 Key Features
 
 ### 🤖 AI-Powered Processing
+
 - **Intelligent Field Mapping**: Automatically detects and maps columns from different languages
 - **Pattern Recognition**: Identifies data patterns and suggests appropriate target fields
 - **Confidence Scoring**: Provides reliability metrics (0-100%) for each mapping decision
@@ -42,6 +43,7 @@ A comprehensive **full-stack lead processing system** that intelligently transfo
 - **Fallback Processing**: Seamlessly switches to rule-based processing when AI is unavailable
 
 ### 📊 Data Processing & Validation
+
 - **File Format Support**: Excel (.xlsx, .xls), CSV with automatic encoding detection
 - **Data Cleaning**: Phone number formatting, email validation, name standardization
 - **Duplicate Detection**: Advanced algorithms to identify and handle duplicate leads
@@ -49,6 +51,7 @@ A comprehensive **full-stack lead processing system** that intelligently transfo
 - **Data Validation**: Comprehensive validation rules with detailed error reporting
 
 ### 🔄 Salesforce Integration
+
 - **OAuth 2.0 Authentication**: Secure login flow with token management
 - **Direct Upload**: Push processed leads directly to Salesforce objects
 - **Field Mapping Configuration**: Customizable field relationships via JSON configuration
@@ -56,6 +59,7 @@ A comprehensive **full-stack lead processing system** that intelligently transfo
 - **Real-time Status**: Live updates on upload progress and results
 
 ### 🌐 Multi-Platform Support
+
 - **Web Application**: Browser-based interface accessible from anywhere
 - **Desktop Application**: Native Electron app for Windows, macOS, and Linux
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
@@ -66,26 +70,31 @@ A comprehensive **full-stack lead processing system** that intelligently transfo
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 18** with Material-UI components and Vite build system
 - **Zustand** for state management and **React Router** for navigation
 - **i18next** for internationalization (Portuguese/English)
 - **Lottie React** for animations and **React Dropzone** for file uploads
 
 ### Backend
+
 - **Python 3.9+** with **FastAPI** framework and **Uvicorn** server
 - **Pandas** for data manipulation and **OpenPyXL/XLRD** for Excel processing
 - **OpenAI API** integration for AI-powered field mapping
 - **Salesforce REST API** with OAuth 2.0 authentication
 
 ### Desktop
+
 - **Electron 28** for cross-platform desktop application
 - **Electron Builder** for packaging and distribution
 - **Auto-updater** for seamless application updates
 
 ### Deployment
+
 - **Heroku** for cloud deployment with automated scripts
 - **PostgreSQL** for optional fine-tuning data storage
 - **Environment-based configuration** for security
+
 ---
 
 ## 📂 Project Structure
@@ -173,6 +182,7 @@ npm run dev
 ```
 
 This will start:
+
 - 🐍 Backend API server on `http://localhost:8000`
 - ⚛️ Frontend Vite server on `http://localhost:5173`
 - 🖥️ Electron desktop application
@@ -188,23 +198,27 @@ This will start:
 ### Main Features
 
 #### 🏠 **Home Page**
+
 - Drag-and-drop file upload with progress tracking
 - Processing status with real-time updates
 - File history with download and preview options
 
 #### ⚙️ **Settings Page**
+
 - OpenAI API key configuration
 - AI processing settings (confidence threshold, model selection)
 - Language selection (Portuguese/English)
 - Lead distribution configuration
 
 #### 📊 **Admin Dashboard**
+
 - Processing statistics and analytics
 - AI usage tracking and cost monitoring
 - System health and performance metrics
 - User management and access control
 
 #### 🔍 **Data Preview**
+
 - Field mapping visualization
 - Data validation results
 - Processing summary with statistics
@@ -269,6 +283,7 @@ npm run deploy:heroku:windows your-app-name
 ```
 
 The automated script handles:
+
 - Heroku app creation
 - Buildpack configuration (Node.js + Python)
 - Environment variables setup
@@ -364,13 +379,16 @@ Edit `config/config.json` to customize AI processing:
     "fallback_to_rules": true
   }
 }
-```---
+```
+
+---
 
 ## 🔍 Troubleshooting
 
 ### Common Issues
 
 #### Backend Connection Issues
+
 ```bash
 # Diagnose backend connectivity
 npm run diagnose
@@ -380,16 +398,19 @@ curl http://localhost:8000/api/v1/health
 ```
 
 #### Salesforce OAuth Issues
+
 - Verify callback URL in Salesforce Connected App
 - Check client ID and secret in environment variables
 - Ensure proper OAuth scopes are configured
 
 #### AI Processing Issues
+
 - Verify OpenAI API key is valid and has credits
 - Check AI processing settings in configuration
 - Review error logs for specific AI-related errors
 
 #### File Processing Issues
+
 - Ensure file format is supported (.csv, .xlsx, .xls)
 - Check file encoding (UTF-8 recommended)
 - Verify file size is under 10MB limit
