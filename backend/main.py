@@ -415,6 +415,19 @@ def get_salesforce_oauth_config():
     # Get Salesforce domain from environment variables
     salesforce_domain = os.getenv("SALESFORCE_LOGIN_URL", "https://login.salesforce.com")
 
+    # Get credentials from environment
+    client_id = os.getenv("SALESFORCE_CLIENT_ID")
+    client_secret = os.getenv("SALESFORCE_CLIENT_SECRET")
+
+    # Log configuration status (without exposing sensitive data)
+    if client_id and client_secret:
+        print(f"[INFO] Salesforce OAuth configured for domain: {salesforce_domain}")
+        print(f"[INFO] Client ID: {client_id[:10]}...")
+    else:
+        print(f"[WARNING] Salesforce OAuth not fully configured")
+        print(f"[WARNING] Missing: {'CLIENT_ID ' if not client_id else ''}{'CLIENT_SECRET' if not client_secret else ''}")
+        print(f"[INFO] Set SALESFORCE_CLIENT_ID and SALESFORCE_CLIENT_SECRET environment variables")
+
     # Environment-aware redirect URI generation
     def get_redirect_uri():
         # Check if explicitly set in environment
@@ -438,8 +451,8 @@ def get_salesforce_oauth_config():
             return "http://localhost:5173/oauth/callback"
 
     return {
-        "client_id": os.getenv("SALESFORCE_CLIENT_ID"),
-        "client_secret": os.getenv("SALESFORCE_CLIENT_SECRET"),
+        "client_id": client_id,
+        "client_secret": client_secret,
         "redirect_uri": get_redirect_uri(),
         "login_url": salesforce_domain,
         "token_url": f"{salesforce_domain}/services/oauth2/token",
@@ -460,9 +473,17 @@ async def exchange_oauth_code(code: str, code_verifier: str, redirect_uri: str) 
     config = get_salesforce_oauth_config()
 
     if not config["client_id"] or not config["client_secret"]:
+        missing_vars = []
+        if not config["client_id"]:
+            missing_vars.append("SALESFORCE_CLIENT_ID")
+        if not config["client_secret"]:
+            missing_vars.append("SALESFORCE_CLIENT_SECRET")
+
+        error_msg = f"Salesforce OAuth configuration incomplete. Missing environment variables: {', '.join(missing_vars)}"
+        print(f"[ERROR] {error_msg}")
         raise HTTPException(
             status_code=500,
-            detail="Salesforce OAuth configuration not found. Please check environment variables."
+            detail=error_msg
         )
 
     token_data = {
@@ -1089,14 +1110,48 @@ async def options_handler(path: str, request: Request):
 
 @app.get("/api/v1/health")
 async def health_check():
-    """Detailed health check"""
+    """Detailed health check with configuration status"""
     print("[INFO] Health check requested")
+
+    # Check OpenAI configuration
+    openai_configured = bool(os.getenv('OPENAI_API_KEY'))
+    openai_key_format_valid = False
+    if openai_configured:
+        api_key = os.getenv('OPENAI_API_KEY')
+        openai_key_format_valid = api_key.startswith('sk-')
+
+    # Check Salesforce configuration
+    sf_client_id = bool(os.getenv('SALESFORCE_CLIENT_ID'))
+    sf_client_secret = bool(os.getenv('SALESFORCE_CLIENT_SECRET'))
+    sf_login_url = os.getenv('SALESFORCE_LOGIN_URL', 'https://login.salesforce.com')
+
+    salesforce_configured = sf_client_id and sf_client_secret
+
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "1.0.0",
         "processing_modules": PROCESSING_MODULES_AVAILABLE,
-        "cors_enabled": True
+        "cors_enabled": True,
+        "configuration": {
+            "openai": {
+                "configured": openai_configured,
+                "key_format_valid": openai_key_format_valid,
+                "ai_features_available": openai_configured and openai_key_format_valid
+            },
+            "salesforce": {
+                "configured": salesforce_configured,
+                "client_id_set": sf_client_id,
+                "client_secret_set": sf_client_secret,
+                "login_url": sf_login_url
+            },
+            "environment": {
+                "node_env": os.getenv('NODE_ENV', 'development'),
+                "python_env": os.getenv('PYTHON_ENV', 'development'),
+                "debug": os.getenv('DEBUG', 'True').lower() == 'true',
+                "heroku_app_name": os.getenv('HEROKU_APP_NAME', 'not-set')
+            }
+        }
     }
 
 @app.post("/api/v1/test/create-sample-data")

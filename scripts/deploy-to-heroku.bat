@@ -70,6 +70,34 @@ if "!OPENAI_API_KEY!"=="" (
 
 REM Set environment variables
 echo [INFO] Setting up environment variables...
+REM Check if environment variables are set
+if "!OPENAI_API_KEY!"=="" (
+    echo [ERROR] OPENAI_API_KEY environment variable not set
+    echo [INFO] Please set your OpenAI API key: set OPENAI_API_KEY=sk-your-key-here
+    pause
+    exit /b 1
+)
+
+if "!SALESFORCE_CLIENT_ID!"=="" (
+    echo [ERROR] SALESFORCE_CLIENT_ID environment variable not set
+    echo [INFO] Please set your Salesforce Client ID: set SALESFORCE_CLIENT_ID=your-client-id
+    pause
+    exit /b 1
+)
+
+if "!SALESFORCE_CLIENT_SECRET!"=="" (
+    echo [ERROR] SALESFORCE_CLIENT_SECRET environment variable not set
+    echo [INFO] Please set your Salesforce Client Secret: set SALESFORCE_CLIENT_SECRET=your-client-secret
+    pause
+    exit /b 1
+)
+
+if "!SALESFORCE_LOGIN_URL!"=="" (
+    echo [WARNING] SALESFORCE_LOGIN_URL not set, using default
+    set SALESFORCE_LOGIN_URL=https://login.salesforce.com
+)
+
+echo [INFO] Configuring Heroku environment variables...
 heroku config:set NODE_ENV=production PYTHON_ENV=production OPENAI_API_KEY=!OPENAI_API_KEY! SALESFORCE_CLIENT_ID=!SALESFORCE_CLIENT_ID! SALESFORCE_CLIENT_SECRET=!SALESFORCE_CLIENT_SECRET! SALESFORCE_REDIRECT_URI=https://!APP_NAME!.herokuapp.com/oauth/callback SALESFORCE_LOGIN_URL=!SALESFORCE_LOGIN_URL! HEROKU_APP_NAME=!APP_NAME! WEB_CONCURRENCY=1 DEBUG=False --app !APP_NAME!
 echo [SUCCESS] Environment variables configured
 

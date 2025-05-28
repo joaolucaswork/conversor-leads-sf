@@ -101,6 +101,13 @@ class AIFieldMapper:
 
         if not api_key:
             self.logger.warning("OPENAI_API_KEY not found in environment variables. AI processing disabled.")
+            self.logger.info("To enable AI features, set OPENAI_API_KEY environment variable")
+            self.ai_enabled = False
+            return
+
+        # Validate API key format
+        if not api_key.startswith('sk-'):
+            self.logger.error("Invalid OpenAI API key format. Key should start with 'sk-'")
             self.ai_enabled = False
             return
 
@@ -111,6 +118,7 @@ class AIFieldMapper:
             self.ai_enabled = True
         except Exception as e:
             self.logger.error(f"Failed to initialize OpenAI client: {e}")
+            self.logger.error("Please verify your OPENAI_API_KEY is valid and has sufficient quota")
             self.ai_enabled = False
 
     def _load_cache(self):
