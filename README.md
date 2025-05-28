@@ -318,8 +318,8 @@ heroku config:set DEBUG=False --app your-app-name
 
 ⚠️ **IMPORTANT**: Before deploying, configure your Salesforce Connected App with the correct callback URLs:
 
-- Login to [reino-capital.my.salesforce.com](https://reino-capital.my.salesforce.com)
-- Go to Setup → App Manager → Find "Leads Processing App" → Edit
+- Login to your Salesforce org (e.g., <https://your-domain.my.salesforce.com>)
+- Go to Setup → App Manager → Find your Connected App → Edit
 - In "Callback URL" field, add both URLs:
 
   ```text

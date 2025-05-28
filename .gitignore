@@ -220,6 +220,17 @@ src/electron/build/
 *.sqlite3
 
 # ========================================
+# SSL CERTIFICATES AND PRIVATE KEYS
+# ========================================
+certificates/
+*.pem
+*.p12
+*.key
+*.crt
+*.cert
+*.pfx
+
+# ========================================
 # PROJECT-SPECIFIC EXCLUSIONS
 # ========================================
 backup_before_reorganization/

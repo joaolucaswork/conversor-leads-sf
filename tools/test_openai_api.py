@@ -14,12 +14,16 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "core"))
 
-def test_hardcoded_api_key():
-    """Test the hardcoded API key from ai_field_mapper.py"""
-    print("🔑 Testing hardcoded OpenAI API key...")
+def test_openai_api_key():
+    """Test OpenAI API key from environment variables"""
+    print("🔑 Testing OpenAI API key from environment...")
 
-    # The same hardcoded key from ai_field_mapper.py
-    api_key = "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"
+    # Get API key from environment variables
+    api_key = os.getenv('OPENAI_API_KEY')
+
+    if not api_key:
+        print("❌ OPENAI_API_KEY not found in environment variables")
+        return False
 
     try:
         from openai import OpenAI
@@ -157,8 +161,8 @@ def main():
     # Test environment variables
     test_environment_variables()
 
-    # Test hardcoded API key
-    api_test_passed = test_hardcoded_api_key()
+    # Test API key from environment
+    api_test_passed = test_openai_api_key()
 
     # Test AI field mapper
     mapper_test_passed = test_ai_field_mapper()

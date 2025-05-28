@@ -8,8 +8,9 @@ const { AuthorizationCode } = require("simple-oauth2"); // Will be used later
 // Initialize electron-store
 const store = new Store();
 
-// Salesforce OAuth Configuration - Hardcoded for Reino Capital
-const sfHost = "https://reino-capital.my.salesforce.com";
+// Salesforce OAuth Configuration - From Environment Variables
+const sfHost =
+  process.env.SALESFORCE_LOGIN_URL || "https://login.salesforce.com";
 const sfClientId = process.env.SALESFORCE_CLIENT_ID;
 const sfClientSecret = process.env.SALESFORCE_CLIENT_SECRET;
 const sfRedirectUri = process.env.SALESFORCE_REDIRECT_URI;
@@ -115,8 +116,8 @@ app.whenReady().then(() => {
     // The above is now preferred at app startup before it's ready.
   }
 
-  // OpenAI API key is now hardcoded in the AI field mapper module
-  console.log("Using Reino Capital's production OpenAI API key");
+  // OpenAI API key is loaded from environment variables
+  console.log("OpenAI API key loaded from environment variables");
 
   // Remove the default menu bar (File, Edit, View, Window, Help)
   Menu.setApplicationMenu(null);
@@ -165,9 +166,11 @@ ipcMain.handle(
       // Prepare environment variables
       const env = { ...process.env };
 
-      // OpenAI API key is now hardcoded in the backend
+      // OpenAI API key is loaded from environment variables
       // This is maintained for backward compatibility
-      console.log("Using Reino Capital's production OpenAI API key for Python script execution");
+      console.log(
+        "Using OpenAI API key from environment variables for Python script execution"
+      );
 
       // Construct the full script path
       const scriptPath = path.join(__dirname, "..", script);

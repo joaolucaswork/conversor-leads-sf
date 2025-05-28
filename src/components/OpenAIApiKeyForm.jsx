@@ -21,22 +21,22 @@ const OpenAIApiKeyForm = ({ onKeySaved }) => {
       <Typography variant="h6" gutterBottom>
         OpenAI AI Features
       </Typography>
-      
-      <Alert 
+
+      <Alert
         icon={<CheckCircleIcon fontSize="inherit" />}
-        severity="success" 
+        severity="success"
         sx={{ mb: 2 }}
       >
         <Typography variant="body1" fontWeight="bold">
-          AI features are pre-configured for Reino Capital
+          AI features are configured via environment variables
         </Typography>
       </Alert>
-      
+
       <Typography variant="body2" color="text.secondary" paragraph>
-        This application comes with Reino Capital's enterprise OpenAI API integration. 
-        No additional configuration is needed to use AI-powered features.
+        This application uses OpenAI API integration configured through environment variables.
+        Ensure OPENAI_API_KEY is set in your environment to use AI-powered features.
       </Typography>
-      
+
       <Typography variant="body2" color="text.secondary" paragraph>
         All lead processing, field mapping, and data validation features are ready to use.
       </Typography>

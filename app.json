@@ -46,9 +46,8 @@
       "required": false
     },
     "SALESFORCE_LOGIN_URL": {
-      "description": "Salesforce login URL",
-      "value": "https://reino-capital.my.salesforce.com",
-      "required": false
+      "description": "Salesforce login URL (e.g., https://your-domain.my.salesforce.com)",
+      "required": true
     },
     "HEROKU_APP_NAME": {
       "description": "Heroku app name for redirect URI generation",
