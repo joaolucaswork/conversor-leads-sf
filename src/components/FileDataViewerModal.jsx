@@ -32,17 +32,18 @@ import {
 } from '@mui/icons-material';
 import { getProcessedFileData } from '../services/apiService';
 
-const FileDataViewerModal = ({ 
-  open, 
-  onClose, 
-  processingId, 
+const FileDataViewerModal = ({
+  open,
+  onClose,
+  processingId,
   fileName,
-  onFullScreen = null 
+  onFullScreen = null
 }) => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+  const isVerySmallScreen = useMediaQuery('(max-width:420px)');
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -112,11 +113,11 @@ const FileDataViewerModal = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="xl" 
-      fullWidth 
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xl"
+      fullWidth
       fullScreen={isMobile}
       scroll="paper"
       PaperProps={{
@@ -126,38 +127,76 @@ const FileDataViewerModal = ({
         }
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <DialogTitle sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        pb: 1
+        pb: 1,
+        px: { xs: 2, sm: 3 },
+        py: { xs: 1.5, sm: 2 }
       }}>
-        <Box>
-          <Typography variant="h6" component="div">
+        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Typography
+            variant={isVerySmallScreen ? "subtitle1" : "h6"}
+            component="div"
+            sx={{
+              fontSize: { xs: '1.1rem', sm: '1.25rem' },
+              fontWeight: 500
+            }}
+          >
             {t('history.dataViewer.title')}
           </Typography>
-          {fileName && (
-            <Typography variant="body2" color="text.secondary">
+          {fileName && !isVerySmallScreen && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}
+              noWrap
+            >
               {t('history.dataViewer.fileName', { fileName })}
             </Typography>
           )}
           {data?.file_info?.record_count && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}
+            >
               {t('history.dataViewer.recordCount', { count: data.file_info.record_count })}
             </Typography>
           )}
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1 } }}>
           {!isMobile && onFullScreen && (
             <Tooltip title={t('history.dataViewer.fullScreen')}>
-              <IconButton onClick={handleFullScreen} size="small">
-                <FullscreenIcon />
+              <IconButton
+                onClick={handleFullScreen}
+                size={isVerySmallScreen ? "medium" : "small"}
+                sx={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  p: { xs: 1.5, sm: 1 }
+                }}
+              >
+                <FullscreenIcon sx={{ fontSize: { xs: '1.25rem', sm: '1rem' } }} />
               </IconButton>
             </Tooltip>
           )}
           <Tooltip title={t('history.dataViewer.closeViewer')}>
-            <IconButton onClick={handleClose} size="small">
-              <CloseIcon />
+            <IconButton
+              onClick={handleClose}
+              size={isVerySmallScreen ? "medium" : "small"}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                p: { xs: 1.5, sm: 1 }
+              }}
+            >
+              <CloseIcon sx={{ fontSize: { xs: '1.25rem', sm: '1rem' } }} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -165,11 +204,11 @@ const FileDataViewerModal = ({
 
       <DialogContent dividers sx={{ p: 0, height: '100%' }}>
         {loading && (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            minHeight: '200px' 
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '200px'
           }}>
             <CircularProgress />
             <Typography sx={{ ml: 2 }}>
@@ -187,17 +226,44 @@ const FileDataViewerModal = ({
         {!loading && !error && data && (
           <>
             {data.records && data.records.length > 0 ? (
-              <TableContainer sx={{ height: '100%' }}>
-                <Table stickyHeader size="small" aria-label="file data table">
+              <TableContainer
+                sx={{
+                  height: '100%',
+                  overflowX: 'auto',
+                  '&::-webkit-scrollbar': {
+                    height: 8,
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                    borderRadius: 4,
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    borderRadius: 4,
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                    },
+                  },
+                }}
+              >
+                <Table
+                  stickyHeader
+                  size="small"
+                  aria-label="file data table"
+                  sx={{ minWidth: { xs: 500, sm: 650 } }}
+                >
                   <TableHead>
                     <TableRow>
                       {data.columns.map((column) => (
-                        <TableCell 
+                        <TableCell
                           key={column}
-                          sx={{ 
+                          sx={{
                             fontWeight: 'bold',
                             backgroundColor: 'background.paper',
-                            minWidth: 120
+                            minWidth: { xs: 100, sm: 120 },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            whiteSpace: 'nowrap',
+                            px: { xs: 1, sm: 2 }
                           }}
                         >
                           {getFieldDisplayName(column)}
@@ -209,13 +275,15 @@ const FileDataViewerModal = ({
                     {data.records.map((record, index) => (
                       <TableRow hover key={index}>
                         {data.columns.map((column) => (
-                          <TableCell 
+                          <TableCell
                             key={column}
-                            sx={{ 
-                              maxWidth: 200,
+                            sx={{
+                              maxWidth: { xs: 150, sm: 200 },
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              px: { xs: 1, sm: 2 }
                             }}
                           >
                             {record[column] || '-'}
@@ -227,11 +295,11 @@ const FileDataViewerModal = ({
                 </Table>
               </TableContainer>
             ) : (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '200px' 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '200px'
               }}>
                 <Typography color="text.secondary">
                   {t('history.dataViewer.noData')}
@@ -243,13 +311,29 @@ const FileDataViewerModal = ({
       </DialogContent>
 
       {!loading && !error && data?.pagination && (
-        <DialogActions sx={{ justifyContent: 'space-between', px: 2, py: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            {t('history.dataViewer.page', { 
-              current: data.pagination.page, 
-              total: data.pagination.total_pages 
-            })}
-          </Typography>
+        <DialogActions
+          sx={{
+            justifyContent: 'space-between',
+            px: { xs: 1, sm: 2 },
+            py: { xs: 0.5, sm: 1 },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 1, sm: 0 }
+          }}
+        >
+          {!isVerySmallScreen && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}
+            >
+              {t('history.dataViewer.page', {
+                current: data.pagination.page,
+                total: data.pagination.total_pages
+              })}
+            </Typography>
+          )}
           <TablePagination
             component="div"
             count={data.pagination.total_records}
@@ -257,17 +341,29 @@ const FileDataViewerModal = ({
             onPageChange={handlePageChange}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleRowsPerPageChange}
-            rowsPerPageOptions={[10, 25, 50, 100]}
-            labelRowsPerPage={t('history.dataViewer.recordsPerPage')}
-            labelDisplayedRows={({ from, to, count }) => 
-              `${from}-${to} ${t('common.of')} ${count}`
+            rowsPerPageOptions={isVerySmallScreen ? [10, 25] : [10, 25, 50, 100]}
+            labelRowsPerPage={isVerySmallScreen ? "" : t('history.dataViewer.recordsPerPage')}
+            labelDisplayedRows={({ from, to, count }) =>
+              isVerySmallScreen ? `${from}-${to}/${count}` : `${from}-${to} ${t('common.of')} ${count}`
             }
-            showFirstButton
-            showLastButton
+            showFirstButton={!isVerySmallScreen}
+            showLastButton={!isVerySmallScreen}
             sx={{
               '& .MuiTablePagination-toolbar': {
-                minHeight: 'auto',
-                paddingLeft: 0
+                minHeight: { xs: 44, sm: 'auto' },
+                paddingLeft: 0,
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              },
+              '& .MuiTablePagination-selectLabel': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              },
+              '& .MuiTablePagination-displayedRows': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              },
+              '& .MuiIconButton-root': {
+                minWidth: 44,
+                minHeight: 44,
+                padding: { xs: 1, sm: 1.5 }
               }
             }}
           />

@@ -52,10 +52,11 @@ const BackButton = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation();
 
-  // Only show back button when NOT on home page
+  // Only show back button when NOT on home page and NOT on file viewer page
   const isHomePage = location.pathname === '/';
+  const isFileViewerPage = location.pathname.startsWith('/file-viewer/');
 
-  if (isHomePage) {
+  if (isHomePage || isFileViewerPage) {
     return null;
   }
 
