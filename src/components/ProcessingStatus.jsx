@@ -41,7 +41,7 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
 
   if (error) {
     return (
-      <Paper elevation={2} sx={{ p: 3, mt: 3, borderColor: 'error.main', borderLeft: '5px solid' }}>
+      <Paper elevation={2} sx={{ p: 3, mt: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <ErrorOutlineIcon color="error" sx={{ mr: 1 }} />
           <Typography variant="h6" component="div" color="error">
@@ -162,8 +162,6 @@ const ProcessingStatus = ({ statusData, processingId, error }) => {
       sx={{
         p: { xs: 2, sm: 2.5, md: 3 },
         mt: { xs: 2, sm: 3 },
-        borderColor: `${statusColor}.main`,
-        borderLeft: '5px solid',
         borderRadius: { xs: 2, sm: 2 }
       }}
     >

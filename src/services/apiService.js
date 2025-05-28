@@ -517,6 +517,27 @@ export const getProcessingStatus = async (processingId) => {
   }
 };
 
+/**
+ * Fetches detailed processing statistics for a specific processing job.
+ * @param {string} processingId - The processing ID to fetch statistics for.
+ * @returns {Promise<object>} - The statistics data including human-readable summary and technical stats.
+ */
+export const getProcessingStatistics = async (processingId) => {
+  if (!processingId) {
+    throw new Error("Processing ID is required to fetch statistics.");
+  }
+  try {
+    const response = await apiClient.get(`/leads/statistics/${processingId}`);
+    return response.data; // Expected: { processingId, fileName, status, statistics: { humanReadableSummary, technicalStats } }
+  } catch (error) {
+    console.error(
+      `Error fetching statistics for ${processingId}:`,
+      error.originalError || error
+    );
+    throw error;
+  }
+};
+
 // Create an apiService object that includes all the functions and the client
 export const apiService = {
   // HTTP client
@@ -529,6 +550,7 @@ export const apiService = {
 
   // Processing operations
   getProcessingStatus,
+  getProcessingStatistics,
   confirmProcessing,
   getLeadPreview,
 

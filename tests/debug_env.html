@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Environment Debug</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .section {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Environment Variables Debug</h1>
+
+    <div class="section">
+      <h2>Environment Detection</h2>
+      <div id="environment-info"></div>
+    </div>
+
+    <div class="section">
+      <h2>Vite Environment Variables</h2>
+      <div id="vite-env"></div>
+    </div>
+
+    <div class="section">
+      <h2>API Connection Test</h2>
+      <button onclick="testApiConnection()">Test Backend Connection</button>
+      <div id="api-test-result"></div>
+    </div>
+
+    <script>
+              // Check environment variables
+              function checkViteEnv() {
+                  const viteEnv = {
+                      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+                      VITE_DEV_MODE: import.meta.env.VITE_DEV_MODE,
+                      VITE_DEBUG: import.meta.env.VITE_DEBUG,
+                      MODE: import.meta.env.MODE,
+                      DEV: import.meta.env.DEV,
+                      PROD: import.meta.env.PROD,
+                      BASE_URL: import.meta.env.BASE_URL
+                  };
+
+                  document.getElementById('vite-env').innerHTML = `
+                      <pre>${JSON.stringify(viteEnv, null, 2)}</pre>
+                      <div class="status ${viteEnv.VITE_API_BASE_URL ? 'success' : 'error'}">
+                          API Base URL: ${viteEnv.VITE_API_BASE_URL || 'NOT SET'}
+                      </div>
+                  `;
+              }
+
+              // Environment detection
+              function checkEnvironment() {
+                  const isElectron = !!(window.electronAPI && typeof window.electronAPI === "object");
+                  const isBrowser = !isElectron;
+
+                  const info = {
+                      isElectron,
+                      isBrowser,
+                      userAgent: navigator.userAgent,
+                      platform: navigator.platform,
+                      hasElectronAPI: !!window.electronAPI,
+                      availableAPIs: window.electronAPI ? Object.keys(window.electronAPI) : [],
+                      windowLocation: window.location.href
+                  };
+
+                  document.getElementById('environment-info').innerHTML = `
+                      <div class="status ${isElectron ? 'success' : 'warning'}">
+                          Running in: ${isElectron ? 'Electron' : 'Browser'} mode
+                      </div>
+                      <pre>${JSON.stringify(info, null, 2)}</pre>
+                  `;
+              }
+
+              // Test API connection
+              async function testApiConnection() {
+                  const resultDiv = document.getElementById('api-test-result');
+                  resultDiv.innerHTML = '<div class="status warning">Testing connection...</div>';
+
+                  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+                  const testUrl = apiBaseUrl;
+
+                  try {
+                      console.log('Testing connection to:', testUrl);
+                      const response = await fetch(testUrl, {
+                          method: 'GET',
+                          headers: {
+                              'Accept': 'application/json'
+                          }
+                      });
+
+                      if (response.ok) {
+                          const data = await response.json();
+                          resultDiv.innerHTML = `
+                              <div class="status success">✅ Backend connection successful!</div>
+                              <pre>${JSON.stringify(data, null, 2)}</pre>
+                          `;
+                      } else {
+                          resultDiv.innerHTML = `
+                              <div class="status error">❌ Backend responded with error: ${response.status}</div>
+                              <pre>Status: ${response.status} ${response.statusText}</pre>
+                          `;
+                      }
+                  } catch (error) {
+                      console.error('Connection test failed:', error);
+                      resultDiv.innerHTML = `
+                          <div class="status error">❌ Connection failed</div>
+                          <pre>Error: ${error.message}
+      URL tested: ${testUrl}
+      Expected API Base URL: ${apiBaseUrl}</pre>
+                      `;
+                  }
+              }
+
+              // Initialize on page load
+              document.addEventListener('DOMContentLoaded', function() {
+                  checkEnvironment();
+                  checkViteEnv();
+              });
+    </script>
+  </body>
+</html>

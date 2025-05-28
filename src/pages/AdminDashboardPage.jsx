@@ -70,19 +70,23 @@ const AdminDashboardPage = () => {
       console.log('📊 Loading training data summary...');
       const summaryResponse = await apiService.get('/training/summary');
       console.log('✅ Training summary loaded:', summaryResponse);
-      setTrainingSummary(summaryResponse);
+      console.log('🔍 Training summary data structure:', summaryResponse.data);
+      console.log('🔍 Training summary keys:', Object.keys(summaryResponse.data || {}));
+      setTrainingSummary(summaryResponse.data);
 
       // Load improvement recommendations
       console.log('💡 Loading improvement recommendations...');
       const recommendationsResponse = await apiService.get('/training/recommendations');
       console.log('✅ Recommendations loaded:', recommendationsResponse);
-      setRecommendations(recommendationsResponse.recommendations || []);
+      console.log('🔍 Recommendations data structure:', recommendationsResponse.data);
+      setRecommendations(recommendationsResponse.data?.recommendations || []);
 
       // Load field mapping patterns
       console.log('🗺️ Loading field mapping patterns...');
       const patternsResponse = await apiService.get('/training/field-patterns');
       console.log('✅ Field patterns loaded:', patternsResponse);
-      setFieldPatterns(patternsResponse);
+      console.log('🔍 Field patterns data structure:', patternsResponse.data);
+      setFieldPatterns(patternsResponse.data || {});
 
       console.log('🎉 Admin Dashboard: All data loaded successfully');
 

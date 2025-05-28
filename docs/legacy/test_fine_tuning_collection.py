@@ -20,8 +20,8 @@ def test_database_connection():
     print("🔍 Testing database connection...")
     
     try:
-        from backend.models.database import SessionLocal, engine
-        from backend.models.training_data import ProcessingJob, FieldMapping, FileUpload
+        from src.backend.models.database import SessionLocal, engine
+        from src.backend.models.training_data import ProcessingJob, FieldMapping, FileUpload
         
         # Test database connection
         db = SessionLocal()
@@ -50,8 +50,8 @@ def test_training_data_service():
     print("\n🧪 Testing training data service...")
     
     try:
-        from backend.models.database import SessionLocal
-        from backend.services.training_data_service import TrainingDataService
+        from src.backend.models.database import SessionLocal
+        from src.backend.services.training_data_service import TrainingDataService
         
         db = SessionLocal()
         try:
@@ -79,8 +79,8 @@ def check_recent_processing_jobs():
     print("\n📊 Checking recent processing jobs...")
     
     try:
-        from backend.models.database import SessionLocal
-        from backend.models.training_data import ProcessingJob, FieldMapping
+        from src.backend.models.database import SessionLocal
+        from src.backend.models.training_data import ProcessingJob, FieldMapping
         
         db = SessionLocal()
         try:

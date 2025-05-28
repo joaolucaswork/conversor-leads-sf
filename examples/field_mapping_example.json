@@ -1,0 +1,24 @@
+{
+  "field_mappings": {
+    "Lead": "FirstName LastName",
+    "Email": "Email",
+    "Telefone": "Phone",
+    "Empresa": "Company",
+    "Cargo": "Title",
+    "Estado": "State",
+    "Cidade": "City",
+    "Origem": "LeadSource",
+    "Atribuir": "OwnerId"
+  },
+  "confidence_scores": {
+    "Lead": 95,
+    "Email": 100,
+    "Telefone": 90,
+    "Empresa": 95,
+    "Cargo": 85,
+    "Estado": 90,
+    "Cidade": 90,
+    "Origem": 80,
+    "Atribuir": 75
+  }
+}

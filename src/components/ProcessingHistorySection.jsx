@@ -25,10 +25,9 @@ import StatusDot from './StatusDot';
 import StatusLegend from './StatusLegend';
 import {
   Download as DownloadIcon,
-  Visibility as ViewIcon,
-  Article as LogsIcon,
   Clear as ClearIcon,
   RemoveRedEye as DataViewIcon,
+  Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -36,11 +35,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   getProcessingHistory as getHistoryService,
   downloadProcessedFile as downloadFileService,
-  getJobLogs as getJobLogsService,
 } from '../services/apiService';
 import { useGlobalProcessingEvents } from '../hooks/useProcessingEvents';
-import LogViewerModal from './LogViewerModal';
+import { useSettingsStore } from '../store/settingsStore';
 import FileDataViewerModal from './FileDataViewerModal';
+import ProcessingStatisticsModal from './ProcessingStatisticsModal';
 import { useTheme, useMediaQuery } from '@mui/material';
 
 const ProcessingHistorySection = ({
@@ -55,6 +54,11 @@ const ProcessingHistorySection = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { addListener } = useGlobalProcessingEvents();
+
+  // Settings store for developer mode
+  const { developerMode } = useSettingsStore(state => ({
+    developerMode: state.developerMode,
+  }));
   const [historyItems, setHistoryItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,17 +69,15 @@ const ProcessingHistorySection = ({
     totalPages: 0,
   });
 
-  // Log viewer modal state
-  const [logModalOpen, setLogModalOpen] = useState(false);
-  const [selectedJobLogs, setSelectedJobLogs] = useState([]);
-  const [selectedJobId, setSelectedJobId] = useState(null);
-  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
-  const [logsError, setLogsError] = useState(null);
-
   // File data viewer modal state
   const [fileViewerModalOpen, setFileViewerModalOpen] = useState(false);
   const [selectedFileProcessingId, setSelectedFileProcessingId] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(null);
+
+  // Statistics modal state
+  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+  const [statisticsProcessingId, setStatisticsProcessingId] = useState(null);
+  const [statisticsFileName, setStatisticsFileName] = useState(null);
 
   const fetchHistory = useCallback(async (pageToFetch = 1) => {
     setIsLoading(true);
@@ -152,28 +154,6 @@ const ProcessingHistorySection = ({
     }
   };
 
-  const handleViewLogs = async (processingId) => {
-    setIsLoadingLogs(true);
-    setLogsError(null);
-    setSelectedJobId(processingId);
-    setLogModalOpen(true);
-
-    try {
-      const logs = await getJobLogsService(processingId);
-      setSelectedJobLogs(logs || []);
-    } catch (err) {
-      console.error('Error fetching logs:', err);
-      setLogsError(err.message || t('history.fetchLogsError', { defaultValue: 'Failed to fetch logs.' }));
-      setSelectedJobLogs([]);
-    } finally {
-      setIsLoadingLogs(false);
-    }
-  };
-
-  const handlePreviewClick = (processingId) => {
-    navigate(`/preview/${processingId}`);
-  };
-
   const handleViewFileData = (processingId, fileName) => {
     if (isMobile) {
       // Navigate to full-screen page on mobile
@@ -192,6 +172,12 @@ const ProcessingHistorySection = ({
     navigate(`/file-viewer/${processingId}`, {
       state: { fileName }
     });
+  };
+
+  const handleViewStatistics = (processingId, fileName) => {
+    setStatisticsProcessingId(processingId);
+    setStatisticsFileName(fileName);
+    setStatisticsModalOpen(true);
   };
 
   const getStatusColor = (status) => {
@@ -269,7 +255,16 @@ const ProcessingHistorySection = ({
 
       {/* Desktop Table View */}
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-        <TableContainer component={Paper} elevation={1}>
+        <TableContainer
+          component={Paper}
+          elevation={1}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            backgroundColor: 'background.paper'
+          }}
+        >
           <Table size="small" aria-label="processing history table">
             <TableHead>
               <TableRow>
@@ -282,26 +277,66 @@ const ProcessingHistorySection = ({
             </TableHead>
             <TableBody>
               {historyItems.map((item) => (
-                <TableRow hover key={item.processingId}>
-                  <TableCell component="th" scope="row">
-                    <Typography variant="body2" noWrap>
+                <TableRow
+                  hover
+                  key={item.processingId}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'action.hover'
+                    }
+                  }}
+                >
+                  <TableCell component="th" scope="row" sx={{ maxWidth: '200px' }}>
+                    <Typography
+                      variant="body2"
+                      noWrap
+                      sx={{
+                        fontWeight: 500,
+                        color: 'text.primary',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                      title={item.fileName} // Tooltip para mostrar nome completo
+                    >
                       {item.fileName}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '0.875rem'
+                      }}
+                    >
                       {item.uploadedAt ? format(new Date(item.uploadedAt), 'Pp') : 'N/A'}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={getStatusLabel(item.status)}
-                      color={getStatusColor(item.status)}
-                      size="small"
-                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <StatusDot status={item.status} size={8} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          textTransform: 'capitalize',
+                          color: 'text.primary'
+                        }}
+                      >
+                        {getStatusLabel(item.status)}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Typography variant="body2">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary'
+                      }}
+                    >
                       {item.recordCount || 0}
                     </Typography>
                   </TableCell>
@@ -327,26 +362,20 @@ const ProcessingHistorySection = ({
                               <DataViewIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={t('history.view')}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handlePreviewClick(item.processingId)}
-                              color="primary"
-                            >
-                              <ViewIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          {/* Statistics button - only visible in Developer Mode */}
+                          {developerMode && (
+                            <Tooltip title={t('statistics.viewStatistics')}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleViewStatistics(item.processingId, item.fileName)}
+                                color="secondary"
+                              >
+                                <AnalyticsIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                         </>
                       )}
-                      <Tooltip title={t('history.viewLogs')}>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewLogs(item.processingId)}
-                          color="secondary"
-                        >
-                          <LogsIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -361,7 +390,7 @@ const ProcessingHistorySection = ({
         {/* Status Legend for Mobile */}
         <StatusLegend />
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
           {historyItems.map((item) => (
             <Card
               key={item.processingId}
@@ -369,35 +398,45 @@ const ProcessingHistorySection = ({
               sx={{
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
+                backgroundColor: 'background.paper',
+                transition: 'box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  boxShadow: 2
+                }
               }}
             >
-              <CardContent sx={{ p: 1.5, pb: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+              <CardContent sx={{ p: { xs: 2, sm: 1.5 }, pb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                   <Typography
                     variant="subtitle2"
                     component="h4"
                     sx={{
-                      fontSize: '0.9375rem',
+                      fontSize: { xs: '1rem', sm: '0.9375rem' },
                       fontWeight: 600,
-                      lineHeight: 1.2,
-                      wordBreak: 'break-word',
+                      lineHeight: 1.3,
                       flex: 1,
-                      mr: 1,
-                      color: 'text.primary'
+                      mr: 1.5,
+                      color: 'text.primary',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: { xs: '200px', sm: '250px' }
                     }}
+                    title={item.fileName} // Tooltip para mostrar nome completo
                   >
                     {item.fileName}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <StatusDot status={item.status} size={8} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                    <StatusDot status={item.status} size={10} />
                     <Typography
                       variant="caption"
                       color="text.secondary"
                       sx={{
-                        fontSize: '0.75rem',
+                        fontSize: { xs: '0.8125rem', sm: '0.75rem' },
                         fontWeight: 500,
-                        textTransform: 'capitalize'
+                        textTransform: 'capitalize',
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {getStatusLabel(item.status)}
@@ -406,34 +445,54 @@ const ProcessingHistorySection = ({
                 </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: { xs: '0.8125rem', sm: '0.75rem' },
+                      fontWeight: 400
+                    }}
+                  >
                     {item.uploadedAt ? format(new Date(item.uploadedAt), 'dd/MM/yy HH:mm') : 'N/A'}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: { xs: '0.8125rem', sm: '0.75rem' },
+                      color: 'text.primary'
+                    }}
+                  >
                     {item.recordCount || 0} registros
                   </Typography>
                 </Box>
               </CardContent>
 
-              <CardActions sx={{ px: 1.5, pb: 1.5, pt: 0 }}>
+              <CardActions sx={{ px: { xs: 2, sm: 1.5 }, pb: { xs: 2, sm: 1.5 }, pt: 0 }}>
                 {item.status === 'completed' && (
-                  <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                  <Box sx={{
+                    display: 'flex',
+                    gap: { xs: 1.5, sm: 1 },
+                    width: '100%',
+                    flexDirection: { xs: 'column', sm: 'row' }
+                  }}>
                     <Button
                       size="small"
                       startIcon={<DataViewIcon />}
                       onClick={() => handleViewFileData(item.processingId, item.fileName)}
                       variant="outlined"
                       sx={{
-                        minHeight: 44, // Touch-friendly
-                        fontSize: '0.8125rem',
-                        px: 2,
+                        minHeight: { xs: 48, sm: 44 }, // Larger touch target on mobile
+                        fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                        px: { xs: 3, sm: 2 },
                         fontWeight: 500,
                         flex: 1,
                         borderColor: 'primary.main',
                         color: 'primary.main',
+                        borderRadius: 2,
                         '&:hover': {
                           borderColor: 'primary.dark',
-                          backgroundColor: 'primary.light',
+                          backgroundColor: 'primary.main',
                           color: 'primary.contrastText'
                         }
                       }}
@@ -446,13 +505,14 @@ const ProcessingHistorySection = ({
                       onClick={() => handleDownloadFile(item)}
                       variant="outlined"
                       sx={{
-                        minHeight: 44, // Touch-friendly
-                        fontSize: '0.8125rem',
-                        px: 2,
+                        minHeight: { xs: 48, sm: 44 }, // Larger touch target on mobile
+                        fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                        px: { xs: 3, sm: 2 },
                         fontWeight: 500,
                         flex: 1,
                         borderColor: 'divider',
                         color: 'text.primary',
+                        borderRadius: 2,
                         '&:hover': {
                           borderColor: 'text.secondary',
                           backgroundColor: 'action.hover'
@@ -461,6 +521,32 @@ const ProcessingHistorySection = ({
                     >
                       {t('common.download')}
                     </Button>
+                    {/* Statistics button - only visible in Developer Mode */}
+                    {developerMode && (
+                      <Button
+                        size="small"
+                        startIcon={<AnalyticsIcon />}
+                        onClick={() => handleViewStatistics(item.processingId, item.fileName)}
+                        variant="outlined"
+                        sx={{
+                          minHeight: { xs: 48, sm: 44 }, // Larger touch target on mobile
+                          fontSize: { xs: '0.875rem', sm: '0.8125rem' },
+                          px: { xs: 3, sm: 2 },
+                          fontWeight: 500,
+                          flex: 1,
+                          borderColor: 'secondary.main',
+                          color: 'secondary.main',
+                          borderRadius: 2,
+                          '&:hover': {
+                            borderColor: 'secondary.dark',
+                            backgroundColor: 'secondary.main',
+                            color: 'secondary.contrastText'
+                          }
+                        }}
+                      >
+                        {t('statistics.viewStatistics')}
+                      </Button>
+                    )}
                   </Box>
                 )}
               </CardActions>
@@ -483,16 +569,6 @@ const ProcessingHistorySection = ({
         />
       )}
 
-      {/* Log Viewer Modal */}
-      <LogViewerModal
-        open={logModalOpen}
-        onClose={() => setLogModalOpen(false)}
-        logs={selectedJobLogs}
-        processingId={selectedJobId}
-        isLoading={isLoadingLogs}
-        error={logsError}
-      />
-
       {/* File Data Viewer Modal */}
       <FileDataViewerModal
         open={fileViewerModalOpen}
@@ -500,6 +576,14 @@ const ProcessingHistorySection = ({
         processingId={selectedFileProcessingId}
         fileName={selectedFileName}
         onFullScreen={handleFullScreenFileViewer}
+      />
+
+      {/* Processing Statistics Modal */}
+      <ProcessingStatisticsModal
+        open={statisticsModalOpen}
+        onClose={() => setStatisticsModalOpen(false)}
+        processingId={statisticsProcessingId}
+        fileName={statisticsFileName}
       />
     </Box>
   );

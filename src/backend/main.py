@@ -26,7 +26,27 @@ from pydantic import BaseModel
 import uvicorn
 import httpx
 
-# Load environment variables from .env file FIRST (before database imports)
+# Import pandas and numpy for file viewing functionality
+try:
+    import pandas as pd
+    import numpy as np
+    PANDAS_AVAILABLE = True
+    print("[SUCCESS] Pandas and numpy imported successfully for file viewing")
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("[WARNING] Pandas/numpy not available - file viewing functionality will be limited")
+
+# Database imports
+from sqlalchemy.orm import Session
+from models.database import get_db, init_db, check_db_connection
+from models.training_data import ProcessingJob
+from services.training_data_service import TrainingDataService
+from services.fine_tuning_service import FineTuningService
+
+# Certificate authentication imports
+from middleware.certificate_auth import verify_admin_certificate
+
+# Load environment variables from .env file
 try:
     from dotenv import load_dotenv
     # Load from project root .env file
@@ -60,26 +80,6 @@ except ImportError:
 core_dir = project_root / "core"
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(core_dir))
-
-# Import pandas and numpy for file viewing functionality
-try:
-    import pandas as pd
-    import numpy as np
-    PANDAS_AVAILABLE = True
-    print("[SUCCESS] Pandas and numpy imported successfully for file viewing")
-except ImportError:
-    PANDAS_AVAILABLE = False
-    print("[WARNING] Pandas/numpy not available - file viewing functionality will be limited")
-
-# Database imports (AFTER environment variables are loaded)
-from sqlalchemy.orm import Session
-from models.database import get_db, init_db, check_db_connection
-from models.training_data import ProcessingJob
-from services.training_data_service import TrainingDataService
-from services.fine_tuning_service import FineTuningService
-
-# Certificate authentication imports
-from middleware.certificate_auth import verify_admin_certificate
 
 # Import our existing processing modules
 try:
@@ -1158,8 +1158,7 @@ async def upload_file(
         "useAiEnhancement": useAiEnhancement,
         "aiModelPreference": aiModelPreference,
         "inputPath": str(input_path),
-        "outputPath": str(get_output_path(processing_id, file.filename)),
-        "startTime": time.time()  # Track start time for processing duration
+        "outputPath": str(get_output_path(processing_id, file.filename))
     }
 
     processing_jobs[processing_id] = job_data
@@ -1343,37 +1342,6 @@ async def process_file_background(processing_id: str):
             job["resultUrl"] = f"/leads/download/{processing_id}"
             job["recordCount"] = record_count
 
-            # Generate human-readable summary and detailed statistics
-            processing_time = time.time() - job.get("startTime", time.time())
-
-            # Generate human-readable summary
-            if job["useAiEnhancement"]:
-                ai_stats = job.get("aiStats", {})
-                api_usage = job.get("apiUsage", {})
-
-                human_summary = f"O processador de IA analisou e processou {record_count} registros de leads do arquivo '{job['fileName']}'. "
-
-                if ai_stats.get('mappings_successful', 0) > 0:
-                    human_summary += f"Foram realizados {ai_stats.get('mappings_successful', 0)} mapeamentos inteligentes de campos com sucesso. "
-
-                if api_usage.get('cache_hit_ratio', 0) > 0.5:
-                    human_summary += "O sistema utilizou cache eficientemente para otimizar o processamento. "
-
-                if ai_stats.get('fallbacks_to_rules', 0) > 0:
-                    human_summary += f"Em {ai_stats.get('fallbacks_to_rules', 0)} casos, o sistema utilizou regras tradicionais como fallback. "
-
-                human_summary += f"O processamento foi concluído em {processing_time:.1f} segundos com custo estimado de ${api_usage.get('estimated_cost', 0):.4f}."
-            else:
-                human_summary = f"O processador tradicional analisou e processou {record_count} registros de leads do arquivo '{job['fileName']}' usando regras de mapeamento padrão. O processamento foi concluído em {processing_time:.1f} segundos sem custos de IA."
-
-            job["humanSummary"] = human_summary
-            job["processingTime"] = processing_time
-            job["errorCount"] = 0  # Could be enhanced to track actual errors
-            job["warningCount"] = 0  # Could be enhanced to track actual warnings
-            job["confidenceScores"] = job.get("confidenceScores", {})
-            job["fieldMappings"] = job.get("fieldMappings", [])
-            job["dataCleaningOps"] = []  # Could be enhanced to track cleaning operations
-
             # Add to history
             history_item = {
                 "processingId": processing_id,
@@ -1385,17 +1353,7 @@ async def process_file_background(processing_id: str):
                 "outputPath": job["outputPath"],
                 "completedAt": datetime.now().isoformat(),
                 "processingMode": "AI-Enhanced" if job["useAiEnhancement"] else "Traditional",
-                "validationIssues": [],  # Add validation issues if any
-                # Include statistics for history
-                "humanSummary": job["humanSummary"],
-                "processingTime": job["processingTime"],
-                "aiStats": job.get("aiStats", {}),
-                "apiUsage": job.get("apiUsage", {}),
-                "errorCount": job["errorCount"],
-                "warningCount": job["warningCount"],
-                "confidenceScores": job["confidenceScores"],
-                "fieldMappings": job["fieldMappings"],
-                "dataCleaningOps": job["dataCleaningOps"]
+                "validationIssues": []  # Add validation issues if any
             }
             processing_history.append(history_item)
 
@@ -1434,60 +1392,6 @@ async def get_processing_status(
         aiStats=job.get("aiStats"),
         apiUsage=job.get("apiUsage")
     )
-
-@app.get("/api/v1/leads/statistics/{processing_id}")
-async def get_processing_statistics(
-    processing_id: str,
-    token: str = Depends(verify_token)
-):
-    """Get detailed processing statistics for a specific job"""
-    # Check current jobs first
-    job = processing_jobs.get(processing_id)
-    if job:
-        return {
-            "processingId": processing_id,
-            "fileName": job.get("fileName"),
-            "status": job.get("status"),
-            "statistics": {
-                "humanReadableSummary": job.get("humanSummary", ""),
-                "technicalStats": {
-                    "aiStats": job.get("aiStats", {}),
-                    "apiUsage": job.get("apiUsage", {}),
-                    "processingTime": job.get("processingTime", 0),
-                    "recordCount": job.get("recordCount", 0),
-                    "errorCount": job.get("errorCount", 0),
-                    "warningCount": job.get("warningCount", 0),
-                    "confidenceScores": job.get("confidenceScores", {}),
-                    "fieldMappings": job.get("fieldMappings", []),
-                    "dataCleaningOperations": job.get("dataCleaningOps", [])
-                }
-            }
-        }
-
-    # Check processing history
-    for item in processing_history:
-        if item.get("processingId") == processing_id:
-            return {
-                "processingId": processing_id,
-                "fileName": item.get("fileName"),
-                "status": item.get("status"),
-                "statistics": {
-                    "humanReadableSummary": item.get("humanSummary", ""),
-                    "technicalStats": {
-                        "aiStats": item.get("aiStats", {}),
-                        "apiUsage": item.get("apiUsage", {}),
-                        "processingTime": item.get("processingTime", 0),
-                        "recordCount": item.get("recordCount", 0),
-                        "errorCount": item.get("errorCount", 0),
-                        "warningCount": item.get("warningCount", 0),
-                        "confidenceScores": item.get("confidenceScores", {}),
-                        "fieldMappings": item.get("fieldMappings", []),
-                        "dataCleaningOperations": item.get("dataCleaningOps", [])
-                    }
-                }
-            }
-
-    raise HTTPException(status_code=404, detail="Processing job not found")
 
 @app.get("/api/v1/leads/history")
 async def get_processing_history(

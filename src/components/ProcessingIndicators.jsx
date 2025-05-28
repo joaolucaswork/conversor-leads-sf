@@ -97,89 +97,55 @@ const ProcessingIndicators = ({
   const currentStageIndex = stages.findIndex(stage => stage.key === currentStage);
   const activeStage = stages[currentStageIndex] || stages[0];
 
-  // Real-time processing indicators
+  // Simple processing type indicator
   const ProcessingTypeIndicator = () => {
     if (!isProcessing) return null;
 
     const isAiProcessing = currentStage === 'ai_processing';
-    const isRuleBasedProcessing = currentStage === 'traditional_processing';
 
     return (
-      <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-        <Chip
-          icon={isAiProcessing ? <PsychologyIcon /> : <RuleIcon />}
-          label={isAiProcessing ? t('processing.indicators.aiEnhanced') : t('processing.indicators.ruleBased')}
-          color={isAiProcessing ? 'primary' : 'secondary'}
-          variant={isProcessing ? 'filled' : 'outlined'}
-          sx={{
-            animation: isProcessing ? `${pulse} 2s infinite` : 'none'
-          }}
-        />
-
-        {apiUsage.cache_hits > 0 && (
-          <Chip
-            icon={<StorageIcon />}
-            label={`${t('processing.indicators.cache')}: ${apiUsage.cache_hits} ${t('processing.indicators.hits')}`}
-            color="info"
-            size="small"
-            variant="outlined"
-          />
-        )}
-
-        {apiUsage.total_calls > 0 && (
-          <Chip
-            icon={<ApiIcon />}
-            label={`${t('processing.indicators.api')}: ${apiUsage.total_calls} ${t('processing.indicators.calls')}`}
-            color="warning"
-            size="small"
-            variant="outlined"
-          />
-        )}
-
-        {apiUsage.ai_skipped > 0 && (
-          <Chip
-            icon={<RuleIcon />}
-            label={`${t('processing.indicators.optimized')}: ${apiUsage.ai_skipped} ${t('processing.indicators.skipped')}`}
-            color="success"
-            size="small"
-            variant="outlined"
-          />
-        )}
+      <Box sx={{
+        mb: 2,
+        p: 2,
+        bgcolor: 'grey.900',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'grey.700'
+      }}>
+        <Typography variant="body2" sx={{ color: 'common.white', textAlign: 'center' }}>
+          {isAiProcessing ? t('processing.indicators.aiEnhanced') : t('processing.indicators.ruleBased')}
+        </Typography>
       </Box>
     );
   };
 
-  // Cost accumulation indicator
+  // Simple cost indicator
   const CostIndicator = () => {
     if (!apiUsage.estimated_cost || apiUsage.estimated_cost === 0) return null;
 
     return (
-      <Fade in={true}>
-        <Paper
-          elevation={1}
-          sx={{
-            p: 1.5,
-            mb: 2,
-            bgcolor: 'success.light',
-            color: 'success.contrastText',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+      <Box sx={{
+        mb: 2,
+        p: 2,
+        bgcolor: 'grey.900',
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'grey.700'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="body2" sx={{ color: 'grey.300' }}>
             {t('processing.indicators.processingCost')}
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="body1" sx={{ fontWeight: 600, color: 'common.white' }}>
             ${apiUsage.estimated_cost.toFixed(4)}
             {isProcessing && (
-              <Typography component="span" variant="caption" sx={{ ml: 1, opacity: 0.8 }}>
+              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'grey.300' }}>
                 {t('processing.indicators.accumulating')}
               </Typography>
             )}
           </Typography>
-        </Paper>
-      </Fade>
+        </Box>
+      </Box>
     );
   };
 

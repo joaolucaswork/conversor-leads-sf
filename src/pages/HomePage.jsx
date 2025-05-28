@@ -44,6 +44,18 @@ const HomePage = () => {
     setIsPolling(false);
   };
 
+  // Helper function to determine if processing is completed
+  const isProcessingCompleted = () => {
+    return currentProcessingStatus?.status === 'completed';
+  };
+
+  // Function to handle when a new file is selected - clears previous processing state immediately
+  const handleNewFileSelected = useCallback(() => {
+    console.log('HomePage: New file selected, clearing previous processing state immediately');
+    resetProcessingState();
+    resetUploadState();
+  }, []);
+
   const handleFileUpload = async (file, options = {}) => {
     resetUploadState(); // Clear messages from previous direct upload attempts
     resetProcessingState(); // Clear status from any previous job
@@ -151,6 +163,8 @@ const HomePage = () => {
           uploadProgress={uploadProgress} // From upload state
           uploadError={uploadError} // From upload state
           uploadSuccessMessage={uploadSuccessMessage} // From upload state
+          processingCompleted={isProcessingCompleted()} // Signal when processing is completed
+          onNewFileSelected={handleNewFileSelected} // Clear previous processing state when new file is selected
         />
       </Paper>
 

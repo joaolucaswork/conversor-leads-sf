@@ -45,7 +45,10 @@
     "noReadyFilesDescription": "Processe alguns arquivos de leads primeiro, depois retorne aqui para enviá-los ao Salesforce.",
     "fileAutoAdded": "{{fileName}} foi processado e está pronto para upload",
     "autoRefreshing": "Atualizando automaticamente...",
-    "filesReadyForUpload": "{{count}} arquivo(s) pronto(s) para upload"
+    "filesReadyForUpload": "{{count}} arquivo(s) pronto(s) para upload",
+    "mostRecent": "Mais Recente",
+    "newest": "Novo",
+    "latestFile": "Arquivo Mais Recente"
   },
   "settings": {
     "title": "Configurações da Aplicação",
@@ -255,7 +258,9 @@
     "intelligentMapping": "Mapeamento inteligente de campos",
     "highAccuracy": "Processamento de alta precisão",
     "optimizedResults": "Otimizado para melhores resultados",
-    "costEstimate": "~$0.01-0.05 custo"
+    "costEstimate": "~$0.01-0.05 custo",
+    "processingComplete": "Processamento concluído com sucesso!",
+    "uploadAnotherFile": "Processar Outro Arquivo"
   },
   "processing": {
     "title": "Status do Processamento",
@@ -335,6 +340,7 @@
       "good": "Bom",
       "needsWork": "Precisa Melhorar",
       "recommendations": "Recomendações de Otimização",
+      "viewMoreDetails": "Ver Mais Detalhes",
       "detailedBreakdown": "Detalhamento do Processamento",
       "aiProcessingStats": "Estatísticas de Processamento de IA",
       "apiUsageDetails": "Detalhes de Uso da API",
@@ -401,6 +407,7 @@
     "edit": "Editar",
     "delete": "Excluir",
     "view": "Visualizar",
+    "showLess": "Mostrar Menos",
     "download": "Baixar",
     "upload": "Enviar",
     "search": "Pesquisar",
@@ -470,5 +477,30 @@
     "lastUpload": "Último upload",
     "loginTime": "Hora do login",
     "refreshProfile": "Atualizar Perfil"
+  },
+  "statistics": {
+    "title": "Estatísticas de Processamento",
+    "viewStatistics": "Ver Estatísticas",
+    "loading": "Carregando estatísticas...",
+    "loadingError": "Falha ao carregar estatísticas",
+    "noSummaryAvailable": "Resumo não disponível para este arquivo",
+    "humanSummary": "Resumo do Processamento",
+    "technicalDetails": "Detalhes Técnicos",
+    "processingTime": "Tempo de Processamento",
+    "recordsProcessed": "Registros Processados",
+    "errors": "Erros",
+    "warnings": "Avisos",
+    "aiProcessingStats": "Estatísticas de Processamento IA",
+    "apiUsageDetails": "Detalhes de Uso da API",
+    "mappingAttempts": "Tentativas de Mapeamento",
+    "mappingSuccesses": "Sucessos de Mapeamento",
+    "validationAttempts": "Tentativas de Validação",
+    "ruleBasedFallbacks": "Fallbacks Baseados em Regras",
+    "totalCost": "Custo Total",
+    "tokensUsed": "Tokens Utilizados",
+    "totalApiCalls": "Total de Chamadas API",
+    "cacheHitRate": "Taxa de Acerto do Cache",
+    "cacheHits": "Acertos de Cache",
+    "aiOperationsSkipped": "Operações IA Puladas"
   }
 }

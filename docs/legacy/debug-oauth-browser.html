@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Browser Debug Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        
+        #log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .storage-item {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OAuth Browser Debug Tool</h1>
+        <p>This tool helps debug OAuth authentication issues in the browser environment.</p>
+    </div>
+
+    <div class="container">
+        <h2>Current Status</h2>
+        <div id="status" class="debug-section info">
+            Ready to start debugging...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Debug Actions</h2>
+        <button class="btn-primary" onclick="checkEnvironment()">1. Check Environment</button>
+        <button class="btn-primary" onclick="checkStorage()">2. Check Storage</button>
+        <button class="btn-primary" onclick="testOAuthConfig()">3. Test OAuth Config</button>
+        <button class="btn-primary" onclick="testPKCE()">4. Test PKCE Generation</button>
+        <button class="btn-success" onclick="startFullOAuthFlow()">5. Start Full OAuth Flow</button>
+        <button class="btn-secondary" onclick="clearLog()">Clear Log</button>
+        <button class="btn-danger" onclick="clearStorage()">Clear Storage</button>
+    </div>
+
+    <div class="container">
+        <h2>Browser Storage Contents</h2>
+        <div id="storage-contents"></div>
+        <button class="btn-secondary" onclick="refreshStorage()">Refresh Storage View</button>
+    </div>
+
+    <div class="container">
+        <h2>Debug Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        // Enhanced logging
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            const prefix = `[${timestamp}] [${type.toUpperCase()}]`;
+            logDiv.textContent += `${prefix} ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            // Also log to browser console
+            console.log(`${prefix} ${message}`);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `debug-section ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // Environment check
+        function checkEnvironment() {
+            log('=== Environment Check ===');
+            log(`User Agent: ${navigator.userAgent}`);
+            log(`Current URL: ${window.location.href}`);
+            log(`Origin: ${window.location.origin}`);
+            log(`Protocol: ${window.location.protocol}`);
+            log(`Host: ${window.location.host}`);
+            
+            // Check for required APIs
+            log(`Crypto API available: ${!!window.crypto}`);
+            log(`Crypto.subtle available: ${!!window.crypto?.subtle}`);
+            log(`Fetch API available: ${!!window.fetch}`);
+            log(`LocalStorage available: ${!!window.localStorage}`);
+            
+            updateStatus('Environment check completed', 'success');
+        }
+
+        // Storage check
+        function checkStorage() {
+            log('=== Storage Check ===');
+            
+            const keys = Object.keys(localStorage).filter(key => 
+                key.startsWith('electron-store-')
+            );
+            
+            log(`Found ${keys.length} electron-store keys in localStorage`);
+            
+            keys.forEach(key => {
+                try {
+                    const value = localStorage.getItem(key);
+                    const parsed = JSON.parse(value);
+                    log(`${key}: ${typeof parsed} (${JSON.stringify(parsed).substring(0, 100)}...)`);
+                } catch (e) {
+                    log(`${key}: ${value} (raw string)`);
+                }
+            });
+            
+            refreshStorage();
+            updateStatus('Storage check completed', 'success');
+        }
+
+        function refreshStorage() {
+            const container = document.getElementById('storage-contents');
+            container.innerHTML = '';
+            
+            const keys = Object.keys(localStorage).filter(key => 
+                key.startsWith('electron-store-')
+            );
+            
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="storage-item">No electron-store items found</div>';
+                return;
+            }
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const div = document.createElement('div');
+                div.className = 'storage-item';
+                div.innerHTML = `<strong>${key}:</strong><br>${value}`;
+                container.appendChild(div);
+            });
+        }
+
+        // OAuth config test
+        async function testOAuthConfig() {
+            log('=== OAuth Config Test ===');
+            
+            try {
+                const baseUrl = 'http://localhost:8000';
+                log(`Fetching OAuth config from: ${baseUrl}/api/v1/oauth/config`);
+                
+                const response = await fetch(`${baseUrl}/api/v1/oauth/config`);
+                log(`Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const config = await response.json();
+                log(`OAuth config received: ${JSON.stringify(config, null, 2)}`);
+                
+                updateStatus('OAuth config test completed successfully', 'success');
+            } catch (error) {
+                log(`OAuth config test failed: ${error.message}`, 'error');
+                updateStatus(`OAuth config test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // PKCE test
+        async function testPKCE() {
+            log('=== PKCE Generation Test ===');
+            
+            try {
+                // Generate code verifier
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const codeVerifier = btoa(String.fromCharCode.apply(null, array))
+                    .replace(/\+/g, "-")
+                    .replace(/\//g, "_")
+                    .replace(/=/g, "");
+                
+                log(`Code verifier generated: ${codeVerifier.substring(0, 20)}... (length: ${codeVerifier.length})`);
+                
+                // Generate code challenge
+                const encoder = new TextEncoder();
+                const data = encoder.encode(codeVerifier);
+                const digest = await crypto.subtle.digest("SHA-256", data);
+                const codeChallenge = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+                    .replace(/\+/g, "-")
+                    .replace(/\//g, "_")
+                    .replace(/=/g, "");
+                
+                log(`Code challenge generated: ${codeChallenge.substring(0, 20)}... (length: ${codeChallenge.length})`);
+                
+                // Test storage
+                localStorage.setItem('electron-store-test_code_verifier', JSON.stringify(codeVerifier));
+                const retrieved = JSON.parse(localStorage.getItem('electron-store-test_code_verifier'));
+                
+                if (retrieved === codeVerifier) {
+                    log('Storage test: SUCCESS - Code verifier stored and retrieved correctly');
+                    localStorage.removeItem('electron-store-test_code_verifier');
+                } else {
+                    log('Storage test: FAILED - Code verifier mismatch', 'error');
+                }
+                
+                updateStatus('PKCE generation test completed successfully', 'success');
+            } catch (error) {
+                log(`PKCE test failed: ${error.message}`, 'error');
+                updateStatus(`PKCE test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Full OAuth flow
+        async function startFullOAuthFlow() {
+            log('=== Starting Full OAuth Flow ===');
+            updateStatus('Starting OAuth flow...', 'warning');
+            
+            try {
+                // Step 1: Get OAuth config
+                log('Step 1: Getting OAuth configuration...');
+                const baseUrl = 'http://localhost:8000';
+                const configResponse = await fetch(`${baseUrl}/api/v1/oauth/config`);
+                
+                if (!configResponse.ok) {
+                    throw new Error(`Failed to get OAuth config: ${configResponse.status}`);
+                }
+                
+                const config = await configResponse.json();
+                log('OAuth config retrieved successfully');
+                
+                // Step 2: Generate PKCE parameters
+                log('Step 2: Generating PKCE parameters...');
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const codeVerifier = btoa(String.fromCharCode.apply(null, array))
+                    .replace(/\+/g, "-")
+                    .replace(/\//g, "_")
+                    .replace(/=/g, "");
+                
+                const encoder = new TextEncoder();
+                const data = encoder.encode(codeVerifier);
+                const digest = await crypto.subtle.digest("SHA-256", data);
+                const codeChallenge = btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+                    .replace(/\+/g, "-")
+                    .replace(/\//g, "_")
+                    .replace(/=/g, "");
+                
+                log('PKCE parameters generated successfully');
+                
+                // Step 3: Store code verifier
+                log('Step 3: Storing code verifier...');
+                localStorage.setItem('electron-store-oauth_code_verifier', JSON.stringify(codeVerifier));
+                
+                // Verify storage
+                const storedVerifier = JSON.parse(localStorage.getItem('electron-store-oauth_code_verifier'));
+                if (storedVerifier !== codeVerifier) {
+                    throw new Error('Code verifier storage verification failed');
+                }
+                log('Code verifier stored and verified successfully');
+                
+                // Step 4: Build OAuth URL
+                log('Step 4: Building OAuth URL...');
+                const redirectUri = `${window.location.origin}/oauth/callback`;
+                const params = new URLSearchParams({
+                    response_type: "code",
+                    client_id: config.client_id,
+                    redirect_uri: redirectUri,
+                    scope: config.scope,
+                    code_challenge: codeChallenge,
+                    code_challenge_method: "S256",
+                });
+                
+                const authUrl = `${config.authorize_url}?${params.toString()}`;
+                log('OAuth URL built successfully');
+                
+                // Step 5: Open popup
+                log('Step 5: Opening OAuth popup...');
+                const popup = window.open(
+                    authUrl,
+                    'salesforce-oauth-debug',
+                    'width=600,height=700,scrollbars=yes,resizable=yes'
+                );
+                
+                if (!popup) {
+                    throw new Error('Popup blocked - check browser settings');
+                }
+                
+                log('OAuth popup opened successfully');
+                log('Please complete the authentication in the popup window...');
+                updateStatus('OAuth popup opened - complete authentication in popup', 'warning');
+                
+                // Monitor popup
+                const checkClosed = setInterval(() => {
+                    if (popup.closed) {
+                        clearInterval(checkClosed);
+                        log('OAuth popup was closed');
+                        updateStatus('OAuth popup closed', 'info');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                log(`OAuth flow failed: ${error.message}`, 'error');
+                updateStatus(`OAuth flow failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearStorage() {
+            const keys = Object.keys(localStorage).filter(key => 
+                key.startsWith('electron-store-')
+            );
+            
+            keys.forEach(key => localStorage.removeItem(key));
+            log(`Cleared ${keys.length} storage items`);
+            refreshStorage();
+            updateStatus('Storage cleared', 'success');
+        }
+
+        // Listen for OAuth messages
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            log(`Received message: ${JSON.stringify(event.data)}`);
+            
+            if (event.data.type === 'OAUTH_SUCCESS') {
+                updateStatus('OAuth authentication successful!', 'success');
+            } else if (event.data.type === 'OAUTH_ERROR') {
+                updateStatus(`OAuth authentication failed: ${event.data.error}`, 'error');
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            log('OAuth Browser Debug Tool loaded');
+            checkEnvironment();
+            refreshStorage();
+        });
+    </script>
+</body>
+</html>

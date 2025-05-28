@@ -66,19 +66,22 @@ const AIStatsDisplay = ({
   };
 
   return (
-    <Card elevation={2} sx={{ mb: 2 }}>
-      <CardContent>
+    <Card elevation={1} sx={{ mb: 2, border: '1px solid', borderColor: 'divider' }}>
+      <CardContent sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h6" component="h3" sx={{ display: 'flex', alignItems: 'center' }}>
-            <PsychologyIcon sx={{ mr: 1, color: 'primary.main' }} />
-            AI Processing Statistics
+          <Typography variant="subtitle1" component="h3" sx={{ display: 'flex', alignItems: 'center', color: 'text.primary' }}>
+            <PsychologyIcon sx={{ mr: 1, color: 'primary.main', fontSize: '1.25rem' }} />
+            Processamento IA
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-              label={`Optimization: ${optimizationScore}/100`}
-              color={getOptimizationColor(optimizationScore)}
+              label={`${optimizationScore}/100`}
+              variant="outlined"
               size="small"
-              icon={<TrendingUpIcon />}
+              sx={{
+                borderColor: optimizationScore >= 80 ? 'success.main' : optimizationScore >= 60 ? 'primary.main' : 'warning.main',
+                color: optimizationScore >= 80 ? 'success.main' : optimizationScore >= 60 ? 'primary.main' : 'warning.main'
+              }}
             />
             {onToggleDetailed && (
               <IconButton size="small" onClick={onToggleDetailed}>
@@ -88,95 +91,76 @@ const AIStatsDisplay = ({
           </Box>
         </Box>
 
-        {/* Main Statistics Grid */}
+        {/* Essential Statistics Only */}
         <Grid container spacing={2} sx={{ mb: 2 }}>
-          {/* API Calls */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary.main" sx={{ fontWeight: 'bold' }}>
+          <Grid item xs={4}>
+            <Box sx={{
+              textAlign: 'center',
+              p: 1.5,
+              bgcolor: 'grey.900',
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'grey.700'
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'common.white' }}>
                 {apiUsage.total_calls || 0}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                API Calls
+              <Typography variant="caption" sx={{ color: 'grey.300' }}>
+                Chamadas API
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
-                <MemoryIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                <Typography variant="caption">
-                  {apiUsage.total_tokens_used || 0} tokens
-                </Typography>
-              </Box>
             </Box>
           </Grid>
 
-          {/* Estimated Cost */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
+          <Grid item xs={4}>
+            <Box sx={{
+              textAlign: 'center',
+              p: 1.5,
+              bgcolor: 'grey.900',
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'grey.700'
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'common.white' }}>
                 {formatCurrency(apiUsage.estimated_cost)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Estimated Cost
+              <Typography variant="caption" sx={{ color: 'grey.300' }}>
+                Custo
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
-                <MoneyIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                <Typography variant="caption">
-                  {isProcessing ? 'Accumulating...' : 'Final'}
-                </Typography>
-              </Box>
             </Box>
           </Grid>
 
-          {/* Cache Hit Rate */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
+          <Grid item xs={4}>
+            <Box sx={{
+              textAlign: 'center',
+              p: 1.5,
+              bgcolor: 'grey.900',
+              borderRadius: 1,
+              border: '1px solid',
+              borderColor: 'grey.700'
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'common.white' }}>
                 {formatPercentage(apiUsage.cache_hit_ratio)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Cache Hit Rate
+              <Typography variant="caption" sx={{ color: 'grey.300' }}>
+                Cache
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
-                <StorageIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                <Typography variant="caption">
-                  {apiUsage.cache_hits || 0} hits
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-
-          {/* AI Skip Rate */}
-          <Grid item xs={6} sm={3}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                {formatPercentage(apiUsage.ai_skip_ratio)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                AI Skip Rate
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
-                <RuleIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                <Typography variant="caption">
-                  {apiUsage.ai_skipped || 0} skipped
-                </Typography>
-              </Box>
             </Box>
           </Grid>
         </Grid>
 
-        {/* Processing Indicators */}
+        {/* Simple Processing Status */}
         {isProcessing && (
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <SpeedIcon sx={{ mr: 1, color: 'primary.main' }} />
-              <Typography variant="body2">
-                Processing with {apiUsage.ai_skipped > 0 ? 'optimized AI usage' : 'AI enhancement'}
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="indeterminate"
-              sx={{ height: 4, borderRadius: 2 }}
-              color={optimizationScore >= 80 ? 'success' : 'primary'}
-            />
+          <Box sx={{
+            mb: 2,
+            p: 2,
+            bgcolor: 'grey.900',
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'grey.700'
+          }}>
+            <Typography variant="body2" sx={{ color: 'common.white', textAlign: 'center' }}>
+              Processando com IA...
+            </Typography>
           </Box>
         )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
@@ -54,7 +54,7 @@ const acceptedFileTypes = {
 };
 const maxFileSize = 10 * 1024 * 1024; // 10MB
 
-const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, uploadSuccessMessage }) => {
+const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, uploadSuccessMessage, processingCompleted = false, onNewFileSelected }) => {
   const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileError, setFileError] = useState('');
@@ -64,6 +64,25 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
   const { developerMode } = useSettingsStore(state => ({
     developerMode: state.developerMode,
   }));
+
+  // Reset component state when processing completes successfully
+  useEffect(() => {
+    if (processingCompleted && selectedFile) {
+      console.log('FileUpload: Processing completed, resetting component state');
+      setSelectedFile(null);
+      setFileError('');
+      setUseAiEnhancement(true);
+    }
+  }, [processingCompleted, selectedFile]);
+
+  // Reset state when upload error occurs
+  useEffect(() => {
+    if (uploadError && selectedFile) {
+      console.log('FileUpload: Upload error detected, keeping file selected for retry');
+      // Keep file selected so user can retry, but clear any file-specific errors
+      setFileError('');
+    }
+  }, [uploadError, selectedFile]);
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     setFileError('');
@@ -85,10 +104,17 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
     }
 
     if (acceptedFiles && acceptedFiles.length > 0) {
+      console.log('FileUpload: New file selected, clearing previous state');
       setSelectedFile(acceptedFiles[0]);
       setFileError('');
+
+      // Notify parent component that a new file was selected so it can clear previous processing state
+      if (onNewFileSelected) {
+        console.log('FileUpload: Notifying parent about new file selection');
+        onNewFileSelected();
+      }
     }
-  }, []);
+  }, [onNewFileSelected]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -114,6 +140,22 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
     setSelectedFile(null);
     setFileError('');
     // Also reset any parent component state if needed, e.g. clear uploadError, uploadSuccessMessage
+  };
+
+  const handleStartNewUpload = () => {
+    console.log('FileUpload: Starting new upload cycle');
+    setSelectedFile(null);
+    setFileError('');
+    setUseAiEnhancement(true);
+
+    // Clear previous processing state immediately
+    if (onNewFileSelected) {
+      console.log('FileUpload: Clearing previous processing state for new upload');
+      onNewFileSelected();
+    }
+
+    // This will trigger the file picker to open
+    open();
   };
 
   return (
@@ -339,6 +381,29 @@ const FileUpload = ({ onFileUpload, isUploading, uploadProgress, uploadError, up
         <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 2 }}>
           {uploadSuccessMessage}
         </Alert>
+      )}
+
+      {/* Show "Upload Another File" button when processing is completed and no file is selected */}
+      {processingCompleted && !selectedFile && !isUploading && (
+        <Paper elevation={1} sx={{ p: 2, mt: 2, textAlign: 'center' }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {t('fileUpload.processingComplete', { defaultValue: 'Processamento concluído com sucesso!' })}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleStartNewUpload}
+            startIcon={<PsychologyIcon />}
+            sx={{
+              minHeight: { xs: 48, sm: 40 },
+              fontSize: { xs: '0.9375rem', sm: '0.875rem' },
+              fontWeight: { xs: 600, sm: 500 },
+              px: { xs: 3, sm: 2 }
+            }}
+          >
+            {t('fileUpload.uploadAnotherFile', { defaultValue: 'Processar Outro Arquivo' })}
+          </Button>
+        </Paper>
       )}
     </Box>
   );

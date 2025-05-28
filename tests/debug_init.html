@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialization Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background: #f8f9fa;
+        }
+        .log-error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .log-warn {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Initialization Debug Tool</h1>
+    
+    <div class="section">
+        <h2>Environment Status</h2>
+        <div id="environment-status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Console Logs Monitor</h2>
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="toggleLogCapture()">Toggle Log Capture</button>
+        <div id="log-capture-status" class="status info">Log capture: Active</div>
+        <div id="console-logs"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Manual Tests</h2>
+        <button onclick="testLocalStorage()">Test localStorage</button>
+        <button onclick="testEnvironmentAPI()">Test Environment API</button>
+        <button onclick="simulateAuthInit()">Simulate Auth Init</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        let logCapture = true;
+        let logs = [];
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function captureLog(level, args) {
+            if (!logCapture) return;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const message = Array.from(args).map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            logs.push({ level, timestamp, message });
+            updateLogDisplay();
+            
+            // Keep only last 50 logs
+            if (logs.length > 50) {
+                logs = logs.slice(-50);
+            }
+        }
+        
+        console.log = function(...args) {
+            captureLog('log', args);
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            captureLog('error', args);
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            captureLog('warn', args);
+            originalWarn.apply(console, args);
+        };
+        
+        function updateLogDisplay() {
+            const container = document.getElementById('console-logs');
+            container.innerHTML = logs.map(log => `
+                <div class="log-entry log-${log.level}">
+                    <strong>[${log.timestamp}] ${log.level.toUpperCase()}:</strong> ${log.message}
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogDisplay();
+        }
+        
+        function toggleLogCapture() {
+            logCapture = !logCapture;
+            document.getElementById('log-capture-status').textContent = 
+                `Log capture: ${logCapture ? 'Active' : 'Inactive'}`;
+        }
+        
+        function checkEnvironment() {
+            const isElectron = !!(window.electronAPI && typeof window.electronAPI === "object");
+            const isBrowser = !isElectron;
+            
+            const envInfo = {
+                isElectron,
+                isBrowser,
+                hasElectronAPI: !!window.electronAPI,
+                availableAPIs: window.electronAPI ? Object.keys(window.electronAPI) : [],
+                userAgent: navigator.userAgent,
+                location: window.location.href,
+                viteEnv: {
+                    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+                    MODE: import.meta.env.MODE,
+                    DEV: import.meta.env.DEV
+                }
+            };
+            
+            document.getElementById('environment-status').innerHTML = `
+                <div class="status ${isElectron ? 'success' : 'warning'}">
+                    Environment: ${isElectron ? 'Electron' : 'Browser'} mode
+                </div>
+                <pre>${JSON.stringify(envInfo, null, 2)}</pre>
+            `;
+        }
+        
+        function testLocalStorage() {
+            const results = document.getElementById('test-results');
+            try {
+                // Test localStorage operations
+                const testKey = 'electron-store-test';
+                const testValue = { test: true, timestamp: Date.now() };
+                
+                localStorage.setItem(testKey, JSON.stringify(testValue));
+                const retrieved = JSON.parse(localStorage.getItem(testKey));
+                localStorage.removeItem(testKey);
+                
+                results.innerHTML = `
+                    <div class="status success">✅ localStorage test passed</div>
+                    <pre>Stored and retrieved: ${JSON.stringify(retrieved, null, 2)}</pre>
+                `;
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="status error">❌ localStorage test failed</div>
+                    <pre>Error: ${error.message}</pre>
+                `;
+            }
+        }
+        
+        function testEnvironmentAPI() {
+            const results = document.getElementById('test-results');
+            
+            // Test if we can access the environment utilities
+            try {
+                if (window.electronAPI) {
+                    results.innerHTML = `
+                        <div class="status success">✅ Electron API available</div>
+                        <pre>Available methods: ${Object.keys(window.electronAPI).join(', ')}</pre>
+                    `;
+                } else {
+                    results.innerHTML = `
+                        <div class="status warning">⚠️ Browser mode - no Electron API</div>
+                        <pre>This is expected in browser mode</pre>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="status error">❌ Environment API test failed</div>
+                    <pre>Error: ${error.message}</pre>
+                `;
+            }
+        }
+        
+        function simulateAuthInit() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = `<div class="status info">🔄 Simulating auth initialization...</div>`;
+            
+            // Simulate the auth store initialization process
+            setTimeout(() => {
+                console.log('Simulated auth init: Starting...');
+                console.log('Simulated auth init: Checking stored data...');
+                console.log('Simulated auth init: No stored auth data found');
+                console.log('Simulated auth init: Setting loading to false');
+                console.log('Simulated auth init: Completed');
+                
+                results.innerHTML += `<div class="status success">✅ Auth simulation completed - check logs above</div>`;
+            }, 1000);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkEnvironment();
+            console.log('Debug page loaded - monitoring console output');
+        });
+    </script>
+</body>
+</html>

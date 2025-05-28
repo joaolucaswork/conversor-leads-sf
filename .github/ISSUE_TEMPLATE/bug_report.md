@@ -12,22 +12,22 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Process file '...'
-2. Use command '....'
-3. See error
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Error message**
-```
-Paste the full error message here
-```
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-**Environment:**
- - OS: [e.g. Windows 10, macOS, Linux]
- - Python version: [e.g. 3.8, 3.9, 3.10]
- - File type: [e.g. Excel .xlsx, CSV]
+**Environment (please complete the following information):**
+ - OS: [e.g. Windows 10, macOS 12.0]
+ - Browser [e.g. chrome, safari]
+ - Version [e.g. 22]
+ - Mode [e.g. Desktop App, Browser]
 
 **Additional context**
 Add any other context about the problem here.

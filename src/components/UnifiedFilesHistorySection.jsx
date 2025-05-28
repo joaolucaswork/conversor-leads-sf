@@ -38,13 +38,15 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Upload as UploadIcon,
-  RemoveRedEye as DataViewIcon
+  RemoveRedEye as DataViewIcon,
+  Analytics as AnalyticsIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
 import { getProcessingHistory, clearProcessingHistory, clearReadyFiles } from '../services/apiService';
 import { useAuthStore } from '../store/authStore';
 import { useLanguageStore } from '../store/languageStore';
+import { useSettingsStore } from '../store/settingsStore';
 import {
   uploadLeadsToSalesforce,
   getSalesforceObjects,
@@ -56,6 +58,7 @@ import StatusDot from './StatusDot';
 import StatusLegend from './StatusLegend';
 import DuplicateHandlingDialog from './DuplicateHandlingDialog';
 import FileDataViewerModal from './FileDataViewerModal';
+import ProcessingStatisticsModal from './ProcessingStatisticsModal';
 import { useNavigate } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
 
@@ -68,6 +71,11 @@ const UnifiedFilesHistorySection = () => {
   // Language store to ensure re-render when language changes
   const { currentLanguage } = useLanguageStore(state => ({
     currentLanguage: state.currentLanguage,
+  }));
+
+  // Settings store for developer mode
+  const { developerMode } = useSettingsStore(state => ({
+    developerMode: state.developerMode,
   }));
 
   const {
@@ -130,6 +138,14 @@ const UnifiedFilesHistorySection = () => {
   const [selectedFileProcessingId, setSelectedFileProcessingId] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(null);
 
+  // Statistics modal state
+  const [statisticsModalOpen, setStatisticsModalOpen] = useState(false);
+  const [statisticsProcessingId, setStatisticsProcessingId] = useState(null);
+  const [statisticsFileName, setStatisticsFileName] = useState(null);
+
+  // Most recent file tracking for visual highlighting
+  const [mostRecentProcessingId, setMostRecentProcessingId] = useState(null);
+
   const loadSalesforceObjects = async () => {
     try {
       const objects = await getSalesforceObjects();
@@ -161,14 +177,28 @@ const UnifiedFilesHistorySection = () => {
         return isCompleted && hasOutputPath;
       });
 
-      setProcessedFiles(completedFiles);
+      // Sort files by completion date - most recent first
+      const sortedFiles = completedFiles.sort((a, b) => {
+        const dateA = new Date(a.completedAt || a.uploadedAt || 0);
+        const dateB = new Date(b.completedAt || b.uploadedAt || 0);
+        return dateB - dateA; // Most recent first
+      });
+
+      setProcessedFiles(sortedFiles);
+
+      // Determine the most recent file if not already set
+      if (sortedFiles.length > 0 && !mostRecentProcessingId) {
+        // The first file in sortedFiles is the most recent
+        setMostRecentProcessingId(sortedFiles[0].processingId);
+        console.log('UnifiedFilesHistorySection: Set initial most recent processing ID:', sortedFiles[0].processingId);
+      }
     } catch (err) {
       console.error('Error loading processed files:', err);
       setError('Failed to load processed files. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, mostRecentProcessingId]);
 
   useEffect(() => {
     loadProcessedFiles();
@@ -197,6 +227,10 @@ const UnifiedFilesHistorySection = () => {
       // Only refresh if the processing was successful
       if (processingData.status === 'completed') {
         console.log('Automatically refreshing ready files list due to processing completion');
+
+        // Update most recent processing ID for visual highlighting
+        setMostRecentProcessingId(processingData.processingId);
+        console.log('UnifiedFilesHistorySection: Set most recent processing ID:', processingData.processingId);
 
         // Show auto-refresh indicator
         setIsAutoRefreshing(true);
@@ -264,6 +298,12 @@ const UnifiedFilesHistorySection = () => {
     navigate(`/file-viewer/${processingId}`, {
       state: { fileName }
     });
+  };
+
+  const handleViewStatistics = (processingId, fileName) => {
+    setStatisticsProcessingId(processingId);
+    setStatisticsFileName(fileName);
+    setStatisticsModalOpen(true);
   };
 
   const handleUploadToSalesforce = (file) => {
@@ -616,25 +656,28 @@ const UnifiedFilesHistorySection = () => {
         </Box>
 
         <Grid container spacing={{ xs: 2, sm: 2, md: 3 }}>
-          {processedFiles.map((file) => (
-            <Grid item xs={12} sm={6} md={6} lg={4} key={file.processingId}>
-              <Card
-                elevation={1}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: { xs: 2, sm: 2 },
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: { xs: 'none', sm: 'translateY(-2px)' },
-                    boxShadow: { xs: 1, sm: 2 },
-                    borderColor: 'text.secondary'
-                  }
-                }}
-              >
+          {processedFiles.map((file) => {
+            const isLatestFile = file.processingId === mostRecentProcessingId;
+
+            return (
+              <Grid item xs={12} sm={6} md={6} lg={4} key={file.processingId}>
+                <Card
+                  elevation={1}
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: { xs: 2, sm: 2 },
+                    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: { xs: 'none', sm: 'translateY(-2px)' },
+                      boxShadow: { xs: 1, sm: 2 },
+                      borderColor: 'text.secondary'
+                    }
+                  }}
+                >
                 <CardContent sx={{
                   flexGrow: 1,
                   p: { xs: 2, sm: 2 },
@@ -660,7 +703,29 @@ const UnifiedFilesHistorySection = () => {
                     >
                       {file.fileName}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                      {isLatestFile && (
+                        <Chip
+                          label={t('home.mostRecent')}
+                          size="small"
+                          variant="filled"
+                          sx={{
+                            fontSize: { xs: '0.625rem', sm: '0.6875rem' },
+                            height: { xs: 20, sm: 22 },
+                            fontWeight: 600,
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                            backgroundColor: '#2e7d32', // Verde escuro
+                            color: 'white',
+                            '& .MuiChip-label': {
+                              px: { xs: 0.75, sm: 1 }
+                            },
+                            '&:hover': {
+                              backgroundColor: '#1b5e20' // Verde ainda mais escuro no hover
+                            }
+                          }}
+                        />
+                      )}
                       <StatusDot status="completed" size={6} />
                       <Typography
                         variant="caption"
@@ -768,6 +833,26 @@ const UnifiedFilesHistorySection = () => {
                     >
                       <DownloadIcon fontSize="small" />
                     </Button>
+                    {/* Statistics button - only visible in Developer Mode */}
+                    {developerMode && (
+                      <Button
+                        size="small"
+                        onClick={() => handleViewStatistics(file.processingId, file.fileName)}
+                        variant="text"
+                        sx={{
+                          minWidth: 'auto',
+                          minHeight: { xs: 44, sm: 32 }, // Touch-friendly on mobile
+                          p: 1,
+                          color: 'secondary.main',
+                          '&:hover': {
+                            backgroundColor: 'secondary.light',
+                            color: 'secondary.contrastText'
+                          }
+                        }}
+                      >
+                        <AnalyticsIcon fontSize="small" />
+                      </Button>
+                    )}
                   </Box>
                   <Button
                     size="medium"
@@ -797,7 +882,8 @@ const UnifiedFilesHistorySection = () => {
                 </CardActions>
               </Card>
             </Grid>
-          ))}
+            );
+          })}
         </Grid>
       </Box>
     );
@@ -1226,6 +1312,14 @@ const UnifiedFilesHistorySection = () => {
         processingId={selectedFileProcessingId}
         fileName={selectedFileName}
         onFullScreen={handleFullScreenFileViewer}
+      />
+
+      {/* Processing Statistics Modal */}
+      <ProcessingStatisticsModal
+        open={statisticsModalOpen}
+        onClose={() => setStatisticsModalOpen(false)}
+        processingId={statisticsProcessingId}
+        fileName={statisticsFileName}
       />
     </Paper>
   );

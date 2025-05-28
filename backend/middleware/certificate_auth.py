@@ -243,7 +243,30 @@ async def verify_admin_certificate(request: Request) -> Dict[str, Any]:
             "message": "Admin access granted via production authentication"
         }
 
-    # Development/local environment - use certificate authentication
+    # Development/local environment - try admin token first, then certificate authentication
+    print("[INFO] Development environment detected - checking for admin token authentication")
+
+    # Check for admin access token in headers (same as production)
+    admin_token = request.headers.get("X-Admin-Token")
+    if admin_token:
+        print("[INFO] Admin token found in development environment")
+        # Validate admin token/session
+        if _validate_admin_access(admin_token):
+            return {
+                "valid": True,
+                "development_mode": True,
+                "auth_method": "admin_token",
+                "message": "Admin access granted via token authentication in development"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid admin token. Access denied."
+            )
+
+    # If no admin token, fall back to certificate authentication
+    print("[INFO] No admin token found, falling back to certificate authentication")
+
     # Check if cryptography libraries are available
     if not CRYPTO_AVAILABLE:
         print("[WARNING] Certificate authentication disabled - cryptography libraries not available")
@@ -276,8 +299,8 @@ async def verify_admin_certificate(request: Request) -> Dict[str, Any]:
     if not client_cert:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Client certificate required for admin access. Please install the admin certificate and try again.",
-            headers={"WWW-Authenticate": "Certificate"}
+            detail="Admin authentication required. Please provide either an admin token (X-Admin-Token header) or client certificate.",
+            headers={"WWW-Authenticate": "AdminToken"}
         )
 
     # Verify the certificate

@@ -1,21 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/src/components/icone.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI-Enhanced Leads Processor</title>
+    <title>Conversor de Leads - Reino Capital</title>
+    <meta name="description" content="Sistema de processamento de leads com IA para Salesforce" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/styles/aura-new.json" as="fetch" crossorigin="anonymous" />
+    
+    <!-- Material-UI Roboto font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
+    />
+    
+    <!-- Material-UI Icons -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+    
+    <!-- Prevent FOUC (Flash of Unstyled Content) -->
     <style>
-      /* Basic loading styles */
       body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
           'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
           sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-color: #121212;
-        color: #ffffff;
+        background-color: #f5f5f5;
       }
       
       #root {
@@ -23,37 +41,56 @@
       }
       
       /* Loading spinner */
-      .loading {
+      .loading-container {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
-        flex-direction: column;
+        background-color: #f5f5f5;
       }
       
-      .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
+      .loading-spinner {
         width: 40px;
         height: 40px;
-        animation: spin 2s linear infinite;
-        margin-bottom: 20px;
+        border: 4px solid #e3f2fd;
+        border-top: 4px solid #1976d2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
       }
       
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      
+      /* Hide loading when React loads */
+      .app-loaded .loading-container {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <div id="root">
-      <div class="loading">
-        <div class="spinner"></div>
-        <p>Loading AI-Enhanced Leads Processor...</p>
+      <!-- Loading fallback -->
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
       </div>
     </div>
+    
+    <!-- React app entry point -->
     <script type="module" src="/src/index.jsx"></script>
+    
+    <!-- Environment detection for Electron -->
+    <script>
+      // Detect if running in Electron
+      window.isElectron = typeof window !== 'undefined' && window.process && window.process.type;
+      
+      // Add app-loaded class when React mounts
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          document.body.classList.add('app-loaded');
+        }, 100);
+      });
+    </script>
   </body>
 </html>

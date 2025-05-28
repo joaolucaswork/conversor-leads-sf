@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples - Vite</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Teste Simples do Vite</h1>
+        <p>Se você está vendo isso, o Vite está funcionando!</p>
+        <div id="status">Carregando JavaScript...</div>
+    </div>
+    
+    <script type="module">
+        document.getElementById('status').textContent = 'JavaScript carregado com sucesso!';
+        console.log('Teste simples funcionando');
+        
+        // Teste de import
+        try {
+            const testModule = await import('./src/utils/environment.js');
+            console.log('Import funcionando:', testModule);
+            document.getElementById('status').textContent = 'Imports funcionando!';
+        } catch (error) {
+            console.error('Erro no import:', error);
+            document.getElementById('status').textContent = 'Erro no import: ' + error.message;
+        }
+    </script>
+</body>
+</html>

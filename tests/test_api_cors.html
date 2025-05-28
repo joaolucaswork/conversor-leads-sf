@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API CORS Test Tool</h1>
+        <p>This tool helps diagnose CORS and connectivity issues between the frontend and backend.</p>
+        
+        <div class="test-section info">
+            <h3>📋 Test Configuration</h3>
+            <p><strong>Frontend URL:</strong> <span id="frontend-url"></span></p>
+            <p><strong>Backend URL:</strong> http://localhost:8000</p>
+            <p><strong>API Base URL:</strong> http://localhost:8000/api/v1</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🏥 Test 1: Health Check</h3>
+            <button onclick="testHealthCheck()">Run Health Check</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test 2: Processing History</h3>
+            <button onclick="testProcessingHistory()">Test Processing History</button>
+            <div id="history-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Test 3: CORS Preflight</h3>
+            <button onclick="testCORSPreflight()">Test CORS Preflight</button>
+            <div id="cors-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Test Results Summary</h3>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set frontend URL
+        document.getElementById('frontend-url').textContent = window.location.origin;
+
+        const API_BASE = 'http://localhost:8000/api/v1';
+        const results = {};
+
+        function logResult(testName, success, message, data = null) {
+            results[testName] = { success, message, data };
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const testCount = Object.keys(results).length;
+            const successCount = Object.values(results).filter(r => r.success).length;
+            
+            summary.innerHTML = `
+                <p><strong>Tests Run:</strong> ${testCount}</p>
+                <p><strong>Successful:</strong> ${successCount}</p>
+                <p><strong>Failed:</strong> ${testCount - successCount}</p>
+            `;
+        }
+
+        async function testHealthCheck() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p>🔄 Testing health check...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Health Check Successful</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    logResult('health', true, 'Health check passed', data);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Health Check Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                    </div>
+                `;
+                logResult('health', false, error.message);
+            }
+        }
+
+        async function testProcessingHistory() {
+            const resultDiv = document.getElementById('history-result');
+            resultDiv.innerHTML = '<p>🔄 Testing processing history...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/leads/history?page=1&limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer test-token',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Processing History Successful</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    logResult('history', true, 'Processing history endpoint working', data);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Processing History Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                    </div>
+                `;
+                logResult('history', false, error.message);
+            }
+        }
+
+        async function testCORSPreflight() {
+            const resultDiv = document.getElementById('cors-result');
+            resultDiv.innerHTML = '<p>🔄 Testing CORS preflight...</p>';
+            
+            try {
+                // Test OPTIONS request
+                const response = await fetch(`${API_BASE}/leads/history`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Authorization, Content-Type'
+                    }
+                });
+                
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ CORS Preflight Response</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>CORS Headers:</strong></p>
+                        <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                    </div>
+                `;
+                logResult('cors', true, 'CORS preflight completed', corsHeaders);
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ CORS Preflight Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                    </div>
+                `;
+                logResult('cors', false, error.message);
+            }
+        }
+
+        // Auto-run health check on page load
+        window.addEventListener('load', () => {
+            setTimeout(testHealthCheck, 1000);
+        });
+    </script>
+</body>
+</html>

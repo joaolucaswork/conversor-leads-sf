@@ -45,7 +45,10 @@
     "noReadyFilesDescription": "Process some lead files first, then return here to upload them to Salesforce.",
     "fileAutoAdded": "{{fileName}} has been processed and is now ready for upload",
     "autoRefreshing": "Auto-refreshing...",
-    "filesReadyForUpload": "{{count}} file(s) ready for upload"
+    "filesReadyForUpload": "{{count}} file(s) ready for upload",
+    "mostRecent": "Most Recent",
+    "newest": "New",
+    "latestFile": "Latest File"
   },
   "settings": {
     "title": "Application Settings",
@@ -266,7 +269,9 @@
     "intelligentMapping": "Intelligent field mapping",
     "highAccuracy": "High accuracy processing",
     "optimizedResults": "Optimized for best results",
-    "costEstimate": "~$0.01-0.05 cost"
+    "costEstimate": "~$0.01-0.05 cost",
+    "processingComplete": "Processing completed successfully!",
+    "uploadAnotherFile": "Process Another File"
   },
   "processing": {
     "title": "Processing Status",
@@ -346,6 +351,7 @@
       "good": "Good",
       "needsWork": "Needs Work",
       "recommendations": "Optimization Recommendations",
+      "viewMoreDetails": "View More Details",
       "detailedBreakdown": "Detailed Processing Breakdown",
       "aiProcessingStats": "AI Processing Statistics",
       "apiUsageDetails": "API Usage Details",
@@ -412,6 +418,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "view": "View",
+    "showLess": "Show Less",
     "download": "Download",
     "upload": "Upload",
     "search": "Search",
@@ -481,5 +488,30 @@
     "lastUpload": "Last upload",
     "loginTime": "Login time",
     "refreshProfile": "Refresh Profile"
+  },
+  "statistics": {
+    "title": "Processing Statistics",
+    "viewStatistics": "View Statistics",
+    "loading": "Loading statistics...",
+    "loadingError": "Failed to load statistics",
+    "noSummaryAvailable": "Summary not available for this file",
+    "humanSummary": "Processing Summary",
+    "technicalDetails": "Technical Details",
+    "processingTime": "Processing Time",
+    "recordsProcessed": "Records Processed",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "aiProcessingStats": "AI Processing Statistics",
+    "apiUsageDetails": "API Usage Details",
+    "mappingAttempts": "Mapping Attempts",
+    "mappingSuccesses": "Mapping Successes",
+    "validationAttempts": "Validation Attempts",
+    "ruleBasedFallbacks": "Rule-based Fallbacks",
+    "totalCost": "Total Cost",
+    "tokensUsed": "Tokens Used",
+    "totalApiCalls": "Total API Calls",
+    "cacheHitRate": "Cache Hit Rate",
+    "cacheHits": "Cache Hits",
+    "aiOperationsSkipped": "AI Operations Skipped"
   }
 }

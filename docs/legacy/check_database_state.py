@@ -20,8 +20,8 @@ def check_database_tables():
     print("🔍 Checking database tables...")
     
     try:
-        from backend.models.database import SessionLocal, engine
-        from backend.models.training_data import ProcessingJob, FieldMapping, FileUpload, UserCorrection, TrainingDataset, ModelPerformance
+        from src.backend.models.database import SessionLocal, engine
+        from src.backend.models.training_data import ProcessingJob, FieldMapping, FileUpload, UserCorrection, TrainingDataset, ModelPerformance
         
         # Check table existence by querying each one
         db = SessionLocal()
@@ -71,8 +71,8 @@ def show_recent_processing_jobs():
     print("-" * 40)
     
     try:
-        from backend.models.database import SessionLocal
-        from backend.models.training_data import ProcessingJob, FieldMapping, FileUpload
+        from src.backend.models.database import SessionLocal
+        from src.backend.models.training_data import ProcessingJob, FieldMapping, FileUpload
         
         db = SessionLocal()
         try:
@@ -143,8 +143,8 @@ def show_field_mapping_patterns():
     print("-" * 40)
     
     try:
-        from backend.models.database import SessionLocal
-        from backend.models.training_data import FieldMapping
+        from src.backend.models.database import SessionLocal
+        from src.backend.models.training_data import FieldMapping
         from sqlalchemy import func
         
         db = SessionLocal()
@@ -215,8 +215,8 @@ def check_training_data_readiness():
     print("-" * 40)
     
     try:
-        from backend.models.database import SessionLocal
-        from backend.services.training_data_service import TrainingDataService
+        from src.backend.models.database import SessionLocal
+        from src.backend.services.training_data_service import TrainingDataService
         
         db = SessionLocal()
         try:

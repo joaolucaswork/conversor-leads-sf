@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 5173,
-    host: "localhost", // Only listen on localhost for security
+    host: true, // Allow external connections
     proxy:
       mode === "development"
         ? {
@@ -36,6 +36,6 @@ export default defineConfig(({ mode }) => ({
   },
   preview: {
     port: 5173,
-    host: "localhost", // Only listen on localhost for security
+    host: true,
   },
 }));

@@ -1,0 +1,12 @@
+# Placeholder for electron-builder configuration
+# Detailed configuration will be added in a later step.
+appId: com.example.electronreactsalesforceapp
+productName: ElectronReactSalesforceApp
+directories:
+  output: dist-electron
+files:
+  - filter:
+    - dist-renderer/**/*
+    - app/**/*
+    - package.json
+# Add more configuration as needed, e.g., for different OS, signing, etc.

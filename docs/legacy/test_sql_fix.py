@@ -20,8 +20,8 @@ def test_sql_syntax_fix():
     
     try:
         # Test the training data service with the fixed SQL
-        from backend.models.database import SessionLocal
-        from backend.services.training_data_service import TrainingDataService
+        from src.backend.models.database import SessionLocal
+        from src.backend.services.training_data_service import TrainingDataService
         
         print("✅ Imports successful")
         
